@@ -222,6 +222,25 @@ export const AdminPortal = ({
     }
   };
 
+  const handleResetAdminPassword = async (adminId, adminName) => {
+    if (!isSuperAdmin) return;
+    const target = adminUsers.find(u => u.id === adminId);
+    if (!target) return;
+
+    const newPass = window.prompt(`Set new password for "${adminName || target.email}":\n(Must contain at least 6 characters)`);
+    if (!newPass) return;
+
+    if (newPass.length < 6) {
+      alert("Password must contain at least 6 characters.");
+      return;
+    }
+
+    const updated = adminUsers.map(u => u.id === adminId ? { ...u, password: newPass } : u);
+    setAdminUsers(updated);
+    await saveAdminUsers(updated);
+    showNotification(`Password updated for "${adminName || target.email}"!`);
+  };
+
   const handleSyncAll = async () => {
     if (!isSuperAdmin) {
       showNotification("Action restricted: Only Super Administrator can perform cloud synchronization.");
@@ -1642,14 +1661,24 @@ export const AdminPortal = ({
                                   Protected Owner
                                 </span>
                               ) : (
-                                <button
-                                  onClick={() => handleRemoveAdmin(admin.id, admin.name)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-500/30 text-rose-300 text-[11px] font-semibold transition-all"
-                                  title={`Revoke access for ${admin.name}`}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  <span>Remove Admin</span>
-                                </button>
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleResetAdminPassword(admin.id, admin.name)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-200 text-[11px] font-semibold border border-slate-700 transition-all"
+                                    title={`Reset password for ${admin.name}`}
+                                  >
+                                    <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                                    <span>Reset Password</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handleRemoveAdmin(admin.id, admin.name)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-500/30 text-rose-300 text-[11px] font-semibold transition-all"
+                                    title={`Revoke access for ${admin.name}`}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Remove</span>
+                                  </button>
+                                </div>
                               )}
                             </td>
                           </tr>

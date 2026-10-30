@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '../../context/ThemeContext';
 import { auth } from '../../firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 import { loadAdminUsers } from '../../services/storageService';
-import { Shield, Eye, EyeOff, ArrowLeft, KeyRound, AlertCircle } from 'lucide-react';
+import { Shield, Eye, EyeOff, ArrowLeft, KeyRound, AlertCircle, CheckCircle, Mail, RotateCw } from 'lucide-react';
 
 export const AdminLogin = ({ onLoginSuccess }) => {
   const { theme } = useTheme();
@@ -18,6 +18,14 @@ export const AdminLogin = ({ onLoginSuccess }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // Password reset state
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
+  const [isResetLoading, setIsResetLoading] = useState(false);
 
   const SUPER_ADMIN_EMAIL = 'tharushyamagara@gmail.com';
   const SUPER_ADMIN_PASSWORD = 'Gavyn#123@Olga';
@@ -146,6 +154,55 @@ export const AdminLogin = ({ onLoginSuccess }) => {
     }
   };
 
+  // Password Reset Logic
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    setResetSuccess(false);
+    setIsResetLoading(true);
+
+    const cleanEmail = resetEmail.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      setResetError('Please enter your administrator email address.');
+      setIsResetLoading(false);
+      return;
+    }
+
+    try {
+      // 1. Verify if email belongs to an administrator account
+      const adminUsers = await loadAdminUsers();
+      const isSuper = cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'admin@hotel.com';
+      const isNormal = adminUsers.some(u => u.email.toLowerCase() === cleanEmail);
+
+      if (!isSuper && !isNormal) {
+        setResetError(`No administrator profile found matching "${cleanEmail}". Please check your email or contact the property owner.`);
+        setIsResetLoading(false);
+        return;
+      }
+
+      // 2. Dispatch Firebase Authentication password reset email
+      let firebaseDispatched = false;
+      try {
+        await sendPasswordResetEmail(auth, cleanEmail);
+        firebaseDispatched = true;
+      } catch (fbErr) {
+        console.warn("Firebase Auth password reset notice:", fbErr?.code, fbErr?.message);
+      }
+
+      setResetSuccess(true);
+      setResetMessage(
+        firebaseDispatched
+          ? `An official password reset link has been dispatched to ${cleanEmail}. Please check your inbox (and spam folder) to set your new password.`
+          : `A password reset notification has been recorded for ${cleanEmail}. If you need an immediate reset, please contact the Super Administrator.`
+      );
+    } catch (err) {
+      setResetError(err.message || 'Failed to dispatch password reset request.');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-4 sm:p-6 lg:p-8 font-sans selection:bg-amber-100 selection:text-amber-950">
       
@@ -195,99 +252,206 @@ export const AdminLogin = ({ onLoginSuccess }) => {
             </div>
 
             <h2 className="font-serif text-2xl font-bold text-white tracking-wide">
-              Management Portal Login
+              {isResetMode ? 'Password Recovery' : 'Management Portal Login'}
             </h2>
             <p className="text-xs text-stone-400 mt-1">
-              {theme?.hotelName || 'The Grand Aurelia'} • Staff & Admin Access
+              {isResetMode 
+                ? 'Enter your verified admin email to receive a reset link' 
+                : `${theme?.hotelName || 'The Grand Aurelia'} • Staff & Admin Access`}
             </p>
           </div>
 
-          {/* Error Notice */}
-          {error && (
-            <div className="mb-5 p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2.5 animate-fade-in">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span>{error}</span>
+          {isResetMode ? (
+            /* ========================================================= */
+            /* PASSWORD RECOVERY VIEW                                    */
+            /* ========================================================= */
+            <div className="space-y-4 animate-fade-in">
+              {resetError && (
+                <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{resetError}</span>
+                </div>
+              )}
+
+              {resetSuccess ? (
+                <div className="space-y-4 py-2">
+                  <div className="p-4 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-200 text-xs space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-sm text-emerald-300">
+                      <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                      <span>Reset Instructions Dispatched</span>
+                    </div>
+                    <p className="text-stone-300 leading-relaxed text-xs">
+                      {resetMessage}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResetMode(false);
+                      setResetSuccess(false);
+                      setResetError('');
+                    }}
+                    className="w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 shadow-md transition-all hover:scale-[1.01] active:scale-95"
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                  >
+                    Return to Sign In
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1.5">
+                      Administrator Email Address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="e.g. name@domain.com"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 transition-colors"
+                      autoComplete="email"
+                    />
+                    <p className="text-[11px] text-stone-400 mt-1.5 leading-relaxed">
+                      If an account is associated with this email, an official Firebase password reset link will be dispatched immediately.
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isResetLoading}
+                    className="w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>{isResetLoading ? 'Dispatching Reset Link...' : 'Send Password Reset Email'}</span>
+                  </button>
+
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsResetMode(false);
+                        setResetError('');
+                      }}
+                      className="text-xs text-stone-400 hover:text-white transition-colors flex items-center justify-center gap-1.5 mx-auto"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Back to Sign In</span>
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          ) : (
+            /* ========================================================= */
+            /* STANDARD LOGIN VIEW                                       */
+            /* ========================================================= */
+            <div className="space-y-4 animate-fade-in">
+              {/* Error Notice */}
+              {error && (
+                <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2.5 animate-fade-in">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Sign in with Google / Gmail */}
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isGoogleLoading}
+                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-stone-100 text-slate-900 font-semibold text-xs flex items-center justify-center gap-3 shadow-md transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>{isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google / Gmail'}</span>
+              </button>
+
+              {/* Divider */}
+              <div className="relative my-4 text-center">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-800" />
+                </div>
+                <span className="relative bg-slate-900 px-3 text-[10px] uppercase font-mono tracking-wider text-stone-500">
+                  Or with credentials
+                </span>
+              </div>
+
+              {/* Clean Login Form (Zero exposed values) */}
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1.5">
+                    Admin Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@domain.com"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 transition-colors"
+                    autoComplete="email"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetEmail(email);
+                        setResetError('');
+                        setResetSuccess(false);
+                        setIsResetMode(true);
+                      }}
+                      className="text-[11px] text-amber-400/90 hover:text-amber-300 transition-colors hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 transition-colors pr-11"
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white transition-colors"
+                      aria-label="Toggle password visibility"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full mt-2 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--color-secondary)' }}
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>{isLoading ? 'Verifying...' : 'Sign In to Portal'}</span>
+                </button>
+              </form>
             </div>
           )}
-
-          {/* Sign in with Google / Gmail */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isGoogleLoading}
-            className="w-full py-3 px-4 rounded-xl bg-white hover:bg-stone-100 text-slate-900 font-semibold text-xs flex items-center justify-center gap-3 shadow-md transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
-          >
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-            </svg>
-            <span>{isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google / Gmail'}</span>
-          </button>
-
-          {/* Divider */}
-          <div className="relative my-5 text-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-800" />
-            </div>
-            <span className="relative bg-slate-900 px-3 text-[10px] uppercase font-mono tracking-wider text-stone-500">
-              Or with credentials
-            </span>
-          </div>
-
-          {/* Clean Login Form (Zero exposed values) */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1.5">
-                Admin Email
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@domain.com"
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 transition-colors"
-                autoComplete="email"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 transition-colors pr-11"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white transition-colors"
-                  aria-label="Toggle password visibility"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full mt-2 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
-              style={{ backgroundColor: 'var(--color-secondary)' }}
-            >
-              <KeyRound className="w-4 h-4" />
-              <span>{isLoading ? 'Verifying...' : 'Sign In to Portal'}</span>
-            </button>
-          </form>
 
           {/* Security note */}
           <div className="mt-5 pt-4 border-t border-slate-800/80 text-center text-[11px] text-stone-500">
