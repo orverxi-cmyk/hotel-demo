@@ -1,0 +1,71 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ===============================================================
+    // ROLE & AUTHENTICATION LOGIC (ZERO HARDCODED PERSONAL EMAILS)
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'SUPER_ADMIN' ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // Media and image validation helpers
+    function isValidImage(res, maxMb) {
+      return res.size < maxMb * 1024 * 1024
+          && res.contentType.matches('image/(jpeg|png|webp|svg\\+xml|gif)');
+    }
+
+    function isValidMedia(res, maxMb) {
+      return res.size < maxMb * 1024 * 1024
+          && (res.contentType.matches('image/(jpeg|png|webp|svg\\+xml|gif)') ||
+              res.contentType.matches('video/(mp4|webm|quicktime|ogg)'));
+    }
+
+    // ===============================================================
+    // 1. HERO SLIDER MEDIA (PHOTOS & 4K VIDEOS)
+    // ===============================================================
+    // Public guests can stream and view homepage slider media.
+    // Only Super Admin can upload new images or video clips (max 100MB).
+    match /slider/{fileName} {
+      allow read: if true;
+      allow write: if isSuperAdmin() && isValidMedia(request.resource, 100);
+      allow delete: if isSuperAdmin();
+    }
+
+    // ===============================================================
+    // 2. SUITES & RESIDENCE PHOTOGRAPHY
+    // ===============================================================
+    // Public guests can view suite galleries.
+    // Only Super Admin can upload or replace suite photography (max 30MB).
+    match /rooms/{fileName} {
+      allow read: if true;
+      allow write: if isSuperAdmin() && isValidImage(request.resource, 30);
+      allow delete: if isSuperAdmin();
+    }
+
+    // ===============================================================
+    // 3. BRANDING, LOGOS & HERO BACKGROUNDS
+    // ===============================================================
+    match /branding/{fileName} {
+      allow read: if true;
+      allow write: if isSuperAdmin() && isValidMedia(request.resource, 50);
+      allow delete: if isSuperAdmin();
+    }
+
+    // ===============================================================
+    // 4. DEFAULT FALLBACK
+    // ===============================================================
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+  }
+}

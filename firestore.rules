@@ -1,0 +1,150 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // ROLE & AUTHENTICATION LOGIC (ZERO HARDCODED PERSONAL EMAILS)
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Role evaluated via custom token claims or Firestore administrator profile
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'SUPER_ADMIN' ||
+        request.auth.token.admin == true ||
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'SUPER_ADMIN')
+      );
+    }
+
+    function isNormalAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'NORMAL_ADMIN' ||
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'NORMAL_ADMIN')
+      );
+    }
+
+    function isAnyAdmin() {
+      return isSuperAdmin() || isNormalAdmin();
+    }
+
+    // ===============================================================
+    // 1. BRANDING & THEME CONFIGURATION (/settings/theme)
+    // ===============================================================
+    function isValidTheme(data) {
+      return data.hotelName is string
+          && data.hotelName.size() > 0
+          && data.primaryColor is string
+          && data.secondaryColor is string
+          && data.currency is string;
+    }
+
+    match /settings/theme {
+      allow read: if true; // Public for website visitors
+      allow write: if isSuperAdmin() && isValidTheme(request.resource.data);
+    }
+
+    // ===============================================================
+    // 2. ADMINISTRATOR ACCOUNTS & ROSTER (/settings/admin_users & /admins)
+    // ===============================================================
+    match /settings/admin_users {
+      allow read: if isAnyAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isAnyAdmin() || (isAuthenticated() && request.auth.uid == adminId);
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // ===============================================================
+    // 3. SUITES & RESIDENCE INVENTORY (/rooms/{roomId})
+    // ===============================================================
+    function isValidRoom(data) {
+      return data.name is string && data.name.size() > 0
+          && data.price is number && data.price > 0
+          && data.category is string
+          && data.image is string
+          && data.available is bool;
+    }
+
+    match /rooms/{roomId} {
+      allow read: if true; // Public guests browsing suites
+      allow create: if isSuperAdmin() && isValidRoom(request.resource.data);
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin(); // Normal admin strictly prohibited from deleting
+    }
+
+    // ===============================================================
+    // 4. HERO SLIDER EXPERIENCES & MEDIA (/services/{serviceId})
+    // ===============================================================
+    function isValidSlide(data) {
+      return data.title is string && data.title.size() > 0
+          && data.badge is string
+          && (data.image is string || (data.videoUrl is string && data.videoUrl.size() > 0));
+    }
+
+    match /services/{serviceId} {
+      allow read: if true; // Public guests viewing hero slider
+      allow create, update: if isSuperAdmin() && isValidSlide(request.resource.data);
+      allow delete: if isSuperAdmin();
+    }
+
+    match /settings/slider {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // ===============================================================
+    // 5. RESERVATIONS & BOOKINGS PIPELINE (/bookings/{bookingId})
+    // ===============================================================
+    function isValidBooking(data) {
+      return data.guestName is string && data.guestName.size() >= 2
+          && data.roomName is string
+          && data.checkIn is string
+          && data.checkOut is string
+          && data.totalAmount is number && data.totalAmount >= 0
+          && data.status in ['Confirmed', 'Pending'];
+    }
+
+    function isValidStatusUpdate(newData) {
+      return newData.status in ['Confirmed', 'Checked In', 'Completed', 'Cancelled', 'Pending'];
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if true; // Guests look up reference code, staff reviews folios
+      allow create: if isValidBooking(request.resource.data); // Public guest reservations
+      allow update: if isAnyAdmin() && isValidStatusUpdate(request.resource.data); // Staff operational status updates
+      allow delete: if isSuperAdmin(); // Only Super Admin can delete; Normal admin strictly barred
+    }
+
+    // ===============================================================
+    // 6. HOTEL CONTENT (/content/{contentId} -> amenities & reviews)
+    // ===============================================================
+    match /content/{contentId} {
+      allow read: if true; // Public guest display
+      allow write: if isSuperAdmin(); // Super Admin only
+    }
+
+    // ===============================================================
+    // 7. TRANSACTIONAL EMAILS & NOTIFICATIONS PIPELINE (/mail/{mailId})
+    // ===============================================================
+    match /mail/{mailId} {
+      allow read: if true; // Allows guest tracker lookup by booking ID
+      allow create: if request.resource.data.bookingId is string; // Guests & system trigger automated status emails
+      allow update, delete: if isSuperAdmin(); // Management only
+    }
+
+    // ===============================================================
+    // 8. SYSTEM FALLBACK
+    // ===============================================================
+    match /{document=**} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+  }
+}
