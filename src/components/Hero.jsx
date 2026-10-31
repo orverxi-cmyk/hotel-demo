@@ -27,7 +27,7 @@ import {
   subscribeSliderSlides 
 } from '../services/storageService';
 
-export const Hero = () => {
+export const Hero = ({ onSelectArticleById }) => {
   const { theme } = useTheme();
   const { openBookingModal } = useBooking();
   
@@ -228,7 +228,19 @@ export const Hero = () => {
               {/* Primary Call to Action */}
               <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => openBookingModal()}
+                  onClick={() => {
+                    if (active.ctaAction === 'article' && active.ctaArticleId) {
+                      if (onSelectArticleById) {
+                        onSelectArticleById(active.ctaArticleId);
+                        return;
+                      }
+                    }
+                    if (active.ctaAction === 'url' && active.ctaUrl) {
+                      window.location.href = active.ctaUrl;
+                      return;
+                    }
+                    openBookingModal();
+                  }}
                   className="w-full py-3 px-4 rounded-xl text-slate-950 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
                   style={{ backgroundColor: 'var(--color-secondary)' }}
                 >
@@ -236,12 +248,35 @@ export const Hero = () => {
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
-                <a
-                  href={active.actionTarget || '#rooms'}
-                  className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-white/10 text-center"
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    const isArticle = active.actionType === 'article' || active.actionTarget?.startsWith('article:');
+                    if (isArticle) {
+                      const artId = active.actionArticleId || active.actionTarget?.replace('article:', '');
+                      if (artId && onSelectArticleById) {
+                        onSelectArticleById(artId);
+                        return;
+                      }
+                    }
+                    if (active.actionTarget) {
+                      if (active.actionTarget.startsWith('#')) {
+                        const el = document.querySelector(active.actionTarget);
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth' });
+                          return;
+                        }
+                      }
+                      window.location.href = active.actionTarget;
+                    } else {
+                      const el = document.querySelector('#rooms');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-white/10 text-center cursor-pointer"
                 >
                   <span>{active.actionLabel || 'Explore More'}</span>
-                </a>
+                </button>
               </div>
 
               {/* Mini Carousel Controls & Slide indicator */}

@@ -1,15 +1,16 @@
 import { db, storage } from "../firebase";
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews, initialNavMenus, initialDiningVenues } from "../data/initialData";
+import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews, initialNavMenus, initialDiningVenues, initialArticles } from "../data/initialData";
 
 const LS_THEME_KEY = "hotel_demo_theme";
 const LS_ROOMS_KEY = "hotel_demo_rooms";
 const LS_BOOKINGS_KEY = "hotel_demo_bookings";
 const LS_NAV_MENUS_KEY = "hotel_demo_navigation_menus";
 const LS_DINING_KEY = "hotel_demo_dining_venues";
+const LS_ARTICLES_KEY = "hotel_demo_articles";
 
-export { initialNavMenus, initialDiningVenues };
+export { initialNavMenus, initialDiningVenues, initialArticles };
 
 const isClient = typeof window !== "undefined";
 
@@ -490,9 +491,14 @@ export const initialSliderSlides = [
     mediaType: 'image',
     videoUrl: '',
     highlights: ['Private Heated Plunge Pools', '24/7 Dedicated Butler', 'Direct Beach Access', 'Diptyque Bath Amenities'],
+    ctaLabel: 'Reserve Residence',
+    ctaAction: 'booking',
+    ctaArticleId: 'article-villas-architecture',
+    ctaUrl: '',
     actionLabel: 'Explore Suites & Villas',
-    actionTarget: '#rooms',
-    ctaLabel: 'Reserve Residence'
+    actionType: 'article',
+    actionArticleId: 'article-villas-architecture',
+    actionTarget: '#rooms'
   },
   {
     id: 'dining',
@@ -504,9 +510,14 @@ export const initialSliderSlides = [
     mediaType: 'image',
     videoUrl: '',
     highlights: ['2 Michelin Stars', 'Cliffside Seafood Raw Bar', 'Sommelier Wine Pairings', 'Private Beach Dinners'],
+    ctaLabel: 'Book Tasting Table',
+    ctaAction: 'article',
+    ctaArticleId: 'article-michelin-story',
+    ctaUrl: '',
     actionLabel: 'Explore Dining Venues',
-    actionTarget: '#dining',
-    ctaLabel: 'Book Tasting Table'
+    actionType: 'anchor',
+    actionArticleId: '',
+    actionTarget: '#dining'
   },
   {
     id: 'spa',
@@ -518,9 +529,14 @@ export const initialSliderSlides = [
     mediaType: 'image',
     videoUrl: '',
     highlights: ['Thermal Mineral Pools', 'Private Cedar Saunas', 'Organic Aromatherapy', 'Cliffside Yoga Pavilion'],
+    ctaLabel: 'Book Spa Experience',
+    ctaAction: 'article',
+    ctaArticleId: 'article-botanical-spa',
+    ctaUrl: '',
     actionLabel: 'Discover Spa Rituals',
-    actionTarget: '#amenities',
-    ctaLabel: 'Book Spa Experience'
+    actionType: 'article',
+    actionArticleId: 'article-botanical-spa',
+    actionTarget: '#amenities'
   },
   {
     id: 'yachts',
@@ -532,9 +548,14 @@ export const initialSliderSlides = [
     mediaType: 'image',
     videoUrl: '',
     highlights: ['Custom Riva Yacht Fleet', 'Sunset Champagne Cruises', 'Secluded Cove Expeditions', 'Private Skipper & Chef'],
+    ctaLabel: 'Inquire Yacht Charter',
+    ctaAction: 'article',
+    ctaArticleId: 'article-yacht-expeditions',
+    ctaUrl: '',
     actionLabel: 'View Maritime Charters',
-    actionTarget: '#amenities',
-    ctaLabel: 'Inquire Yacht Charter'
+    actionType: 'article',
+    actionArticleId: 'article-yacht-expeditions',
+    actionTarget: '#amenities'
   },
   {
     id: 'cellar',
@@ -546,9 +567,14 @@ export const initialSliderSlides = [
     mediaType: 'image',
     videoUrl: '',
     highlights: ['12,000 Rare Bottles', 'Master Sommelier Hosted', 'Private Subterranean Vault', 'Aged Grand Crus'],
+    ctaLabel: 'Private Tasting Reservation',
+    ctaAction: 'article',
+    ctaArticleId: 'article-wine-vault',
+    ctaUrl: '',
     actionLabel: 'Explore Wine Vault',
-    actionTarget: '#dining',
-    ctaLabel: 'Private Tasting Reservation'
+    actionType: 'article',
+    actionArticleId: 'article-wine-vault',
+    actionTarget: '#dining'
   }
 ];
 
@@ -674,6 +700,45 @@ export const saveSliderSlide = async (slide) => {
     console.warn("Firestore saveSliderSlide note:", err?.message);
     return { success: true, syncedToCloud: false, error: err?.message };
   }
+};
+
+export const saveSliderSlides = async (slidesList) => {
+  if (isClient) {
+    localStorage.setItem(LS_SLIDER_KEY, JSON.stringify(slidesList));
+    broadcastUpdate("hotel_slider_updated", slidesList);
+  }
+
+  try {
+    const promises = slidesList.map(s => setDoc(doc(db, "services", s.id), s, { merge: true }));
+    await Promise.all(promises);
+    return { success: true, syncedToCloud: true };
+  } catch (err) {
+    console.warn("Firestore saveSliderSlides note:", err?.message);
+    return { success: true, syncedToCloud: false, error: err?.message };
+  }
+};
+
+export const deleteSliderSlide = async (slideId) => {
+  const cached = isClient ? localStorage.getItem(LS_SLIDER_KEY) : null;
+  let slides = cached ? JSON.parse(cached) : initialSliderSlides;
+  slides = slides.filter(s => s.id !== slideId);
+
+  if (isClient) {
+    localStorage.setItem(LS_SLIDER_KEY, JSON.stringify(slides));
+    broadcastUpdate("hotel_slider_updated", slides);
+  }
+
+  try {
+    await deleteDoc(doc(db, "services", slideId));
+    return { success: true, syncedToCloud: true };
+  } catch (err) {
+    console.warn("Firestore deleteSliderSlide note:", err?.message);
+    return { success: true, syncedToCloud: false, error: err?.message };
+  }
+};
+
+export const resetSliderSlides = async () => {
+  return await saveSliderSlides(initialSliderSlides);
 };
 
 // Upload media file (photo or video) to Firebase Storage
@@ -973,4 +1038,139 @@ export const saveDiningVenues = async (venuesList) => {
     console.warn("Firestore saveDiningVenues note:", err?.message);
     return { success: true, syncedToCloud: false, error: err?.message };
   }
+};
+
+// --- DISCOVER ARTICLES & MULTI-PHOTO STORIES MANAGEMENT ---
+export const getCachedArticles = () => {
+  if (!isClient) return initialArticles;
+  try {
+    const cached = localStorage.getItem(LS_ARTICLES_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return initialArticles;
+};
+
+export const subscribeArticles = (callback) => {
+  const initial = getCachedArticles();
+  if (initial && initial.length > 0) callback(initial);
+
+  let unsubscribeFirestore = () => {};
+  try {
+    const articlesDocRef = doc(db, "content", "articles");
+    unsubscribeFirestore = onSnapshot(articlesDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.items)) {
+          if (isClient) {
+            localStorage.setItem(LS_ARTICLES_KEY, JSON.stringify(data.items));
+          }
+          callback(data.items);
+        }
+      }
+    }, (err) => {
+      console.warn("Firestore articles onSnapshot note:", err?.message);
+    });
+  } catch (_) {}
+
+  let bc = null;
+  try {
+    bc = new BroadcastChannel(CMS_BROADCAST_CHANNEL);
+    bc.onmessage = (e) => {
+      if (e.data?.type === "hotel_articles_updated" && e.data?.payload) {
+        callback(e.data.payload);
+      }
+    };
+  } catch (_) {}
+
+  const handleCustomEvent = (e) => {
+    if (e.detail && Array.isArray(e.detail)) callback(e.detail);
+  };
+
+  const handleStorageEvent = (e) => {
+    if (e.key === LS_ARTICLES_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (Array.isArray(parsed) && parsed.length > 0) callback(parsed);
+      } catch (_) {}
+    }
+  };
+
+  if (isClient) {
+    window.addEventListener("hotel_articles_updated", handleCustomEvent);
+    window.addEventListener("storage", handleStorageEvent);
+  }
+
+  return () => {
+    unsubscribeFirestore();
+    if (bc) { try { bc.close(); } catch (_) {} }
+    if (isClient) {
+      window.removeEventListener("hotel_articles_updated", handleCustomEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    }
+  };
+};
+
+export const loadArticles = async () => {
+  const cached = getCachedArticles();
+  let articles = cached;
+
+  try {
+    const articlesDocRef = doc(db, "content", "articles");
+    const snapshot = await getDoc(articlesDocRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      if (data && Array.isArray(data.items)) {
+        articles = data.items;
+        if (isClient) localStorage.setItem(LS_ARTICLES_KEY, JSON.stringify(articles));
+      }
+    } else {
+      await setDoc(articlesDocRef, { items: initialArticles, updatedAt: new Date().toISOString() }).catch(() => {});
+    }
+  } catch (err) {
+    console.warn("Using local articles:", err?.message);
+  }
+
+  return articles;
+};
+
+export const saveArticles = async (articlesList) => {
+  if (isClient) {
+    localStorage.setItem(LS_ARTICLES_KEY, JSON.stringify(articlesList));
+    broadcastUpdate("hotel_articles_updated", articlesList);
+  }
+
+  try {
+    const articlesDocRef = doc(db, "content", "articles");
+    await setDoc(articlesDocRef, { items: articlesList, updatedAt: new Date().toISOString() }, { merge: true });
+    return { success: true, syncedToCloud: true };
+  } catch (err) {
+    console.warn("Firestore saveArticles note:", err?.message);
+    return { success: true, syncedToCloud: false, error: err?.message };
+  }
+};
+
+export const saveArticle = async (article) => {
+  const cached = isClient ? localStorage.getItem(LS_ARTICLES_KEY) : null;
+  let articles = cached ? JSON.parse(cached) : initialArticles;
+  const idx = articles.findIndex(a => a.id === article.id);
+  if (idx >= 0) {
+    articles[idx] = article;
+  } else {
+    articles.push(article);
+  }
+  return await saveArticles(articles);
+};
+
+export const deleteArticle = async (articleId) => {
+  const cached = isClient ? localStorage.getItem(LS_ARTICLES_KEY) : null;
+  let articles = cached ? JSON.parse(cached) : initialArticles;
+  articles = articles.filter(a => a.id !== articleId);
+  return await saveArticles(articles);
+};
+
+export const resetArticles = async () => {
+  return await saveArticles(initialArticles);
 };

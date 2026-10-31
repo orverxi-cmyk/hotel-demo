@@ -407,9 +407,134 @@ export const initialNavMenus = [
   { id: 'nav-rooms', label: 'Rooms & Suites', href: '/#rooms', targetId: 'rooms', isExternal: false, visible: true, order: 2 },
   { id: 'nav-amenities', label: 'Experiences & Spa', href: '/#amenities', targetId: 'amenities', isExternal: false, visible: true, order: 3 },
   { id: 'nav-dining', label: 'Gastronomy', href: '/#dining', targetId: 'dining', isExternal: false, visible: true, order: 4 },
-  { id: 'nav-gallery', label: 'Gallery', href: '/#gallery', targetId: 'gallery', isExternal: false, visible: true, order: 5 },
-  { id: 'nav-reviews', label: 'Testimonials', href: '/#reviews', targetId: 'reviews', isExternal: false, visible: true, order: 6 },
-  { id: 'nav-contact', label: 'Contact', href: '/#contact', targetId: 'contact', isExternal: false, visible: true, order: 7 }
+  { id: 'nav-discover', label: 'Discover', href: '/#discover', targetId: 'discover', isExternal: false, visible: true, order: 5 },
+  { id: 'nav-gallery', label: 'Gallery', href: '/#gallery', targetId: 'gallery', isExternal: false, visible: true, order: 6 },
+  { id: 'nav-reviews', label: 'Testimonials', href: '/#reviews', targetId: 'reviews', isExternal: false, visible: true, order: 7 },
+  { id: 'nav-contact', label: 'Contact', href: '/#contact', targetId: 'contact', isExternal: false, visible: true, order: 8 }
+];
+
+// Curated Discover Articles & Editorial Stories (with Multi-Photo Galleries)
+export const initialArticles = [
+  {
+    id: "article-yacht-expeditions",
+    title: "The Emerald Coast by Riva: Private Yacht Charters & Archipelago Coves",
+    subtitle: "An insider's captained journey through secret granite sea grottos, crystal lagoons, and sunset champagne cruises.",
+    category: "Maritime Fleet",
+    readTime: "4 min read",
+    date: "October 2026",
+    author: "Captain Matteo Rossi & Marine Concierge",
+    coverImage: "https://images.unsplash.com/photo-1569263979104-865ab7cd8d17?auto=format&fit=crop&w=1600&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1569263979104-865ab7cd8d17?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1510525009512-ab7522cabb65?auto=format&fit=crop&w=1200&q=80"
+    ],
+    content: `From our private marina slip, step directly aboard the hand-crafted mahogany Riva Dolceriva. The morning air carries wild myrtle and sea salt as twin V8 engines purr smoothly into the turquoise bay.
+
+Our maritime fleet offers bespoke private expeditions into the sheltered Maddalena Archipelago. Glide past pink granite sea sculptures that have guarded these waters for millennia, dropping anchor in secluded lagoons inaccessible by land.
+
+Guests enjoy champagne pairings by our private sommelier, line-caught red snapper sashimi prepared on deck by our private chef, and seamless Seabob water propulsion exploration across kaleidoscopic marine reserves. As dusk paints the Mediterranean in shades of violet and amber, return to the resort's torchlit jetty for an unforgettable aperitivo.`,
+    linkedSlideId: "yachts",
+    visible: true,
+    order: 1
+  },
+  {
+    id: "article-michelin-story",
+    title: "Inside L'Orangerie: Chef Marco Valenti's 2-Star Michelin Philosophy",
+    subtitle: "From estate heirloom gardens to the cliffside raw bar: the artistry of Mediterranean haute gastronomy.",
+    category: "Haute Gastronomy",
+    readTime: "5 min read",
+    date: "October 2026",
+    author: "Chef Marco Valenti & Culinary Guild",
+    coverImage: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1600&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1578474846511-04ba529f0b88?auto=format&fit=crop&w=1200&q=80"
+    ],
+    content: `At L'Orangerie, dining is approached not as a meal, but as an orchestral sensory movement. Master Chef Marco Valenti blends centuries-old Sardinian culinary traditions with avant-garde French technique.
+
+Every morning begins at sunrise in the hotel's 4-hectare organic botanical estate. Hand-plucked wild thyme, sea fennel, and citrus blossoms are infused into cold broths and delicately smoked butter. By midday, fishermen arrive at our private beach cove bearing wild turbot, spiny lobster, and scarlet red prawns.
+
+The signature 9-course Tasting Degustation takes diners on an epicurean voyage from cliffside crudo to gold-leaf saffron risotto, accompanied by sommelier pairings drawn from our 12,000-bottle subterranean vault.`,
+    linkedSlideId: "dining",
+    visible: true,
+    order: 2
+  },
+  {
+    id: "article-wine-vault",
+    title: "12,000 Legendary Vintages: Inside the 18th-Century Sommelier Vault",
+    subtitle: "A subterranean cavern honoring rare Sassicaia, historic Barolo, and candlelit masterclasses.",
+    category: "Sommelier Cellar",
+    readTime: "4 min read",
+    date: "October 2026",
+    author: "Gianluca Moretti, Master Sommelier",
+    coverImage: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1600&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1474722883778-792e7990302f?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1568213816046-0ee1c42bd559?auto=format&fit=crop&w=1200&q=80"
+    ],
+    content: `Carved deep into the coastal limestone bedrock beneath the estate, the wine vault maintains an unyielding temperature of 14°C and 75% natural humidity. Here lies one of Europe's most celebrated private cellars.
+
+Housing over 12,000 bottles spanning three centuries, the collection includes vertical vintages of Château d'Yquem, rare Tenuta San Guido Sassicaia from 1968, and biodynamic natural producers reviving indigenous Cannonau grapes.
+
+Every evening, our Master Sommelier leads intimate tastings by flickering candlelight. Guests explore forgotten varietals, learn the alchemy of cellar aging, and savor artisanal pecorino aged exclusively in mountain caves for the hotel.`,
+    linkedSlideId: "cellar",
+    visible: true,
+    order: 3
+  },
+  {
+    id: "article-botanical-spa",
+    title: "Thermal Alchemy & Cedar Wellness: The Botanical Spa Rituals",
+    subtitle: "Holistic herbal lavender immersions, volcanic mineral plunge pools, and cliffside yoga pavilions.",
+    category: "Botanical Wellness",
+    readTime: "3 min read",
+    date: "October 2026",
+    author: "Dr. Elena Alessi, Holistic Director",
+    coverImage: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1600&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=80"
+    ],
+    content: `Surrounded by wild Mediterranean scrub and eucalyptus groves, The Botanical Spa was conceived as a sacred sanctuary for deep cellular restoration.
+
+Mineral spring waters enriched with magnesium and volcanic minerals flow into tiered outdoor pools overlooking the sapphire sea. In the Finnish cedar saunas, steam is infused with organic lavender harvested each morning on the grounds.
+
+Guests begin their wellness journey with an individual botanical consultation, followed by custom essential oil massages, lymphatic drainage hydrotherapy, and private sunset meditation sessions in our open-air cliffside pavilion.`,
+    linkedSlideId: "spa",
+    visible: true,
+    order: 4
+  },
+  {
+    id: "article-villas-architecture",
+    title: "Sanctuaries of Solitude: The Architecture of Our Oceanfront Villas",
+    subtitle: "Private heated infinity plunge pools, hand-carved Orosei marble, and 24/7 dedicated butler service.",
+    category: "Architecture & Design",
+    readTime: "4 min read",
+    date: "October 2026",
+    author: "Gianfranco Mattei, Lead Architect",
+    coverImage: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80"
+    ],
+    content: `Built in organic harmony with the sloping coastal terrain, each villa was designed to dissolve the boundary between luxurious interior sanctuary and panoramic Mediterranean horizon.
+
+Natural materials take center stage: hand-cut local granite, creamy Orosei marble terraces, and bleached Sardinian oak ceilings. Floor-to-ceiling retractable glass walls open onto private heated plunge pools that seem to spill directly into the sea below.
+
+Every residence features private gated beach access, secluded sun decks, and a dedicated 24/7 private butler trained in aristocratic European hospitality to attend to every detail of your stay.`,
+    linkedSlideId: "suites",
+    visible: true,
+    order: 5
+  }
 ];
 
 // Gastronomy & Restaurant Venues / Tasting Menus

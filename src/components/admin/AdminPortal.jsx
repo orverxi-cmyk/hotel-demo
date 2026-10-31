@@ -46,7 +46,10 @@ import {
   ExternalLink,
   EyeOff,
   UtensilsCrossed,
-  Link2
+  Link2,
+  BookOpen,
+  Images,
+  FileText
 } from 'lucide-react';
 import { 
   syncAllContentToFirestore, 
@@ -55,6 +58,9 @@ import {
   initialAdminUsers,
   loadSliderSlides,
   saveSliderSlide,
+  saveSliderSlides,
+  deleteSliderSlide,
+  resetSliderSlides,
   initialSliderSlides,
   uploadMediaFile,
   loadNavMenus,
@@ -63,7 +69,14 @@ import {
   initialNavMenus,
   loadDiningVenues,
   saveDiningVenues,
-  initialDiningVenues
+  initialDiningVenues,
+  loadArticles,
+  saveArticles,
+  saveArticle,
+  deleteArticle,
+  resetArticles,
+  initialArticles,
+  subscribeArticles
 } from '../../services/storageService';
 
 export const AdminPortal = ({ 
@@ -167,6 +180,242 @@ export const AdminPortal = ({
     if (!isSuperAdmin) return;
     await saveSliderSlide(slide);
     showNotification(`Slide "${slide.title}" saved successfully!`);
+  };
+
+  const handleAddSlideHighlight = (slideId) => {
+    if (!isSuperAdmin) return;
+    const slide = sliderSlides.find(s => s.id === slideId);
+    if (!slide) return;
+    const currentHighlights = Array.isArray(slide.highlights) ? [...slide.highlights] : [];
+    currentHighlights.push('New Experience Highlight');
+    handleUpdateSlideField(slideId, 'highlights', currentHighlights);
+  };
+
+  const handleUpdateSlideHighlight = (slideId, index, text) => {
+    if (!isSuperAdmin) return;
+    const slide = sliderSlides.find(s => s.id === slideId);
+    if (!slide) return;
+    const currentHighlights = Array.isArray(slide.highlights) ? [...slide.highlights] : [];
+    currentHighlights[index] = text;
+    handleUpdateSlideField(slideId, 'highlights', currentHighlights);
+  };
+
+  const handleRemoveSlideHighlight = (slideId, index) => {
+    if (!isSuperAdmin) return;
+    const slide = sliderSlides.find(s => s.id === slideId);
+    if (!slide) return;
+    const currentHighlights = Array.isArray(slide.highlights) ? [...slide.highlights] : [];
+    currentHighlights.splice(index, 1);
+    handleUpdateSlideField(slideId, 'highlights', currentHighlights);
+  };
+
+  const handleResetSlider = async () => {
+    if (!isSuperAdmin) return;
+    if (window.confirm("Reset all 5 hero slider slides to factory defaults?")) {
+      setSliderSlides(initialSliderSlides);
+      await resetSliderSlides();
+      showNotification("Slider reset to default luxury showcases.");
+    }
+  };
+
+  // Discover Articles & Editorial Stories State
+  const [articles, setArticles] = useState(initialArticles);
+  const [isAddingArticle, setIsAddingArticle] = useState(false);
+  const [editingArticle, setEditingArticle] = useState(null);
+  const [articleFormData, setArticleFormData] = useState({
+    title: '',
+    subtitle: '',
+    category: 'Haute Gastronomy',
+    readTime: '4 min read',
+    date: 'October 2026',
+    author: '',
+    coverImage: '',
+    photos: [],
+    content: '',
+    highlights: [],
+    visible: true
+  });
+  const [uploadingArticlePhoto, setUploadingArticlePhoto] = useState(false);
+  const [newPhotoUrlInput, setNewPhotoUrlInput] = useState('');
+  const [newArticleHighlightInput, setNewArticleHighlightInput] = useState('');
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const data = await loadArticles();
+        if (data && data.length > 0) setArticles(data);
+      } catch (err) {
+        console.warn("Articles load note:", err?.message);
+      }
+    };
+    fetchArticles();
+
+    const unsubscribe = subscribeArticles((updated) => {
+      if (updated && Array.isArray(updated) && updated.length > 0) {
+        setArticles(updated);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleOpenAddArticle = () => {
+    setEditingArticle(null);
+    setArticleFormData({
+      title: '',
+      subtitle: '',
+      category: 'Haute Gastronomy',
+      readTime: '4 min read',
+      date: 'October 2026',
+      author: 'Estate Concierge & Sommelier',
+      coverImage: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1600&q=80',
+      photos: [
+        'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1200&q=80'
+      ],
+      content: '',
+      highlights: [],
+      visible: true
+    });
+    setNewPhotoUrlInput('');
+    setNewArticleHighlightInput('');
+    setIsAddingArticle(true);
+  };
+
+  const handleOpenEditArticle = (art) => {
+    setEditingArticle(art);
+    setArticleFormData({
+      ...art,
+      photos: Array.isArray(art.photos) ? [...art.photos] : (art.coverImage ? [art.coverImage] : []),
+      highlights: Array.isArray(art.highlights) ? [...art.highlights] : []
+    });
+    setNewPhotoUrlInput('');
+    setNewArticleHighlightInput('');
+    setIsAddingArticle(true);
+  };
+
+  const handleSaveArticleForm = async (e) => {
+    e.preventDefault();
+    if (!isSuperAdmin) return;
+    if (!articleFormData.title.trim()) {
+      showNotification("Please provide an Article Title.");
+      return;
+    }
+
+    const photosClean = (articleFormData.photos || []).filter(p => typeof p === 'string' && p.trim().length > 0);
+    const cover = articleFormData.coverImage.trim() || (photosClean.length > 0 ? photosClean[0] : '');
+
+    const articleToSave = {
+      ...articleFormData,
+      id: editingArticle ? editingArticle.id : `article-${Date.now()}-${articleFormData.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+      title: articleFormData.title.trim(),
+      subtitle: articleFormData.subtitle?.trim() || '',
+      coverImage: cover,
+      photos: photosClean.length > 0 ? photosClean : [cover],
+      order: editingArticle ? editingArticle.order : (articles.length + 1),
+      updatedAt: new Date().toISOString()
+    };
+
+    let updatedList;
+    if (editingArticle) {
+      updatedList = articles.map(a => a.id === editingArticle.id ? articleToSave : a);
+    } else {
+      updatedList = [...articles, articleToSave];
+    }
+
+    setArticles(updatedList);
+    setIsAddingArticle(false);
+    setEditingArticle(null);
+    await saveArticles(updatedList);
+    showNotification(`Article "${articleToSave.title}" saved successfully with ${articleToSave.photos.length} photos!`);
+  };
+
+  const handleDeleteArticle = async (articleId, articleTitle) => {
+    if (!isSuperAdmin) return;
+    if (window.confirm(`Delete article "${articleTitle}"? This cannot be undone.`)) {
+      const updated = articles.filter(a => a.id !== articleId);
+      setArticles(updated);
+      await deleteArticle(articleId);
+      showNotification(`Article "${articleTitle}" deleted.`);
+    }
+  };
+
+  const handleToggleArticleVisibility = async (articleId) => {
+    if (!isSuperAdmin) return;
+    const target = articles.find(a => a.id === articleId);
+    if (!target) return;
+    const updated = articles.map(a => a.id === articleId ? { ...a, visible: a.visible === false ? true : false } : a);
+    setArticles(updated);
+    await saveArticles(updated);
+  };
+
+  const handleUploadArticlePhoto = async (file) => {
+    if (!isSuperAdmin) return;
+    if (!file) return;
+    try {
+      setUploadingArticlePhoto(true);
+      const res = await uploadMediaFile(file, 'articles');
+      if (res && res.url) {
+        setArticleFormData(prev => ({
+          ...prev,
+          photos: [...(prev.photos || []), res.url],
+          coverImage: prev.coverImage || res.url
+        }));
+        showNotification("Photo uploaded and added to article gallery!");
+      }
+    } catch (err) {
+      showNotification(`Photo upload failed: ${err.message}`);
+    } finally {
+      setUploadingArticlePhoto(false);
+    }
+  };
+
+  const handleAddPhotoUrl = () => {
+    const url = newPhotoUrlInput.trim();
+    if (!url) return;
+    setArticleFormData(prev => ({
+      ...prev,
+      photos: [...(prev.photos || []), url],
+      coverImage: prev.coverImage || url
+    }));
+    setNewPhotoUrlInput('');
+  };
+
+  const handleRemoveArticlePhoto = (index) => {
+    setArticleFormData(prev => {
+      const nextPhotos = [...(prev.photos || [])];
+      nextPhotos.splice(index, 1);
+      return {
+        ...prev,
+        photos: nextPhotos,
+        coverImage: nextPhotos.length > 0 ? (prev.coverImage === prev.photos[index] ? nextPhotos[0] : prev.coverImage) : ''
+      };
+    });
+  };
+
+  const handleAddArticleHighlight = () => {
+    const text = newArticleHighlightInput.trim();
+    if (!text) return;
+    setArticleFormData(prev => ({
+      ...prev,
+      highlights: [...(prev.highlights || []), text]
+    }));
+    setNewArticleHighlightInput('');
+  };
+
+  const handleRemoveArticleHighlight = (index) => {
+    setArticleFormData(prev => {
+      const nextH = [...(prev.highlights || [])];
+      nextH.splice(index, 1);
+      return { ...prev, highlights: nextH };
+    });
+  };
+
+  const handleResetArticles = async () => {
+    if (!isSuperAdmin) return;
+    if (window.confirm("Reset all Discover articles to factory default editorial stories?")) {
+      setArticles(initialArticles);
+      await resetArticles();
+      showNotification("Articles reset to default luxury showcases.");
+    }
   };
 
   useEffect(() => {
@@ -674,6 +923,21 @@ export const AdminPortal = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('articles')}
+          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
+            activeTab === 'articles'
+              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>Discover Articles</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-stone-300">
+            {articles.length}
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('bookings')}
           className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap relative ${
             activeTab === 'bookings'
@@ -1143,14 +1407,26 @@ export const AdminPortal = ({
                   </p>
                 </div>
 
-                <button
-                  onClick={onClose}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center gap-2 shadow-lg transition-all hover:scale-105 active:scale-95 shrink-0"
-                  style={{ backgroundColor: 'var(--color-secondary)' }}
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>Preview On Homepage</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {isSuperAdmin && (
+                    <button
+                      onClick={handleResetSlider}
+                      className="px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-stone-300 border border-slate-700 flex items-center gap-1.5 transition-all"
+                      title="Reset slides to factory defaults"
+                    >
+                      <RotateCw className="w-3.5 h-3.5" />
+                      <span>Reset Defaults</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={onClose}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center gap-2 shadow-lg transition-all hover:scale-105 active:scale-95 shrink-0"
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Preview On Homepage</span>
+                  </button>
+                </div>
               </div>
 
               {/* Normal Admin Warning */}
@@ -1258,30 +1534,266 @@ export const AdminPortal = ({
                           )}
                         </div>
 
-                        {/* Slide Metadata & Direct URL Editor */}
+                        {/* Slide Metadata, Inclusions & Destination Links Editor */}
                         <div className="lg:col-span-7 space-y-4 text-xs">
+                          
+                          {/* Row 1: Badge / Category & Slide Number */}
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div className="sm:col-span-3">
+                              <label className="block text-slate-300 mb-1 font-semibold">
+                                Category Badge / Kicker (Top Tag)
+                              </label>
+                              <input
+                                type="text"
+                                disabled={!isSuperAdmin}
+                                value={slide.badge || ''}
+                                placeholder="e.g. MICHELIN GASTRONOMY & EATERY"
+                                onChange={(e) => handleUpdateSlideField(slide.id, 'badge', e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-amber-300 font-mono text-xs uppercase disabled:opacity-60 focus:outline-none focus:border-amber-400 font-bold"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-slate-300 mb-1 font-semibold">
+                                Slide Number
+                              </label>
+                              <input
+                                type="text"
+                                disabled={!isSuperAdmin}
+                                value={slide.number || ''}
+                                placeholder="02"
+                                onChange={(e) => handleUpdateSlideField(slide.id, 'number', e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-center disabled:opacity-60 focus:outline-none focus:border-amber-400 font-bold"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Row 2: Headline Title */}
                           <div>
                             <label className="block text-slate-300 mb-1 font-semibold">Slide Headline Title</label>
                             <input
                               type="text"
                               disabled={!isSuperAdmin}
-                              value={slide.title}
+                              value={slide.title || ''}
                               onChange={(e) => handleUpdateSlideField(slide.id, 'title', e.target.value)}
-                              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white disabled:opacity-60 focus:outline-none focus:border-amber-400 font-serif text-sm"
+                              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white disabled:opacity-60 focus:outline-none focus:border-amber-400 font-serif text-sm font-bold"
                             />
                           </div>
 
+                          {/* Row 3: Editorial Subtitle */}
                           <div>
-                            <label className="block text-slate-300 mb-1 font-semibold">Editorial Subtitle</label>
+                            <label className="block text-slate-300 mb-1 font-semibold">Editorial Subtitle / Description</label>
                             <textarea
                               rows={2}
                               disabled={!isSuperAdmin}
-                              value={slide.subtitle}
+                              value={slide.subtitle || ''}
                               onChange={(e) => handleUpdateSlideField(slide.id, 'subtitle', e.target.value)}
                               className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white disabled:opacity-60 focus:outline-none focus:border-amber-400 text-xs"
                             />
                           </div>
 
+                          {/* Row 4: Bespoke Inclusions / Bullet Highlights Editor */}
+                          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-mono uppercase text-amber-300 font-semibold tracking-wider">
+                                Bespoke Inclusions (Bullet Points)
+                              </span>
+                              {isSuperAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddSlideHighlight(slide.id)}
+                                  className="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Add Inclusion</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                              {(slide.highlights || []).map((highlight, hIdx) => (
+                                <div key={hIdx} className="flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                  <input
+                                    type="text"
+                                    disabled={!isSuperAdmin}
+                                    value={highlight}
+                                    onChange={(e) => handleUpdateSlideHighlight(slide.id, hIdx, e.target.value)}
+                                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                  />
+                                  {isSuperAdmin && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveSlideHighlight(slide.id, hIdx)}
+                                      className="p-1 rounded text-slate-500 hover:text-rose-400 transition-colors"
+                                      title="Remove highlight"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              {(!slide.highlights || slide.highlights.length === 0) && (
+                                <span className="text-[11px] text-slate-500 italic block">
+                                  No bespoke inclusions added yet.
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Row 5: Action Destination Buttons (Primary & Secondary) */}
+                          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+                            <span className="text-[11px] font-mono uppercase text-amber-300 font-semibold tracking-wider block">
+                              Slide Buttons & Destination Actions
+                            </span>
+
+                            {/* Primary Button */}
+                            <div className="space-y-1.5 pt-1 border-t border-slate-800">
+                              <span className="text-[11px] text-slate-300 font-semibold flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                <span>Primary Action Button (Gold Button)</span>
+                              </span>
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                                <div className="sm:col-span-4">
+                                  <input
+                                    type="text"
+                                    disabled={!isSuperAdmin}
+                                    value={slide.ctaLabel || ''}
+                                    placeholder="e.g. Book Tasting Table"
+                                    onChange={(e) => handleUpdateSlideField(slide.id, 'ctaLabel', e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                  />
+                                </div>
+
+                                <div className="sm:col-span-4">
+                                  <select
+                                    disabled={!isSuperAdmin}
+                                    value={slide.ctaAction || 'booking'}
+                                    onChange={(e) => handleUpdateSlideField(slide.id, 'ctaAction', e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                  >
+                                    <option value="booking">Open Booking Modal</option>
+                                    <option value="article">Open Discover Article</option>
+                                    <option value="url">Custom Website Link</option>
+                                  </select>
+                                </div>
+
+                                <div className="sm:col-span-4">
+                                  {slide.ctaAction === 'article' ? (
+                                    <select
+                                      disabled={!isSuperAdmin}
+                                      value={slide.ctaArticleId || ''}
+                                      onChange={(e) => handleUpdateSlideField(slide.id, 'ctaArticleId', e.target.value)}
+                                      className="w-full bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                    >
+                                      <option value="">Select Discover Article...</option>
+                                      {articles.map((art) => (
+                                        <option key={art.id} value={art.id}>
+                                          {art.title.slice(0, 32)}...
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : slide.ctaAction === 'url' ? (
+                                    <input
+                                      type="text"
+                                      disabled={!isSuperAdmin}
+                                      value={slide.ctaUrl || ''}
+                                      placeholder="https://... or /page"
+                                      onChange={(e) => handleUpdateSlideField(slide.id, 'ctaUrl', e.target.value)}
+                                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400 font-mono text-[11px]"
+                                    />
+                                  ) : (
+                                    <span className="text-[11px] text-stone-400 italic flex items-center h-full px-1">
+                                      Triggers reservation modal
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Secondary Button */}
+                            <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                              <span className="text-[11px] text-slate-300 font-semibold flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-slate-500" />
+                                <span>Secondary Action Button (Outlined Button)</span>
+                              </span>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                                <div className="sm:col-span-4">
+                                  <input
+                                    type="text"
+                                    disabled={!isSuperAdmin}
+                                    value={slide.actionLabel || ''}
+                                    placeholder="e.g. Explore Dining Venues"
+                                    onChange={(e) => handleUpdateSlideField(slide.id, 'actionLabel', e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                  />
+                                </div>
+
+                                <div className="sm:col-span-4">
+                                  <select
+                                    disabled={!isSuperAdmin}
+                                    value={slide.actionType || 'anchor'}
+                                    onChange={(e) => handleUpdateSlideField(slide.id, 'actionType', e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                  >
+                                    <option value="anchor">Scroll to Page Section</option>
+                                    <option value="article">Open Discover Article</option>
+                                    <option value="url">Custom Website Link</option>
+                                  </select>
+                                </div>
+
+                                <div className="sm:col-span-4">
+                                  {slide.actionType === 'article' ? (
+                                    <select
+                                      disabled={!isSuperAdmin}
+                                      value={slide.actionArticleId || (slide.actionTarget?.startsWith('article:') ? slide.actionTarget.replace('article:', '') : '')}
+                                      onChange={(e) => {
+                                        handleUpdateSlideField(slide.id, 'actionArticleId', e.target.value);
+                                        handleUpdateSlideField(slide.id, 'actionTarget', `article:${e.target.value}`);
+                                      }}
+                                      className="w-full bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                    >
+                                      <option value="">Select Discover Article...</option>
+                                      {articles.map((art) => (
+                                        <option key={art.id} value={art.id}>
+                                          {art.title.slice(0, 32)}...
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : slide.actionType === 'url' ? (
+                                    <input
+                                      type="text"
+                                      disabled={!isSuperAdmin}
+                                      value={slide.actionTarget || ''}
+                                      placeholder="https://..."
+                                      onChange={(e) => handleUpdateSlideField(slide.id, 'actionTarget', e.target.value)}
+                                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400 font-mono text-[11px]"
+                                    />
+                                  ) : (
+                                    <select
+                                      disabled={!isSuperAdmin}
+                                      value={slide.actionTarget || '#rooms'}
+                                      onChange={(e) => handleUpdateSlideField(slide.id, 'actionTarget', e.target.value)}
+                                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                    >
+                                      <option value="#rooms">Rooms & Suites (#rooms)</option>
+                                      <option value="#dining">Gastronomy & Dining (#dining)</option>
+                                      <option value="#amenities">Experiences & Spa (#amenities)</option>
+                                      <option value="#discover">Discover Articles (#discover)</option>
+                                      <option value="#gallery">Gallery (#gallery)</option>
+                                      <option value="#reviews">Testimonials (#reviews)</option>
+                                      <option value="#contact">Location & Contact (#contact)</option>
+                                    </select>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {/* Row 6: Media Type & Direct Media URL */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-slate-300 mb-1 font-semibold">Media Type</label>
@@ -1336,10 +1848,11 @@ export const AdminPortal = ({
                               <button
                                 type="button"
                                 onClick={() => handleSaveSlide(slide)}
-                                className="px-4 py-2 rounded-xl text-slate-950 font-bold uppercase tracking-wider text-xs shadow-md transition-all hover:scale-105 active:scale-95"
+                                className="px-5 py-2 rounded-xl text-slate-950 font-bold uppercase tracking-wider text-xs shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
                                 style={{ backgroundColor: 'var(--color-secondary)' }}
                               >
-                                Save Slide
+                                <Save className="w-3.5 h-3.5" />
+                                <span>Save Slide</span>
                               </button>
                             )}
                           </div>
@@ -1824,6 +2337,420 @@ export const AdminPortal = ({
                   </div>
                 </div>
               )}
+
+            </div>
+          )}
+
+          {/* TAB: DISCOVER ARTICLES & MULTI-PHOTO EDITORIAL STORIES */}
+          {activeTab === 'articles' && (
+            <div className="space-y-6 animate-fade-in">
+              
+              {/* Header card */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+                      Editorial Storytelling & Curated Chronicles
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                      Multi-Photo Galleries
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white font-serif">
+                    Discover Articles & Editorial Manager
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-xl mt-1 leading-relaxed">
+                    Create and manage rich luxury articles for the Discover section. Each article supports a multi-photo gallery view and can be directly linked to from hero slider buttons.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {isSuperAdmin && (
+                    <button
+                      onClick={handleResetArticles}
+                      className="px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-stone-300 border border-slate-700 flex items-center gap-1.5 transition-all"
+                      title="Reset articles to factory defaults"
+                    >
+                      <RotateCw className="w-3.5 h-3.5" />
+                      <span>Reset Articles</span>
+                    </button>
+                  )}
+
+                  {isSuperAdmin && (
+                    <button
+                      onClick={handleOpenAddArticle}
+                      className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center gap-2 shadow-lg transition-all hover:scale-105 active:scale-95"
+                      style={{ backgroundColor: 'var(--color-secondary)' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Create New Article</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Normal Admin Warning */}
+              {!isSuperAdmin && (
+                <div className="p-3.5 rounded-xl bg-sky-950/40 border border-sky-500/30 text-sky-200 text-xs flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span>Normal Administrator: Discover articles are view-only. Adding, editing, or uploading photos requires Super Admin privileges.</span>
+                </div>
+              )}
+
+              {/* Add / Edit Article Form Modal */}
+              {isAddingArticle && (
+                <div className="bg-slate-950 p-6 rounded-2xl border border-amber-400/30 shadow-2xl space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-amber-400" />
+                      <h4 className="font-serif text-lg font-bold text-white">
+                        {editingArticle ? `Edit Article: "${editingArticle.title}"` : 'Create New Discover Article'}
+                      </h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingArticle(false)}
+                      className="p-1 rounded-lg hover:bg-slate-800 text-stone-400 hover:text-white"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSaveArticleForm} className="space-y-5 text-xs">
+                    
+                    {/* Title & Subtitle */}
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-slate-300 mb-1.5 font-semibold">Article Headline Title *</label>
+                        <input
+                          type="text"
+                          required
+                          value={articleFormData.title}
+                          onChange={(e) => setArticleFormData({ ...articleFormData, title: e.target.value })}
+                          placeholder="e.g. Inside L'Orangerie: Chef Marco Valenti's 2-Star Michelin Philosophy"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-serif font-bold focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 mb-1.5 font-semibold">Subtitle / Editorial Hook</label>
+                        <textarea
+                          rows={2}
+                          value={articleFormData.subtitle}
+                          onChange={(e) => setArticleFormData({ ...articleFormData, subtitle: e.target.value })}
+                          placeholder="An insider's captained journey through secret granite sea grottos..."
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Metadata: Category, Author, Date, Read Time */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-slate-300 mb-1.5 font-semibold">Category Badge</label>
+                        <input
+                          type="text"
+                          value={articleFormData.category}
+                          onChange={(e) => setArticleFormData({ ...articleFormData, category: e.target.value })}
+                          placeholder="e.g. Haute Gastronomy"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-400 font-mono uppercase text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 mb-1.5 font-semibold">Author / Byline</label>
+                        <input
+                          type="text"
+                          value={articleFormData.author}
+                          onChange={(e) => setArticleFormData({ ...articleFormData, author: e.target.value })}
+                          placeholder="Chef Marco Valenti"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 mb-1.5 font-semibold">Date</label>
+                        <input
+                          type="text"
+                          value={articleFormData.date}
+                          onChange={(e) => setArticleFormData({ ...articleFormData, date: e.target.value })}
+                          placeholder="October 2026"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 mb-1.5 font-semibold">Estimated Read Time</label>
+                        <input
+                          type="text"
+                          value={articleFormData.readTime}
+                          onChange={(e) => setArticleFormData({ ...articleFormData, readTime: e.target.value })}
+                          placeholder="4 min read"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-400 font-mono text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* MULTI-PHOTO GALLERY MANAGER */}
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Images className="w-4 h-4 text-amber-400" />
+                            <h5 className="font-semibold text-white text-sm">
+                              Multi-Photo Gallery & Visual Assets ({articleFormData.photos?.length || 0} photos)
+                            </h5>
+                          </div>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            Add multiple photos. Guests will be able to cycle through the high-resolution photo viewer in the article modal.
+                          </p>
+                        </div>
+
+                        {/* Direct File Upload to Cloud Storage */}
+                        <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shrink-0">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{uploadingArticlePhoto ? 'Uploading Photo...' : 'Upload Photo'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingArticlePhoto}
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleUploadArticlePhoto(file);
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Add Photo by Direct URL */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="url"
+                          value={newPhotoUrlInput}
+                          placeholder="Or paste high-resolution photo URL (https://images.unsplash.com/...)"
+                          onChange={(e) => setNewPhotoUrlInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddPhotoUrl(); }}}
+                          className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-400 font-mono text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddPhotoUrl}
+                          className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-200 font-semibold text-xs border border-slate-700"
+                        >
+                          Add URL
+                        </button>
+                      </div>
+
+                      {/* Photo Grid Preview & Reorder/Delete */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 pt-2">
+                        {(articleFormData.photos || []).map((photoUrl, pIdx) => (
+                          <div 
+                            key={pIdx} 
+                            className="relative aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950 group"
+                          >
+                            <img
+                              src={photoUrl}
+                              alt={`Photo ${pIdx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/75 text-amber-300">
+                              #{pIdx + 1}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveArticlePhoto(pIdx)}
+                              className="absolute top-1 right-1 p-1 rounded-full bg-rose-600/80 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Remove photo"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {(!articleFormData.photos || articleFormData.photos.length === 0) && (
+                          <div className="col-span-full py-6 text-center text-slate-500 italic border border-dashed border-slate-800 rounded-xl">
+                            No photos added yet. Upload or enter a photo URL above.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Full Article Content */}
+                    <div>
+                      <label className="block text-slate-300 mb-1.5 font-semibold">
+                        Full Story Body (Separate paragraphs with double enter)
+                      </label>
+                      <textarea
+                        rows={7}
+                        value={articleFormData.content}
+                        onChange={(e) => setArticleFormData({ ...articleFormData, content: e.target.value })}
+                        placeholder="Write the luxury chronicle of this experience..."
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3.5 text-white font-light text-xs leading-relaxed focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    {/* Article Highlights / Key Features */}
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                      <span className="text-[11px] font-mono uppercase text-amber-300 font-semibold tracking-wider block">
+                        Featured Highlights & Inclusions (Optional)
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={newArticleHighlightInput}
+                          placeholder="e.g. Private Sommelier Wine Pairings"
+                          onChange={(e) => setNewArticleHighlightInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddArticleHighlight(); }}}
+                          className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-400 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddArticleHighlight}
+                          className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-200 font-semibold text-xs border border-slate-700"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {(articleFormData.highlights || []).map((h, hIdx) => (
+                          <span
+                            key={hIdx}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-stone-300 text-xs"
+                          >
+                            <span>{h}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveArticleHighlight(hIdx)}
+                              className="text-slate-500 hover:text-rose-400"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Form Action Buttons */}
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingArticle(false)}
+                        className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-stone-300 font-semibold text-xs transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 rounded-xl text-slate-950 font-bold uppercase tracking-wider text-xs shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                        style={{ backgroundColor: 'var(--color-secondary)' }}
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>Save Article & Gallery</span>
+                      </button>
+                    </div>
+
+                  </form>
+                </div>
+              )}
+
+              {/* Articles Grid List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {articles.map((art) => {
+                  const photosCount = Array.isArray(art.photos) ? art.photos.length : 1;
+
+                  return (
+                    <div 
+                      key={art.id} 
+                      className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-xl flex flex-col justify-between group hover:border-amber-400/40 transition-all"
+                    >
+                      {/* Cover Photo & Badges */}
+                      <div className="relative h-48 bg-slate-900 overflow-hidden">
+                        <img
+                          src={art.coverImage || (art.photos && art.photos[0])}
+                          alt={art.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+
+                        {/* Top Badges */}
+                        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-widest uppercase bg-slate-950/80 backdrop-blur-md text-amber-300 border border-white/10">
+                            {art.category || 'Curated Story'}
+                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            {photosCount > 1 && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-950/80 backdrop-blur-md text-stone-200 border border-white/10">
+                                <Images className="w-3 h-3 text-amber-400" />
+                                <span>{photosCount}</span>
+                              </span>
+                            )}
+
+                            {isSuperAdmin && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleArticleVisibility(art.id)}
+                                  className="p-1.5 rounded-lg bg-black/60 text-white hover:bg-black text-xs"
+                                  title={art.visible !== false ? 'Visible on website' : 'Hidden from website'}
+                                >
+                                  {art.visible !== false ? <Eye className="w-3.5 h-3.5 text-emerald-400" /> : <EyeOff className="w-3.5 h-3.5 text-stone-400" />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteArticle(art.id, art.title)}
+                                  className="p-1.5 rounded-lg bg-rose-950/80 text-rose-300 hover:bg-rose-900 text-xs border border-rose-500/30"
+                                  title="Delete article"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Bottom Meta */}
+                        <div className="absolute bottom-2 left-3 right-3 text-[11px] text-stone-300 font-mono">
+                          {art.date} • {art.readTime}
+                        </div>
+                      </div>
+
+                      {/* Card Content */}
+                      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div className="space-y-1.5">
+                          <h4 className="font-serif font-bold text-white text-base line-clamp-2">
+                            {art.title}
+                          </h4>
+                          <p className="text-stone-400 text-xs font-light line-clamp-3">
+                            {art.subtitle}
+                          </p>
+                        </div>
+
+                        {/* Footer & Edit Button */}
+                        <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                          <span className="text-[11px] text-stone-400 truncate max-w-[150px]">
+                            {art.author || 'Editorial'}
+                          </span>
+
+                          {isSuperAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditArticle(art)}
+                              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 font-semibold text-xs flex items-center gap-1.5 border border-slate-700"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Edit Article</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
 
             </div>
           )}
