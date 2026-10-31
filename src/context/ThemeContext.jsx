@@ -2,31 +2,36 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { defaultTheme, themePresets } from '../data/initialData';
-import { loadThemeSettings, saveThemeSettings } from '../services/storageService';
+import { loadThemeSettings, saveThemeSettings, getCachedTheme, subscribeThemeSettings } from '../services/storageService';
 import { applyThemeToDOM } from '../utils/colorUtils';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(defaultTheme);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [syncStatus, setSyncStatus] = useState({ synced: true, message: "Ready" });
 
-  // Initial load
+  // Initial load with instant cache & real-time sync
   useEffect(() => {
-    const initTheme = async () => {
-      try {
-        const loaded = await loadThemeSettings();
-        setTheme(loaded);
-        applyThemeToDOM(loaded.primaryColor, loaded.secondaryColor);
-      } catch (err) {
-        console.error("Theme load error:", err);
-      } finally {
-        setIsLoading(false);
+    // 1. Instant 0ms cache application
+    const cached = getCachedTheme();
+    if (cached) {
+      setTheme(cached);
+      applyThemeToDOM(cached.primaryColor, cached.secondaryColor);
+    }
+
+    // 2. Real-time subscription (Firestore onSnapshot + BroadcastChannel + Events)
+    const unsubscribe = subscribeThemeSettings((newTheme) => {
+      if (newTheme) {
+        setTheme(newTheme);
+        applyThemeToDOM(newTheme.primaryColor, newTheme.secondaryColor);
       }
-    };
-    initTheme();
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Update theme and apply to DOM immediately

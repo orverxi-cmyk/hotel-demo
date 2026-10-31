@@ -44,20 +44,23 @@ export const AdminLogin = ({ onLoginSuccess }) => {
         (cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'superadmin' || cleanEmail === 'admin@hotel.com') && 
         password === SUPER_ADMIN_PASSWORD
       ) {
+        const targetEmail = (cleanEmail === 'superadmin' || cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase()) ? SUPER_ADMIN_EMAIL : 'admin@hotel.com';
         try {
-          await signInWithEmailAndPassword(auth, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD).catch(() => {});
-        } catch (_) {}
+          await signInWithEmailAndPassword(auth, targetEmail, SUPER_ADMIN_PASSWORD);
+        } catch (authErr) {
+          console.warn("Firebase Auth sign-in notice:", authErr?.message);
+        }
 
         const adminSession = {
           role: 'SUPER_ADMIN',
-          email: SUPER_ADMIN_EMAIL,
-          name: 'Super Administrator'
+          email: targetEmail,
+          name: targetEmail === SUPER_ADMIN_EMAIL ? 'Super Administrator' : 'Hotel Administrator'
         };
 
         sessionStorage.setItem('hotel_super_admin_session', 'authenticated');
         sessionStorage.setItem('hotel_admin_role', 'SUPER_ADMIN');
-        sessionStorage.setItem('hotel_admin_email', SUPER_ADMIN_EMAIL);
-        sessionStorage.setItem('hotel_admin_name', 'Super Administrator');
+        sessionStorage.setItem('hotel_admin_email', targetEmail);
+        sessionStorage.setItem('hotel_admin_name', adminSession.name);
 
         onLoginSuccess(adminSession);
         return;

@@ -10,7 +10,9 @@ import {
   loadBookings,
   saveBooking,
   updateBookingStatus,
-  resetAllDemoData
+  resetAllDemoData,
+  getCachedRooms,
+  subscribeRooms
 } from '../services/storageService';
 import { sendBookingStatusEmail, getBookingEmailLogs } from '../services/emailService';
 
@@ -42,25 +44,35 @@ export const BookingProvider = ({ children }) => {
     setTimeout(() => setActiveNotification(null), 4000);
   };
 
-  // Load initial data
+  // Load initial data with instant cache & real-time sync
   useEffect(() => {
-    const fetchData = async () => {
+    // 1. Immediately apply cached rooms in 0ms (no flash)
+    const cachedRooms = getCachedRooms();
+    if (cachedRooms && cachedRooms.length > 0) {
+      setRooms(cachedRooms);
+    }
+
+    // 2. Real-time subscription to rooms
+    const unsubscribeRooms = subscribeRooms((newRooms) => {
+      if (newRooms && newRooms.length > 0) {
+        setRooms(newRooms);
+      }
+      setIsLoading(false);
+    });
+
+    // 3. Load bookings
+    const fetchBookings = async () => {
       try {
-        const [loadedRooms, loadedBookings] = await Promise.all([
-          loadRooms(),
-          loadBookings()
-        ]);
-        setRooms(loadedRooms || initialRooms);
+        const loadedBookings = await loadBookings();
         setBookings(loadedBookings || initialBookings);
       } catch (err) {
-        console.error("Data load error:", err);
-        setRooms(initialRooms);
+        console.error("Bookings load error:", err);
         setBookings(initialBookings);
-      } finally {
-        setIsLoading(false);
       }
     };
-    fetchData();
+    fetchBookings();
+
+    return () => unsubscribeRooms();
   }, []);
 
   const openBookingModal = (room = null) => {

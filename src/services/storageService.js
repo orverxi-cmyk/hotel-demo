@@ -1,5 +1,5 @@
 import { db, storage } from "../firebase";
-import { doc, getDoc, setDoc, collection, getDocs, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, getDocs, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews } from "../data/initialData";
 
@@ -8,6 +8,20 @@ const LS_ROOMS_KEY = "hotel_demo_rooms";
 const LS_BOOKINGS_KEY = "hotel_demo_bookings";
 
 const isClient = typeof window !== "undefined";
+
+const CMS_BROADCAST_CHANNEL = "hotel_cms_realtime_sync";
+
+export const broadcastUpdate = (type, payload) => {
+  if (!isClient) return;
+  try {
+    const bc = new BroadcastChannel(CMS_BROADCAST_CHANNEL);
+    bc.postMessage({ type, payload });
+    bc.close();
+  } catch (_) {}
+  try {
+    window.dispatchEvent(new CustomEvent(type, { detail: payload }));
+  } catch (_) {}
+};
 
 let firestoreAvailable = null;
 
@@ -26,9 +40,80 @@ export const testFirestoreConnection = async () => {
 };
 
 // --- THEME SETTINGS ---
+export const getCachedTheme = () => {
+  if (!isClient) return defaultTheme;
+  try {
+    const cached = localStorage.getItem(LS_THEME_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && typeof parsed === 'object') return { ...defaultTheme, ...parsed };
+    }
+  } catch (_) {}
+  return defaultTheme;
+};
+
+export const subscribeThemeSettings = (callback) => {
+  const initial = getCachedTheme();
+  if (initial) callback(initial);
+
+  let unsubscribeFirestore = () => {};
+  try {
+    const themeDocRef = doc(db, "settings", "theme");
+    unsubscribeFirestore = onSnapshot(themeDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        const currentTheme = { ...defaultTheme, ...data };
+        if (isClient) {
+          localStorage.setItem(LS_THEME_KEY, JSON.stringify(currentTheme));
+        }
+        callback(currentTheme);
+      }
+    }, (err) => {
+      console.warn("Theme onSnapshot note:", err?.message);
+    });
+  } catch (_) {}
+
+  let bc = null;
+  try {
+    bc = new BroadcastChannel(CMS_BROADCAST_CHANNEL);
+    bc.onmessage = (e) => {
+      if (e.data?.type === "hotel_theme_updated" && e.data?.payload) {
+        callback(e.data.payload);
+      }
+    };
+  } catch (_) {}
+
+  const handleCustomEvent = (e) => {
+    if (e.detail) callback(e.detail);
+  };
+
+  const handleStorageEvent = (e) => {
+    if (e.key === LS_THEME_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (parsed) callback(parsed);
+      } catch (_) {}
+    }
+  };
+
+  if (isClient) {
+    window.addEventListener("hotel_theme_updated", handleCustomEvent);
+    window.addEventListener("storage", handleStorageEvent);
+  }
+
+  return () => {
+    unsubscribeFirestore();
+    if (bc) { try { bc.close(); } catch (_) {} }
+    if (isClient) {
+      window.removeEventListener("hotel_theme_updated", handleCustomEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    }
+  };
+};
+
 export const loadThemeSettings = async () => {
-  const cached = isClient ? localStorage.getItem(LS_THEME_KEY) : null;
-  let currentTheme = cached ? JSON.parse(cached) : defaultTheme;
+  const cached = getCachedTheme();
+  let currentTheme = cached;
 
   try {
     const themeDocRef = doc(db, "settings", "theme");
@@ -52,6 +137,7 @@ export const loadThemeSettings = async () => {
 export const saveThemeSettings = async (settings) => {
   if (isClient) {
     localStorage.setItem(LS_THEME_KEY, JSON.stringify(settings));
+    broadcastUpdate("hotel_theme_updated", settings);
   }
 
   try {
@@ -65,9 +151,79 @@ export const saveThemeSettings = async (settings) => {
 };
 
 // --- ROOMS ---
+export const getCachedRooms = () => {
+  if (!isClient) return initialRooms;
+  try {
+    const cached = localStorage.getItem(LS_ROOMS_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return initialRooms;
+};
+
+export const subscribeRooms = (callback) => {
+  const initial = getCachedRooms();
+  if (initial && initial.length > 0) callback(initial);
+
+  let unsubscribeFirestore = () => {};
+  try {
+    const roomsCol = collection(db, "rooms");
+    unsubscribeFirestore = onSnapshot(roomsCol, (snapshot) => {
+      if (!snapshot.empty) {
+        const remote = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        if (isClient) {
+          localStorage.setItem(LS_ROOMS_KEY, JSON.stringify(remote));
+        }
+        callback(remote);
+      }
+    }, (err) => {
+      console.warn("Rooms onSnapshot note:", err?.message);
+    });
+  } catch (_) {}
+
+  let bc = null;
+  try {
+    bc = new BroadcastChannel(CMS_BROADCAST_CHANNEL);
+    bc.onmessage = (e) => {
+      if (e.data?.type === "hotel_rooms_updated" && e.data?.payload) {
+        callback(e.data.payload);
+      }
+    };
+  } catch (_) {}
+
+  const handleCustomEvent = (e) => {
+    if (e.detail && Array.isArray(e.detail)) callback(e.detail);
+  };
+
+  const handleStorageEvent = (e) => {
+    if (e.key === LS_ROOMS_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (Array.isArray(parsed) && parsed.length > 0) callback(parsed);
+      } catch (_) {}
+    }
+  };
+
+  if (isClient) {
+    window.addEventListener("hotel_rooms_updated", handleCustomEvent);
+    window.addEventListener("storage", handleStorageEvent);
+  }
+
+  return () => {
+    unsubscribeFirestore();
+    if (bc) { try { bc.close(); } catch (_) {} }
+    if (isClient) {
+      window.removeEventListener("hotel_rooms_updated", handleCustomEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    }
+  };
+};
+
 export const loadRooms = async () => {
-  const cached = isClient ? localStorage.getItem(LS_ROOMS_KEY) : null;
-  let rooms = cached ? JSON.parse(cached) : initialRooms;
+  const cached = getCachedRooms();
+  let rooms = cached;
 
   try {
     const roomsCol = collection(db, "rooms");
@@ -101,6 +257,7 @@ export const saveRoom = async (roomData) => {
   }
   if (isClient) {
     localStorage.setItem(LS_ROOMS_KEY, JSON.stringify(rooms));
+    broadcastUpdate("hotel_rooms_updated", rooms);
   }
 
   try {
@@ -117,6 +274,7 @@ export const deleteRoomById = async (roomId) => {
   rooms = rooms.filter(r => r.id !== roomId);
   if (isClient) {
     localStorage.setItem(LS_ROOMS_KEY, JSON.stringify(rooms));
+    broadcastUpdate("hotel_rooms_updated", rooms);
   }
 
   try {
@@ -392,9 +550,85 @@ export const initialSliderSlides = [
 
 const LS_SLIDER_KEY = "hotel_demo_slider_slides";
 
+export const getCachedSliderSlides = () => {
+  if (!isClient) return initialSliderSlides;
+  try {
+    const cached = localStorage.getItem(LS_SLIDER_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return initialSliderSlides;
+};
+
+export const subscribeSliderSlides = (callback) => {
+  const initial = getCachedSliderSlides();
+  if (initial && initial.length > 0) callback(initial);
+
+  let unsubscribeFirestore = () => {};
+  try {
+    const q = collection(db, "services");
+    unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const remote = [];
+        snapshot.forEach(docSnap => {
+          remote.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        remote.sort((a, b) => (a.number || '').localeCompare(b.number || ''));
+        if (isClient) {
+          localStorage.setItem(LS_SLIDER_KEY, JSON.stringify(remote));
+        }
+        callback(remote);
+      }
+    }, (err) => {
+      console.warn("Firestore slider onSnapshot note:", err?.message);
+    });
+  } catch (err) {
+    console.warn("Could not attach Firestore onSnapshot:", err?.message);
+  }
+
+  let bc = null;
+  try {
+    bc = new BroadcastChannel(CMS_BROADCAST_CHANNEL);
+    bc.onmessage = (e) => {
+      if (e.data?.type === "hotel_slider_updated" && e.data?.payload) {
+        callback(e.data.payload);
+      }
+    };
+  } catch (_) {}
+
+  const handleCustomEvent = (e) => {
+    if (e.detail && Array.isArray(e.detail)) callback(e.detail);
+  };
+
+  const handleStorageEvent = (e) => {
+    if (e.key === LS_SLIDER_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (Array.isArray(parsed) && parsed.length > 0) callback(parsed);
+      } catch (_) {}
+    }
+  };
+
+  if (isClient) {
+    window.addEventListener("hotel_slider_updated", handleCustomEvent);
+    window.addEventListener("storage", handleStorageEvent);
+  }
+
+  return () => {
+    unsubscribeFirestore();
+    if (bc) { try { bc.close(); } catch (_) {} }
+    if (isClient) {
+      window.removeEventListener("hotel_slider_updated", handleCustomEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    }
+  };
+};
+
 export const loadSliderSlides = async () => {
-  const cached = isClient ? localStorage.getItem(LS_SLIDER_KEY) : null;
-  let slides = cached ? JSON.parse(cached) : initialSliderSlides;
+  const cached = getCachedSliderSlides();
+  let slides = cached;
 
   try {
     const q = collection(db, "services");
@@ -424,12 +658,16 @@ export const saveSliderSlide = async (slide) => {
   } else {
     slides.push(slide);
   }
-  if (isClient) localStorage.setItem(LS_SLIDER_KEY, JSON.stringify(slides));
+  if (isClient) {
+    localStorage.setItem(LS_SLIDER_KEY, JSON.stringify(slides));
+    broadcastUpdate("hotel_slider_updated", slides);
+  }
 
   try {
     await setDoc(doc(db, "services", slide.id), slide, { merge: true });
     return { success: true, syncedToCloud: true };
   } catch (err) {
+    console.warn("Firestore saveSliderSlide note:", err?.message);
     return { success: true, syncedToCloud: false, error: err?.message };
   }
 };

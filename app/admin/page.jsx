@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminPortal } from '../../src/components/admin/AdminPortal';
 import { AdminLogin } from '../../src/components/admin/AdminLogin';
+import { auth } from '../../src/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -19,9 +21,15 @@ export default function AdminPage() {
       const isAuth = sessionStorage.getItem('hotel_super_admin_session') === 'authenticated';
       setIsAuthenticated(isAuth);
       if (isAuth) {
-        setAdminRole(sessionStorage.getItem('hotel_admin_role') || 'SUPER_ADMIN');
-        setAdminEmail(sessionStorage.getItem('hotel_admin_email') || 'tharushyamagara@gmail.com');
+        const storedRole = sessionStorage.getItem('hotel_admin_role') || 'SUPER_ADMIN';
+        const storedEmail = sessionStorage.getItem('hotel_admin_email') || 'tharushyamagara@gmail.com';
+        setAdminRole(storedRole);
+        setAdminEmail(storedEmail);
         setAdminName(sessionStorage.getItem('hotel_admin_name') || 'Super Administrator');
+
+        if (!auth.currentUser && storedRole === 'SUPER_ADMIN') {
+          signInWithEmailAndPassword(auth, storedEmail, 'Gavyn#123@Olga').catch(() => {});
+        }
       }
     }
   }, []);

@@ -20,38 +20,41 @@ import {
   Calendar,
   Maximize2
 } from 'lucide-react';
-import { loadSliderSlides, initialSliderSlides } from '../services/storageService';
+import { 
+  loadSliderSlides, 
+  initialSliderSlides, 
+  getCachedSliderSlides, 
+  subscribeSliderSlides 
+} from '../services/storageService';
 
 export const Hero = () => {
   const { theme } = useTheme();
   const { openBookingModal } = useBooking();
   
   const [slides, setSlides] = useState(initialSliderSlides);
+  const [mounted, setMounted] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const autoPlayDuration = 6500; // 6.5s per slide
 
-  // Load dynamic slides from Firestore / Storage with local fallback
+  // Load dynamic slides from Firestore / Storage with instant real-time sync
   useEffect(() => {
-    const fetchSlides = async () => {
-      const data = await loadSliderSlides();
-      if (data && data.length > 0) {
-        setSlides(data);
-      }
-    };
-    fetchSlides();
+    // 1. Immediately apply cached slides from localStorage (0 ms)
+    const cached = getCachedSliderSlides();
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      setSlides(cached);
+    }
+    setMounted(true);
 
-    const handleStorageChange = (e) => {
-      if (e.key === 'hotel_demo_slider_slides') {
-        try {
-          const updated = JSON.parse(e.newValue);
-          if (updated && Array.isArray(updated)) setSlides(updated);
-        } catch (_) {}
+    // 2. Real-time subscription: Firestore onSnapshot + BroadcastChannel + Events
+    const unsubscribe = subscribeSliderSlides((updated) => {
+      if (updated && Array.isArray(updated) && updated.length > 0) {
+        setSlides(updated);
       }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Auto-play timer
@@ -171,7 +174,7 @@ export const Hero = () => {
           {/* RIGHT COLUMN: Editorial Details (1/4 WIDTH = 25% -> col-span-3) */}
           <div className="lg:col-span-3 flex flex-col justify-between bg-slate-900/75 p-5 sm:p-6 lg:p-6 rounded-3xl border border-white/10 shadow-2xl backdrop-blur-md order-2">
             
-            <div className="space-y-4">
+            <div className={`space-y-4 transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
               
               {/* Hotel & Slide Kicker */}
               <div className="flex items-center justify-between">
