@@ -1,40 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
 import { Utensils, Award, Clock, Calendar, Wine } from 'lucide-react';
+import { getCachedDiningVenues, subscribeDiningVenues, initialDiningVenues } from '../services/storageService';
 
 export const DiningSection = () => {
   const { theme } = useTheme();
   const { openBookingModal } = useBooking();
+  const [venues, setVenues] = useState(initialDiningVenues);
 
-  const venues = [
-    {
-      name: "L'Orangerie Gastronomique",
-      accolade: "2 Michelin Stars",
-      type: "Haute Cuisine & Tasting Menus",
-      hours: "19:00 - 23:00",
-      image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800&q=80",
-      description: "Under Executive Chef Marco Valenti, local organic sea treasures and estate herbs are transformed into sensory culinary art."
-    },
-    {
-      name: "The Cliffside Terrace & Raw Bar",
-      accolade: "Oceanfront Vista",
-      type: "Mediterranean Crudo & Sunset Aperitivo",
-      hours: "12:00 - 22:30",
-      image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
-      description: "Perched 40 meters above crashing waves, serving chilled oysters, wild turbot carpaccio, and vintage champagne as the sun melts into the sea."
-    },
-    {
-      name: "The Cellar Vault & Cigar Lounge",
-      accolade: "12,000 Rare Bottles",
-      type: "Sommelier Masterclasses & Aged Spirits",
-      hours: "17:00 - 01:00",
-      image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80",
-      description: "A subterranean cavern dating to the 18th century, offering private tastings of rare Sassicaia, Barolo, and hand-rolled Caribbean cigars."
+  useEffect(() => {
+    const cached = getCachedDiningVenues();
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      setVenues(cached);
     }
-  ];
+
+    const unsubscribe = subscribeDiningVenues((updated) => {
+      if (updated && Array.isArray(updated) && updated.length > 0) {
+        setVenues(updated);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const visibleVenues = venues.filter(v => v.visible !== false);
 
   return (
     <section id="dining" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -57,7 +49,7 @@ export const DiningSection = () => {
 
       {/* Venues Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {venues.map((venue, idx) => (
+        {visibleVenues.map((venue, idx) => (
           <div 
             key={idx}
             className="group bg-white rounded-3xl overflow-hidden border border-stone-200/80 shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col"

@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
-import { Sparkles, Calendar, Menu, X, Shield, PhoneCall, Home } from 'lucide-react';
+import { Sparkles, Calendar, Menu, X, Shield, PhoneCall, Home, ExternalLink } from 'lucide-react';
+import { getCachedNavMenus, subscribeNavMenus, initialNavMenus } from '../services/storageService';
 
 export const Navbar = ({ onOpenCMS }) => {
   const { theme } = useTheme();
@@ -15,6 +16,27 @@ export const Navbar = ({ onOpenCMS }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
+  const [navMenus, setNavMenus] = useState(initialNavMenus);
+
+  // Sync navigation menus dynamically in real time
+  useEffect(() => {
+    const cached = getCachedNavMenus();
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      setNavMenus(cached);
+    }
+
+    const unsubscribe = subscribeNavMenus((updated) => {
+      if (updated && Array.isArray(updated) && updated.length > 0) {
+        setNavMenus(updated);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const visibleMenus = [...navMenus]
+    .filter(m => m.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   useEffect(() => {
     const handleScroll = () => {
@@ -102,86 +124,69 @@ export const Navbar = ({ onOpenCMS }) => {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links (Includes Home + section anchors, single line with fluid shrink) */}
+          {/* Desktop Navigation Links (Dynamically synced & customizable) */}
           <nav className="hidden md:flex items-center gap-2 lg:gap-3.5 xl:gap-5 2xl:gap-6 text-xs lg:text-[13px] xl:text-sm font-medium text-white/90 whitespace-nowrap flex-nowrap">
-            {/* Home Link with dynamic active logic */}
-            <Link 
-              href="/" 
-              onClick={handleHomeClick}
-              className={`transition-colors whitespace-nowrap py-1 relative ${
-                activeSection === 'home' && pathname === '/'
-                  ? 'text-amber-300 font-semibold' 
-                  : 'text-white/90 hover:text-amber-300'
-              }`}
-            >
-              <span>Home</span>
-              {activeSection === 'home' && pathname === '/' && (
-                <span 
-                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                  style={{ backgroundColor: 'var(--color-secondary)' }}
-                />
-              )}
-            </Link>
+            {visibleMenus.map((item) => {
+              const isHome = item.href === '/' || item.targetId === 'home';
+              const isActive = (isHome && pathname === '/' && activeSection === 'home') ||
+                               (!isHome && pathname === '/' && activeSection === item.targetId);
 
-            <a 
-              href="/#rooms" 
-              onClick={(e) => handleSectionClick(e, 'rooms')}
-              className={`transition-colors whitespace-nowrap py-1 ${
-                activeSection === 'rooms' && pathname === '/' ? 'text-amber-300 font-semibold' : 'hover:text-amber-300'
-              }`}
-            >
-              Rooms & Suites
-            </a>
+              if (item.isExternal || item.href.startsWith('http://') || item.href.startsWith('https://')) {
+                return (
+                  <a 
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 transition-colors whitespace-nowrap py-1 hover:text-amber-300"
+                  >
+                    <span>{item.label}</span>
+                    <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                  </a>
+                );
+              }
 
-            <a 
-              href="/#amenities" 
-              onClick={(e) => handleSectionClick(e, 'amenities')}
-              className={`transition-colors whitespace-nowrap py-1 ${
-                activeSection === 'amenities' && pathname === '/' ? 'text-amber-300 font-semibold' : 'hover:text-amber-300'
-              }`}
-            >
-              Experiences & Spa
-            </a>
+              if (item.href.startsWith('/#')) {
+                const targetId = item.targetId || item.href.replace('/#', '');
+                return (
+                  <a 
+                    key={item.id}
+                    href={item.href}
+                    onClick={(e) => handleSectionClick(e, targetId)}
+                    className={`transition-colors whitespace-nowrap py-1 relative ${
+                      isActive ? 'text-amber-300 font-semibold' : 'text-white/90 hover:text-amber-300'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {isActive && (
+                      <span 
+                        className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                        style={{ backgroundColor: 'var(--color-secondary)' }}
+                      />
+                    )}
+                  </a>
+                );
+              }
 
-            <a 
-              href="/#dining" 
-              onClick={(e) => handleSectionClick(e, 'dining')}
-              className={`transition-colors whitespace-nowrap py-1 ${
-                activeSection === 'dining' && pathname === '/' ? 'text-amber-300 font-semibold' : 'hover:text-amber-300'
-              }`}
-            >
-              Gastronomy
-            </a>
-
-            <a 
-              href="/#gallery" 
-              onClick={(e) => handleSectionClick(e, 'gallery')}
-              className={`transition-colors whitespace-nowrap py-1 ${
-                activeSection === 'gallery' && pathname === '/' ? 'text-amber-300 font-semibold' : 'hover:text-amber-300'
-              }`}
-            >
-              Gallery
-            </a>
-
-            <a 
-              href="/#reviews" 
-              onClick={(e) => handleSectionClick(e, 'reviews')}
-              className={`transition-colors whitespace-nowrap py-1 ${
-                activeSection === 'reviews' && pathname === '/' ? 'text-amber-300 font-semibold' : 'hover:text-amber-300'
-              }`}
-            >
-              Testimonials
-            </a>
-
-            <a 
-              href="/#contact" 
-              onClick={(e) => handleSectionClick(e, 'contact')}
-              className={`transition-colors whitespace-nowrap py-1 ${
-                activeSection === 'contact' && pathname === '/' ? 'text-amber-300 font-semibold' : 'hover:text-amber-300'
-              }`}
-            >
-              Contact
-            </a>
+              return (
+                <Link 
+                  key={item.id}
+                  href={item.href}
+                  onClick={isHome ? handleHomeClick : () => setIsMobileMenuOpen(false)}
+                  className={`transition-colors whitespace-nowrap py-1 relative ${
+                    isActive ? 'text-amber-300 font-semibold' : 'text-white/90 hover:text-amber-300'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <span 
+                      className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                      style={{ backgroundColor: 'var(--color-secondary)' }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right Action Buttons (Stays on one line, shrink-0) */}
@@ -218,66 +223,62 @@ export const Navbar = ({ onOpenCMS }) => {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-slate-950/98 backdrop-blur-xl border-b border-white/10 px-6 py-6 space-y-4 shadow-2xl animate-fade-in">
           <nav className="flex flex-col space-y-3 text-base font-medium text-white/90">
-            <Link 
-              href="/" 
-              onClick={handleHomeClick}
-              className={`flex items-center justify-between py-1 transition-colors ${
-                activeSection === 'home' && pathname === '/' ? 'text-amber-300 font-bold' : 'hover:text-amber-300'
-              }`}
-            >
-              <span>Home</span>
-              {activeSection === 'home' && pathname === '/' && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              )}
-            </Link>
+            {visibleMenus.map((item) => {
+              const isHome = item.href === '/' || item.targetId === 'home';
+              const isActive = (isHome && pathname === '/' && activeSection === 'home') ||
+                               (!isHome && pathname === '/' && activeSection === item.targetId);
 
-            <a 
-              href="/#rooms" 
-              onClick={(e) => handleSectionClick(e, 'rooms')} 
-              className={`hover:text-amber-300 ${activeSection === 'rooms' && pathname === '/' ? 'text-amber-300 font-semibold' : ''}`}
-            >
-              Rooms & Suites
-            </a>
+              if (item.isExternal || item.href.startsWith('http://') || item.href.startsWith('https://')) {
+                return (
+                  <a 
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-between py-1 hover:text-amber-300"
+                  >
+                    <span>{item.label}</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                  </a>
+                );
+              }
 
-            <a 
-              href="/#amenities" 
-              onClick={(e) => handleSectionClick(e, 'amenities')} 
-              className={`hover:text-amber-300 ${activeSection === 'amenities' && pathname === '/' ? 'text-amber-300 font-semibold' : ''}`}
-            >
-              Experiences & Spa
-            </a>
+              if (item.href.startsWith('/#')) {
+                const targetId = item.targetId || item.href.replace('/#', '');
+                return (
+                  <a 
+                    key={item.id}
+                    href={item.href}
+                    onClick={(e) => handleSectionClick(e, targetId)} 
+                    className={`flex items-center justify-between py-1 transition-colors ${
+                      isActive ? 'text-amber-300 font-bold' : 'hover:text-amber-300'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {isActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    )}
+                  </a>
+                );
+              }
 
-            <a 
-              href="/#dining" 
-              onClick={(e) => handleSectionClick(e, 'dining')} 
-              className={`hover:text-amber-300 ${activeSection === 'dining' && pathname === '/' ? 'text-amber-300 font-semibold' : ''}`}
-            >
-              Gastronomy
-            </a>
-
-            <a 
-              href="/#gallery" 
-              onClick={(e) => handleSectionClick(e, 'gallery')} 
-              className={`hover:text-amber-300 ${activeSection === 'gallery' && pathname === '/' ? 'text-amber-300 font-semibold' : ''}`}
-            >
-              Photo Gallery
-            </a>
-
-            <a 
-              href="/#reviews" 
-              onClick={(e) => handleSectionClick(e, 'reviews')} 
-              className={`hover:text-amber-300 ${activeSection === 'reviews' && pathname === '/' ? 'text-amber-300 font-semibold' : ''}`}
-            >
-              Guest Reviews
-            </a>
-
-            <a 
-              href="/#contact" 
-              onClick={(e) => handleSectionClick(e, 'contact')} 
-              className={`hover:text-amber-300 ${activeSection === 'contact' && pathname === '/' ? 'text-amber-300 font-semibold' : ''}`}
-            >
-              Contact Concierge
-            </a>
+              return (
+                <Link 
+                  key={item.id}
+                  href={item.href}
+                  onClick={isHome ? handleHomeClick : () => setIsMobileMenuOpen(false)}
+                  className={`flex items-center justify-between py-1 transition-colors ${
+                    isActive ? 'text-amber-300 font-bold' : 'hover:text-amber-300'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="pt-4 border-t border-white/10 flex flex-col gap-3">

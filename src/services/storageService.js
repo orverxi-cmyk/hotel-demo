@@ -1,11 +1,15 @@
 import { db, storage } from "../firebase";
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews } from "../data/initialData";
+import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews, initialNavMenus, initialDiningVenues } from "../data/initialData";
 
 const LS_THEME_KEY = "hotel_demo_theme";
 const LS_ROOMS_KEY = "hotel_demo_rooms";
 const LS_BOOKINGS_KEY = "hotel_demo_bookings";
+const LS_NAV_MENUS_KEY = "hotel_demo_navigation_menus";
+const LS_DINING_KEY = "hotel_demo_dining_venues";
+
+export { initialNavMenus, initialDiningVenues };
 
 const isClient = typeof window !== "undefined";
 
@@ -740,5 +744,233 @@ export const uploadMediaFile = async (file, folder = 'slider', onProgress = null
       isLocal: true,
       error: err.message
     };
+  }
+};
+
+// --- WEBSITE NAVIGATION MENUS MANAGEMENT ---
+export const getCachedNavMenus = () => {
+  if (!isClient) return initialNavMenus;
+  try {
+    const cached = localStorage.getItem(LS_NAV_MENUS_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return initialNavMenus;
+};
+
+export const subscribeNavMenus = (callback) => {
+  const initial = getCachedNavMenus();
+  if (initial && initial.length > 0) callback(initial);
+
+  let unsubscribeFirestore = () => {};
+  try {
+    const menusDocRef = doc(db, "settings", "menus");
+    unsubscribeFirestore = onSnapshot(menusDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.items)) {
+          if (isClient) {
+            localStorage.setItem(LS_NAV_MENUS_KEY, JSON.stringify(data.items));
+          }
+          callback(data.items);
+        }
+      }
+    }, (err) => {
+      console.warn("Firestore nav menus onSnapshot note:", err?.message);
+    });
+  } catch (_) {}
+
+  let bc = null;
+  try {
+    bc = new BroadcastChannel(CMS_BROADCAST_CHANNEL);
+    bc.onmessage = (e) => {
+      if (e.data?.type === "hotel_menus_updated" && e.data?.payload) {
+        callback(e.data.payload);
+      }
+    };
+  } catch (_) {}
+
+  const handleCustomEvent = (e) => {
+    if (e.detail && Array.isArray(e.detail)) callback(e.detail);
+  };
+
+  const handleStorageEvent = (e) => {
+    if (e.key === LS_NAV_MENUS_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (Array.isArray(parsed) && parsed.length > 0) callback(parsed);
+      } catch (_) {}
+    }
+  };
+
+  if (isClient) {
+    window.addEventListener("hotel_menus_updated", handleCustomEvent);
+    window.addEventListener("storage", handleStorageEvent);
+  }
+
+  return () => {
+    unsubscribeFirestore();
+    if (bc) { try { bc.close(); } catch (_) {} }
+    if (isClient) {
+      window.removeEventListener("hotel_menus_updated", handleCustomEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    }
+  };
+};
+
+export const loadNavMenus = async () => {
+  const cached = getCachedNavMenus();
+  let menus = cached;
+
+  try {
+    const menusDocRef = doc(db, "settings", "menus");
+    const snapshot = await getDoc(menusDocRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      if (data && Array.isArray(data.items)) {
+        menus = data.items;
+        if (isClient) localStorage.setItem(LS_NAV_MENUS_KEY, JSON.stringify(menus));
+      }
+    } else {
+      await setDoc(menusDocRef, { items: initialNavMenus }).catch(() => {});
+    }
+  } catch (err) {
+    console.warn("Using local nav menus:", err?.message);
+  }
+
+  return menus;
+};
+
+export const saveNavMenus = async (menusList) => {
+  if (isClient) {
+    localStorage.setItem(LS_NAV_MENUS_KEY, JSON.stringify(menusList));
+    broadcastUpdate("hotel_menus_updated", menusList);
+  }
+
+  try {
+    const menusDocRef = doc(db, "settings", "menus");
+    await setDoc(menusDocRef, { items: menusList, updatedAt: new Date().toISOString() }, { merge: true });
+    return { success: true, syncedToCloud: true };
+  } catch (err) {
+    console.warn("Firestore saveNavMenus note:", err?.message);
+    return { success: true, syncedToCloud: false, error: err?.message };
+  }
+};
+
+export const resetNavMenus = async () => {
+  return await saveNavMenus(initialNavMenus);
+};
+
+// --- DINING MENUS & VENUES MANAGEMENT ---
+export const getCachedDiningVenues = () => {
+  if (!isClient) return initialDiningVenues;
+  try {
+    const cached = localStorage.getItem(LS_DINING_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return initialDiningVenues;
+};
+
+export const subscribeDiningVenues = (callback) => {
+  const initial = getCachedDiningVenues();
+  if (initial && initial.length > 0) callback(initial);
+
+  let unsubscribeFirestore = () => {};
+  try {
+    const diningDocRef = doc(db, "content", "dining");
+    unsubscribeFirestore = onSnapshot(diningDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.items)) {
+          if (isClient) {
+            localStorage.setItem(LS_DINING_KEY, JSON.stringify(data.items));
+          }
+          callback(data.items);
+        }
+      }
+    }, (err) => {
+      console.warn("Firestore dining onSnapshot note:", err?.message);
+    });
+  } catch (_) {}
+
+  let bc = null;
+  try {
+    bc = new BroadcastChannel(CMS_BROADCAST_CHANNEL);
+    bc.onmessage = (e) => {
+      if (e.data?.type === "hotel_dining_updated" && e.data?.payload) {
+        callback(e.data.payload);
+      }
+    };
+  } catch (_) {}
+
+  const handleCustomEvent = (e) => {
+    if (e.detail && Array.isArray(e.detail)) callback(e.detail);
+  };
+
+  const handleStorageEvent = (e) => {
+    if (e.key === LS_DINING_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (Array.isArray(parsed) && parsed.length > 0) callback(parsed);
+      } catch (_) {}
+    }
+  };
+
+  if (isClient) {
+    window.addEventListener("hotel_dining_updated", handleCustomEvent);
+    window.addEventListener("storage", handleStorageEvent);
+  }
+
+  return () => {
+    unsubscribeFirestore();
+    if (bc) { try { bc.close(); } catch (_) {} }
+    if (isClient) {
+      window.removeEventListener("hotel_dining_updated", handleCustomEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    }
+  };
+};
+
+export const loadDiningVenues = async () => {
+  const cached = getCachedDiningVenues();
+  let venues = cached;
+
+  try {
+    const diningDocRef = doc(db, "content", "dining");
+    const snapshot = await getDoc(diningDocRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      if (data && Array.isArray(data.items)) {
+        venues = data.items;
+        if (isClient) localStorage.setItem(LS_DINING_KEY, JSON.stringify(venues));
+      }
+    } else {
+      await setDoc(diningDocRef, { items: initialDiningVenues }).catch(() => {});
+    }
+  } catch (err) {
+    console.warn("Using local dining venues:", err?.message);
+  }
+
+  return venues;
+};
+
+export const saveDiningVenues = async (venuesList) => {
+  if (isClient) {
+    localStorage.setItem(LS_DINING_KEY, JSON.stringify(venuesList));
+    broadcastUpdate("hotel_dining_updated", venuesList);
+  }
+
+  try {
+    const diningDocRef = doc(db, "content", "dining");
+    await setDoc(diningDocRef, { items: venuesList, updatedAt: new Date().toISOString() }, { merge: true });
+    return { success: true, syncedToCloud: true };
+  } catch (err) {
+    console.warn("Firestore saveDiningVenues note:", err?.message);
+    return { success: true, syncedToCloud: false, error: err?.message };
   }
 };

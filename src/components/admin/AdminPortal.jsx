@@ -39,7 +39,14 @@ import {
   Upload,
   Play,
   Mail,
-  RotateCw
+  RotateCw,
+  Compass,
+  ArrowUp,
+  ArrowDown,
+  ExternalLink,
+  EyeOff,
+  UtensilsCrossed,
+  Link2
 } from 'lucide-react';
 import { 
   syncAllContentToFirestore, 
@@ -49,7 +56,14 @@ import {
   loadSliderSlides,
   saveSliderSlide,
   initialSliderSlides,
-  uploadMediaFile
+  uploadMediaFile,
+  loadNavMenus,
+  saveNavMenus,
+  resetNavMenus,
+  initialNavMenus,
+  loadDiningVenues,
+  saveDiningVenues,
+  initialDiningVenues
 } from '../../services/storageService';
 
 export const AdminPortal = ({ 
@@ -256,7 +270,168 @@ export const AdminPortal = ({
     }
   };
 
-  const [activeTab, setActiveTab] = useState('theme'); // 'theme', 'bookings', 'rooms', 'analytics', 'users'
+  const [activeTab, setActiveTab] = useState('theme'); // 'theme', 'slider', 'menus', 'bookings', 'rooms', 'analytics', 'users'
+
+  // Navigation & Dining Menus State
+  const [navMenus, setNavMenus] = useState(initialNavMenus);
+  const [diningVenues, setDiningVenues] = useState(initialDiningVenues);
+  const [menuSubTab, setMenuSubTab] = useState('navigation'); // 'navigation' or 'dining'
+  const [isAddingNavMenu, setIsAddingNavMenu] = useState(false);
+  const [newNavForm, setNewNavForm] = useState({
+    label: '',
+    href: '',
+    targetId: '',
+    isExternal: false,
+    visible: true
+  });
+  const [isAddingDining, setIsAddingDining] = useState(false);
+  const [newDiningForm, setNewDiningForm] = useState({
+    name: '',
+    accolade: '',
+    type: '',
+    hours: '',
+    image: '',
+    description: '',
+    visible: true
+  });
+
+  useEffect(() => {
+    const fetchAllMenus = async () => {
+      try {
+        const [m, d] = await Promise.all([
+          loadNavMenus(),
+          loadDiningVenues()
+        ]);
+        if (m && m.length > 0) setNavMenus(m);
+        if (d && d.length > 0) setDiningVenues(d);
+      } catch (err) {
+        console.warn("Menus fetch note:", err?.message);
+      }
+    };
+    fetchAllMenus();
+  }, []);
+
+  // Handlers for Navigation Menus
+  const handleAddNavMenu = async (e) => {
+    e.preventDefault();
+    if (!newNavForm.label.trim() || !newNavForm.href.trim()) {
+      showNotification("Please provide both a Menu Label and Destination Link.");
+      return;
+    }
+    const cleanLabel = newNavForm.label.trim();
+    const cleanHref = newNavForm.href.trim();
+    const anchor = newNavForm.targetId.trim() || (cleanHref.startsWith('/#') ? cleanHref.replace('/#', '') : '');
+    const newId = `nav-${Date.now()}-${cleanLabel.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+    
+    const newItem = {
+      id: newId,
+      label: cleanLabel,
+      href: cleanHref,
+      targetId: anchor,
+      isExternal: Boolean(newNavForm.isExternal),
+      visible: true,
+      order: navMenus.length + 1
+    };
+
+    const updated = [...navMenus, newItem];
+    setNavMenus(updated);
+    setIsAddingNavMenu(false);
+    setNewNavForm({ label: '', href: '', targetId: '', isExternal: false, visible: true });
+    await saveNavMenus(updated);
+    showNotification(`Navigation menu "${cleanLabel}" added successfully!`);
+  };
+
+  const handleRemoveNavMenu = async (menuId) => {
+    const target = navMenus.find(m => m.id === menuId);
+    if (!target) return;
+    if (navMenus.length <= 1) {
+      showNotification("At least one navigation menu item must remain active.");
+      return;
+    }
+    const updated = navMenus.filter(m => m.id !== menuId).map((item, idx) => ({ ...item, order: idx + 1 }));
+    setNavMenus(updated);
+    await saveNavMenus(updated);
+    showNotification(`Menu item "${target.label}" removed from navbar.`);
+  };
+
+  const handleToggleNavVisibility = async (menuId) => {
+    const updated = navMenus.map(m => m.id === menuId ? { ...m, visible: !m.visible } : m);
+    setNavMenus(updated);
+    await saveNavMenus(updated);
+    const target = updated.find(m => m.id === menuId);
+    showNotification(`Menu "${target.label}" is now ${target.visible ? 'visible' : 'hidden'}.`);
+  };
+
+  const handleMoveNavMenu = async (index, direction) => {
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= navMenus.length) return;
+    const reordered = [...navMenus];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIdx, 0, moved);
+    const updated = reordered.map((item, idx) => ({ ...item, order: idx + 1 }));
+    setNavMenus(updated);
+    await saveNavMenus(updated);
+    showNotification("Navigation menu order updated & synced!");
+  };
+
+  const handleUpdateNavField = (menuId, field, value) => {
+    const updated = navMenus.map(m => m.id === menuId ? { ...m, [field]: value } : m);
+    setNavMenus(updated);
+  };
+
+  const handleSaveAllNavMenus = async () => {
+    await saveNavMenus(navMenus);
+    showNotification("All navigation menus saved and synced live!");
+  };
+
+  const handleResetNavMenus = async () => {
+    if (!window.confirm("Reset all navigation menus back to hotel luxury defaults?")) return;
+    setNavMenus(initialNavMenus);
+    await resetNavMenus();
+    showNotification("Navigation menus reset to defaults.");
+  };
+
+  // Dining handlers
+  const handleAddDiningVenue = async (e) => {
+    e.preventDefault();
+    if (!newDiningForm.name.trim()) {
+      showNotification("Please provide a Venue / Menu name.");
+      return;
+    }
+    const newId = `dining-${Date.now()}`;
+    const newVenue = {
+      id: newId,
+      name: newDiningForm.name.trim(),
+      accolade: newDiningForm.accolade.trim() || 'Signature Experience',
+      type: newDiningForm.type.trim() || 'Tasting Menu & Gastronomy',
+      hours: newDiningForm.hours.trim() || '18:00 - 23:00',
+      image: newDiningForm.image.trim() || 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800&q=80',
+      description: newDiningForm.description.trim() || 'Sensory culinary journey prepared with estate ingredients.',
+      order: diningVenues.length + 1,
+      visible: true
+    };
+    const updated = [...diningVenues, newVenue];
+    setDiningVenues(updated);
+    setIsAddingDining(false);
+    setNewDiningForm({ name: '', accolade: '', type: '', hours: '', image: '', description: '', visible: true });
+    await saveDiningVenues(updated);
+    showNotification(`Dining menu "${newVenue.name}" added successfully!`);
+  };
+
+  const handleRemoveDiningVenue = async (venueId) => {
+    const target = diningVenues.find(v => v.id === venueId);
+    if (!target) return;
+    const updated = diningVenues.filter(v => v.id !== venueId);
+    setDiningVenues(updated);
+    await saveDiningVenues(updated);
+    showNotification(`Dining venue "${target.name}" removed.`);
+  };
+
+  const handleToggleDiningVisibility = async (venueId) => {
+    const updated = diningVenues.map(v => v.id === venueId ? { ...v, visible: !v.visible } : v);
+    setDiningVenues(updated);
+    await saveDiningVenues(updated);
+  };
   
   // Local theme form state
   const [themeForm, setThemeForm] = useState({
@@ -480,6 +655,21 @@ export const AdminPortal = ({
           <span>Hero Slider & Media</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-stone-300">
             {sliderSlides.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('menus')}
+          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
+            activeTab === 'menus'
+              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Compass className="w-4 h-4" />
+          <span>Navigation & Menus</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-stone-300">
+            {navMenus.length}
           </span>
         </button>
 
@@ -1160,6 +1350,480 @@ export const AdminPortal = ({
                   );
                 })}
               </div>
+
+            </div>
+          )}
+
+          {/* TAB: NAVIGATION & MENUS MANAGER */}
+          {activeTab === 'menus' && (
+            <div className="space-y-6 animate-fade-in">
+              
+              {/* Header card */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+                      Website Navigation & Guest Architecture
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                      Live Dynamic Menus
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white font-serif">
+                    Website Menus & Navigation Manager
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-xl mt-1 leading-relaxed">
+                    Add, remove, reorder, and customize the main header and mobile drawer navigation menus. You can also configure Gastronomy dining venues and culinary tasting menus. Changes reflect on the guest website immediately in real-time.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleResetNavMenus}
+                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-stone-300 text-xs font-semibold border border-slate-700 transition-all flex items-center gap-1.5"
+                    title="Reset to hotel default luxury menus"
+                  >
+                    <RotateCw className="w-3.5 h-3.5" />
+                    <span>Reset Defaults</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingNavMenu(!isAddingNavMenu)}
+                    className="px-4 py-2 rounded-xl text-slate-950 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all hover:scale-105 active:scale-95"
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{isAddingNavMenu ? 'Close Creator' : 'Add Menu Item'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Sub-Tabs: Header Navigation vs Dining Menus */}
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setMenuSubTab('navigation')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    menuSubTab === 'navigation'
+                      ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+                      : 'text-slate-400 hover:text-white bg-slate-900/40'
+                  }`}
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>Website Header & Mobile Navigation ({navMenus.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMenuSubTab('dining')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    menuSubTab === 'dining'
+                      ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+                      : 'text-slate-400 hover:text-white bg-slate-900/40'
+                  }`}
+                >
+                  <UtensilsCrossed className="w-3.5 h-3.5" />
+                  <span>Gastronomy Venues & Tasting Menus ({diningVenues.length})</span>
+                </button>
+              </div>
+
+              {/* SUBTAB 1: HEADER NAVIGATION MENUS */}
+              {menuSubTab === 'navigation' && (
+                <div className="space-y-6">
+
+                  {/* Add New Menu Item Inline Creator */}
+                  {isAddingNavMenu && (
+                    <form 
+                      onSubmit={handleAddNavMenu}
+                      className="p-5 rounded-2xl bg-slate-950 border-2 border-amber-400/40 shadow-2xl space-y-4 animate-fade-in"
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Plus className="w-4 h-4 text-amber-400" />
+                          <h4 className="text-sm font-bold text-white">Create New Navigation Menu Item</h4>
+                        </div>
+                        <span className="text-[11px] font-mono text-stone-400">Position #{navMenus.length + 1}</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                        <div>
+                          <label className="block text-slate-300 mb-1 font-semibold">
+                            Menu Label <span className="text-amber-400">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Special Offers, Villas, Track Booking"
+                            value={newNavForm.label}
+                            onChange={(e) => setNewNavForm({ ...newNavForm, label: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-300 mb-1 font-semibold">
+                            Destination Link / URL <span className="text-amber-400">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. /#rooms, /rooms/room-1, or https://..."
+                            value={newNavForm.href}
+                            onChange={(e) => setNewNavForm({ ...newNavForm, href: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-mono text-[11px] focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-300 mb-1 font-semibold">
+                            Scroll Anchor ID (optional)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. rooms, dining, amenities"
+                            value={newNavForm.targetId}
+                            onChange={(e) => setNewNavForm({ ...newNavForm, targetId: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-mono text-[11px] focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-stone-300">
+                          <input
+                            type="checkbox"
+                            checked={newNavForm.isExternal}
+                            onChange={(e) => setNewNavForm({ ...newNavForm, isExternal: e.target.checked })}
+                            className="rounded border-slate-700 text-amber-400 focus:ring-0"
+                          />
+                          <span>Open in new tab (external link)</span>
+                        </label>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingNavMenu(false)}
+                            className="px-4 py-2 rounded-xl bg-slate-800 text-stone-300 text-xs font-semibold hover:bg-slate-700"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-5 py-2 rounded-xl text-slate-950 text-xs font-bold uppercase tracking-wider shadow-lg hover:scale-105 active:scale-95 transition-all"
+                            style={{ backgroundColor: 'var(--color-secondary)' }}
+                          >
+                            Add to Navigation
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* Navigation Items List */}
+                  <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+                    <div className="p-4 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Compass className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                          Active Navigation Menu Roster ({navMenus.length} Items)
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-stone-400">
+                        Items appear in the exact order shown below
+                      </span>
+                    </div>
+
+                    <div className="divide-y divide-slate-800/80">
+                      {navMenus.map((menu, idx) => (
+                        <div 
+                          key={menu.id}
+                          className={`p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 transition-all ${
+                            menu.visible ? 'bg-slate-950/40 hover:bg-slate-900/30' : 'bg-slate-950/90 opacity-60'
+                          }`}
+                        >
+                          {/* Left: Reorder & Number */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col gap-1">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveNavMenu(idx, 'up')}
+                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-20 flex items-center justify-center text-stone-300 transition-all"
+                                title="Move up"
+                              >
+                                <ArrowUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === navMenus.length - 1}
+                                onClick={() => handleMoveNavMenu(idx, 'down')}
+                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-20 flex items-center justify-center text-stone-300 transition-all"
+                                title="Move down"
+                              >
+                                <ArrowDown className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <span className="w-8 h-8 rounded-xl bg-slate-900 text-stone-300 border border-slate-800 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                              {String(idx + 1).padStart(2, '0')}
+                            </span>
+                          </div>
+
+                          {/* Middle: In-line editable details */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 flex-1 w-full text-xs">
+                            <div className="lg:col-span-4">
+                              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">
+                                Menu Title / Label
+                              </label>
+                              <input
+                                type="text"
+                                value={menu.label}
+                                onChange={(e) => handleUpdateNavField(menu.id, 'label', e.target.value)}
+                                onBlur={handleSaveAllNavMenus}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white font-medium focus:outline-none focus:border-amber-400"
+                              />
+                            </div>
+
+                            <div className="lg:col-span-5">
+                              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">
+                                Destination Link (href)
+                              </label>
+                              <input
+                                type="text"
+                                value={menu.href}
+                                onChange={(e) => handleUpdateNavField(menu.id, 'href', e.target.value)}
+                                onBlur={handleSaveAllNavMenus}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-amber-200 font-mono text-[11px] focus:outline-none focus:border-amber-400"
+                              />
+                            </div>
+
+                            <div className="lg:col-span-3 flex items-center gap-2 pt-4 lg:pt-0">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold ${
+                                menu.visible 
+                                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30' 
+                                  : 'bg-rose-950 text-rose-300 border border-rose-500/30'
+                              }`}>
+                                {menu.visible ? 'Visible' : 'Hidden'}
+                              </span>
+
+                              {menu.isExternal && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-500/30">
+                                  External
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right: Actions (Toggle & Remove) */}
+                          <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleNavVisibility(menu.id)}
+                              className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+                                menu.visible
+                                  ? 'bg-slate-800 text-stone-200 hover:bg-slate-700 border-slate-700'
+                                  : 'bg-emerald-950 text-emerald-300 hover:bg-emerald-900 border-emerald-600/40'
+                              }`}
+                              title={menu.visible ? 'Hide from navbar' : 'Show in navbar'}
+                            >
+                              {menu.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              <span>{menu.visible ? 'Hide' : 'Show'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveNavMenu(menu.id)}
+                              className="p-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/30 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                              title="Delete menu item"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Remove</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Live Navbar Preview Box */}
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 space-y-3">
+                    <span className="text-[10px] uppercase font-mono tracking-widest text-amber-400 block font-semibold">
+                      Live Guest Navbar Preview
+                    </span>
+                    <div className="p-3.5 rounded-xl bg-slate-950 border border-white/10 flex items-center justify-between overflow-x-auto gap-4">
+                      <div className="font-serif font-bold text-white text-xs whitespace-nowrap">
+                        {theme?.hotelName || 'The Grand Aurelia'}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-white/80 whitespace-nowrap overflow-x-auto">
+                        {navMenus.filter(m => m.visible).map(m => (
+                          <span key={m.id} className="px-2 py-0.5 rounded hover:text-amber-300 font-medium">
+                            {m.label}
+                          </span>
+                        ))}
+                      </div>
+                      <div 
+                        className="px-3 py-1 rounded-full text-[10px] font-bold text-slate-950 uppercase shrink-0"
+                        style={{ backgroundColor: 'var(--color-secondary)' }}
+                      >
+                        Book Stay
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* SUBTAB 2: DINING & TASTING MENUS */}
+              {menuSubTab === 'dining' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-base font-bold text-white font-serif">
+                        Gastronomy Venues & Culinary Menus
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Manage dining locations, Michelin tasting experiences, and operating hours in the Gastronomy section.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingDining(!isAddingDining)}
+                      className="px-4 py-2 rounded-xl text-slate-950 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all hover:scale-105 active:scale-95"
+                      style={{ backgroundColor: 'var(--color-secondary)' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{isAddingDining ? 'Close' : 'Add Dining Menu'}</span>
+                    </button>
+                  </div>
+
+                  {isAddingDining && (
+                    <form 
+                      onSubmit={handleAddDiningVenue}
+                      className="p-5 rounded-2xl bg-slate-950 border-2 border-amber-400/40 shadow-2xl space-y-4 animate-fade-in"
+                    >
+                      <h4 className="text-sm font-bold text-white">Create Dining Venue / Tasting Menu</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <label className="block text-slate-300 mb-1 font-semibold">Restaurant / Venue Name</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. La Terrazza Sul Mare"
+                            value={newDiningForm.name}
+                            onChange={(e) => setNewDiningForm({ ...newDiningForm, name: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-300 mb-1 font-semibold">Accolade / Distinction</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 2 Michelin Stars, Oceanfront Vista"
+                            value={newDiningForm.accolade}
+                            onChange={(e) => setNewDiningForm({ ...newDiningForm, accolade: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-300 mb-1 font-semibold">Cuisine & Menu Type</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Haute Cuisine & Degustation"
+                            value={newDiningForm.type}
+                            onChange={(e) => setNewDiningForm({ ...newDiningForm, type: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-300 mb-1 font-semibold">Operating Hours</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 19:00 - 23:30"
+                            value={newDiningForm.hours}
+                            onChange={(e) => setNewDiningForm({ ...newDiningForm, hours: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-slate-300 mb-1 font-semibold">Image URL</label>
+                          <input
+                            type="url"
+                            placeholder="https://images.unsplash.com/..."
+                            value={newDiningForm.image}
+                            onChange={(e) => setNewDiningForm({ ...newDiningForm, image: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-mono text-[11px] focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-slate-300 mb-1 font-semibold">Editorial Description</label>
+                          <textarea
+                            rows={2}
+                            placeholder="Sensory tasting experience guided by Master Sommelier..."
+                            value={newDiningForm.description}
+                            onChange={(e) => setNewDiningForm({ ...newDiningForm, description: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingDining(false)}
+                          className="px-4 py-2 rounded-xl bg-slate-800 text-stone-300 text-xs font-semibold"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-5 py-2 rounded-xl text-slate-950 text-xs font-bold uppercase tracking-wider"
+                          style={{ backgroundColor: 'var(--color-secondary)' }}
+                        >
+                          Save Dining Venue
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {diningVenues.map((venue) => (
+                      <div key={venue.id} className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-xl flex flex-col">
+                        <div className="relative h-44 overflow-hidden">
+                          <img src={venue.image} alt={venue.name} className="w-full h-full object-cover" />
+                          <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleDiningVisibility(venue.id)}
+                              className="p-1.5 rounded-lg bg-black/60 text-white hover:bg-black text-xs"
+                              title={venue.visible ? 'Hide' : 'Show'}
+                            >
+                              {venue.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5 text-stone-400" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveDiningVenue(venue.id)}
+                              className="p-1.5 rounded-lg bg-rose-950/80 text-rose-300 hover:bg-rose-900 text-xs border border-rose-500/30"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="p-4 flex-1 flex flex-col justify-between space-y-2 text-xs">
+                          <div>
+                            <span className="text-[10px] font-mono text-amber-400 uppercase font-semibold">{venue.accolade}</span>
+                            <h5 className="font-serif font-bold text-white text-sm">{venue.name}</h5>
+                            <span className="text-stone-400 text-[11px] block">{venue.type}</span>
+                            <span className="text-stone-500 text-[10px] block mt-0.5">{venue.hours}</span>
+                          </div>
+                          <p className="text-stone-300 text-[11px] line-clamp-2">{venue.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             </div>
           )}

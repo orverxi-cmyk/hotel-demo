@@ -101,6 +101,11 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    match /settings/menus {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
     // ===============================================================
     // 5. RESERVATIONS & BOOKINGS PIPELINE (/bookings/{bookingId})
     // ===============================================================

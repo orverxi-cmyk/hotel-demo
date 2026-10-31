@@ -401,3 +401,52 @@ export const availableAddons = [
   }
 ];
 
+// Website Header & Mobile Navigation Menus
+export const initialNavMenus = [
+  { id: 'nav-home', label: 'Home', href: '/', targetId: 'home', isExternal: false, visible: true, order: 1 },
+  { id: 'nav-rooms', label: 'Rooms & Suites', href: '/#rooms', targetId: 'rooms', isExternal: false, visible: true, order: 2 },
+  { id: 'nav-amenities', label: 'Experiences & Spa', href: '/#amenities', targetId: 'amenities', isExternal: false, visible: true, order: 3 },
+  { id: 'nav-dining', label: 'Gastronomy', href: '/#dining', targetId: 'dining', isExternal: false, visible: true, order: 4 },
+  { id: 'nav-gallery', label: 'Gallery', href: '/#gallery', targetId: 'gallery', isExternal: false, visible: true, order: 5 },
+  { id: 'nav-reviews', label: 'Testimonials', href: '/#reviews', targetId: 'reviews', isExternal: false, visible: true, order: 6 },
+  { id: 'nav-contact', label: 'Contact', href: '/#contact', targetId: 'contact', isExternal: false, visible: true, order: 7 }
+];
+
+// Gastronomy & Restaurant Venues / Tasting Menus
+export const initialDiningVenues = [
+  {
+    id: "dining-1",
+    name: "L'Orangerie Gastronomique",
+    accolade: "2 Michelin Stars",
+    type: "Haute Cuisine & Tasting Menus",
+    hours: "19:00 - 23:00",
+    image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800&q=80",
+    description: "Under Executive Chef Marco Valenti, local organic sea treasures and estate herbs are transformed into sensory culinary art.",
+    order: 1,
+    visible: true
+  },
+  {
+    id: "dining-2",
+    name: "The Cliffside Terrace & Raw Bar",
+    accolade: "Oceanfront Vista",
+    type: "Mediterranean Crudo & Sunset Aperitivo",
+    hours: "12:00 - 22:30",
+    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    description: "Perched 40 meters above crashing waves, serving chilled oysters, wild turbot carpaccio, and vintage champagne as the sun melts into the sea.",
+    order: 2,
+    visible: true
+  },
+  {
+    id: "dining-3",
+    name: "The Cellar Vault & Cigar Lounge",
+    accolade: "12,000 Rare Bottles",
+    type: "Sommelier Masterclasses & Aged Spirits",
+    hours: "17:00 - 01:00",
+    image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80",
+    description: "A subterranean cavern dating to the 18th century, offering private tastings of rare Sassicaia, Barolo, and hand-rolled Caribbean cigars.",
+    order: 3,
+    visible: true
+  }
+];
+
+
