@@ -1534,41 +1534,10 @@ export const AdminPortal = ({
                           )}
                         </div>
 
-                        {/* Slide Metadata, Inclusions & Destination Links Editor */}
+                        {/* Slide Headline, Inclusions & Destination Link Editor */}
                         <div className="lg:col-span-7 space-y-4 text-xs">
                           
-                          {/* Row 1: Badge / Category & Slide Number */}
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                            <div className="sm:col-span-3">
-                              <label className="block text-slate-300 mb-1 font-semibold">
-                                Category Badge / Kicker (Top Tag)
-                              </label>
-                              <input
-                                type="text"
-                                disabled={!isSuperAdmin}
-                                value={slide.badge || ''}
-                                placeholder="e.g. MICHELIN GASTRONOMY & EATERY"
-                                onChange={(e) => handleUpdateSlideField(slide.id, 'badge', e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-amber-300 font-mono text-xs uppercase disabled:opacity-60 focus:outline-none focus:border-amber-400 font-bold"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-slate-300 mb-1 font-semibold">
-                                Slide Number
-                              </label>
-                              <input
-                                type="text"
-                                disabled={!isSuperAdmin}
-                                value={slide.number || ''}
-                                placeholder="02"
-                                onChange={(e) => handleUpdateSlideField(slide.id, 'number', e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-center disabled:opacity-60 focus:outline-none focus:border-amber-400 font-bold"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Row 2: Headline Title */}
+                          {/* Headline Title */}
                           <div>
                             <label className="block text-slate-300 mb-1 font-semibold">Slide Headline Title</label>
                             <input
@@ -1580,7 +1549,7 @@ export const AdminPortal = ({
                             />
                           </div>
 
-                          {/* Row 3: Editorial Subtitle */}
+                          {/* Editorial Subtitle */}
                           <div>
                             <label className="block text-slate-300 mb-1 font-semibold">Editorial Subtitle / Description</label>
                             <textarea
@@ -1592,7 +1561,7 @@ export const AdminPortal = ({
                             />
                           </div>
 
-                          {/* Row 4: Bespoke Inclusions / Bullet Highlights Editor */}
+                          {/* Bespoke Inclusions / Bullet Highlights Editor */}
                           <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
                             <div className="flex items-center justify-between">
                               <span className="text-[11px] font-mono uppercase text-amber-300 font-semibold tracking-wider">
@@ -1641,156 +1610,97 @@ export const AdminPortal = ({
                             </div>
                           </div>
 
-                          {/* Row 5: Action Destination Buttons (Primary & Secondary) */}
-                          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-                            <span className="text-[11px] font-mono uppercase text-amber-300 font-semibold tracking-wider block">
-                              Slide Buttons & Destination Actions
-                            </span>
+                          {/* Slide Destination Link (Direct Link to Discover Article) */}
+                          <div className="p-3.5 rounded-xl bg-slate-900/90 border border-amber-400/30 space-y-3">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-mono uppercase text-amber-300 font-semibold tracking-wider flex items-center gap-1.5">
+                                  <Link2 className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>Destination Link (Slider Links to Discover / Articles)</span>
+                                </span>
+                                <span className="text-[10px] text-amber-400/80 font-mono">
+                                  Links directly to /discover
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 mt-0.5">
+                                Enter the destination URL or pick a Discover article from the dropdown to link this slide directly.
+                              </p>
+                            </div>
 
-                            {/* Primary Button */}
-                            <div className="space-y-1.5 pt-1 border-t border-slate-800">
-                              <span className="text-[11px] text-slate-300 font-semibold flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                                <span>Primary Action Button (Gold Button)</span>
-                              </span>
-                              
-                              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                                <div className="sm:col-span-4">
-                                  <input
-                                    type="text"
-                                    disabled={!isSuperAdmin}
-                                    value={slide.ctaLabel || ''}
-                                    placeholder="e.g. Book Tasting Table"
-                                    onChange={(e) => handleUpdateSlideField(slide.id, 'ctaLabel', e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
-                                  />
-                                </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                              <div className="sm:col-span-7">
+                                <label className="block text-[11px] text-slate-300 font-semibold mb-1">
+                                  Destination URL Link
+                                </label>
+                                <input
+                                  type="text"
+                                  disabled={!isSuperAdmin}
+                                  value={slide.destinationLink || ''}
+                                  placeholder="/discover?article=article-michelin-story"
+                                  onChange={(e) => handleUpdateSlideField(slide.id, 'destinationLink', e.target.value)}
+                                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-amber-300 font-mono disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                />
+                              </div>
 
-                                <div className="sm:col-span-4">
-                                  <select
-                                    disabled={!isSuperAdmin}
-                                    value={slide.ctaAction || 'booking'}
-                                    onChange={(e) => handleUpdateSlideField(slide.id, 'ctaAction', e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
-                                  >
-                                    <option value="booking">Open Booking Modal</option>
-                                    <option value="article">Open Discover Article</option>
-                                    <option value="url">Custom Website Link</option>
-                                  </select>
-                                </div>
-
-                                <div className="sm:col-span-4">
-                                  {slide.ctaAction === 'article' ? (
-                                    <select
-                                      disabled={!isSuperAdmin}
-                                      value={slide.ctaArticleId || ''}
-                                      onChange={(e) => handleUpdateSlideField(slide.id, 'ctaArticleId', e.target.value)}
-                                      className="w-full bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 disabled:opacity-60 focus:outline-none focus:border-amber-400"
-                                    >
-                                      <option value="">Select Discover Article...</option>
-                                      {articles.map((art) => (
-                                        <option key={art.id} value={art.id}>
-                                          {art.title.slice(0, 32)}...
-                                        </option>
-                                      ))}
-                                    </select>
-                                  ) : slide.ctaAction === 'url' ? (
-                                    <input
-                                      type="text"
-                                      disabled={!isSuperAdmin}
-                                      value={slide.ctaUrl || ''}
-                                      placeholder="https://... or /page"
-                                      onChange={(e) => handleUpdateSlideField(slide.id, 'ctaUrl', e.target.value)}
-                                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400 font-mono text-[11px]"
-                                    />
-                                  ) : (
-                                    <span className="text-[11px] text-stone-400 italic flex items-center h-full px-1">
-                                      Triggers reservation modal
-                                    </span>
-                                  )}
-                                </div>
+                              <div className="sm:col-span-5">
+                                <label className="block text-[11px] text-slate-300 font-semibold mb-1">
+                                  Quick-Select Discover Article
+                                </label>
+                                <select
+                                  disabled={!isSuperAdmin}
+                                  value={slide.destinationLink || ''}
+                                  onChange={(e) => handleUpdateSlideField(slide.id, 'destinationLink', e.target.value)}
+                                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                >
+                                  <option value="/discover">Overview: /discover</option>
+                                  {articles.map((art) => (
+                                    <option key={art.id} value={`/discover?article=${art.id}`}>
+                                      {art.title.slice(0, 35)}...
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
                             </div>
 
-                            {/* Secondary Button */}
-                            <div className="space-y-1.5 pt-2 border-t border-slate-800">
-                              <span className="text-[11px] text-slate-300 font-semibold flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-slate-500" />
-                                <span>Secondary Action Button (Outlined Button)</span>
-                              </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                              <div>
+                                <label className="block text-[11px] text-slate-300 font-semibold mb-1">
+                                  Primary Button Label
+                                </label>
+                                <input
+                                  type="text"
+                                  disabled={!isSuperAdmin}
+                                  value={slide.ctaLabel || ''}
+                                  placeholder="e.g. Read Discover Story"
+                                  onChange={(e) => handleUpdateSlideField(slide.id, 'ctaLabel', e.target.value)}
+                                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                />
+                              </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                                <div className="sm:col-span-4">
+                              <div>
+                                <label className="block text-[11px] text-slate-300 font-semibold mb-1">
+                                  Secondary Button Label & Target
+                                </label>
+                                <div className="flex gap-2">
                                   <input
                                     type="text"
                                     disabled={!isSuperAdmin}
                                     value={slide.actionLabel || ''}
-                                    placeholder="e.g. Explore Dining Venues"
+                                    placeholder="e.g. Explore More"
                                     onChange={(e) => handleUpdateSlideField(slide.id, 'actionLabel', e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                    className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
                                   />
-                                </div>
-
-                                <div className="sm:col-span-4">
-                                  <select
+                                  <input
+                                    type="text"
                                     disabled={!isSuperAdmin}
-                                    value={slide.actionType || 'anchor'}
-                                    onChange={(e) => handleUpdateSlideField(slide.id, 'actionType', e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
-                                  >
-                                    <option value="anchor">Scroll to Page Section</option>
-                                    <option value="article">Open Discover Article</option>
-                                    <option value="url">Custom Website Link</option>
-                                  </select>
-                                </div>
-
-                                <div className="sm:col-span-4">
-                                  {slide.actionType === 'article' ? (
-                                    <select
-                                      disabled={!isSuperAdmin}
-                                      value={slide.actionArticleId || (slide.actionTarget?.startsWith('article:') ? slide.actionTarget.replace('article:', '') : '')}
-                                      onChange={(e) => {
-                                        handleUpdateSlideField(slide.id, 'actionArticleId', e.target.value);
-                                        handleUpdateSlideField(slide.id, 'actionTarget', `article:${e.target.value}`);
-                                      }}
-                                      className="w-full bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 disabled:opacity-60 focus:outline-none focus:border-amber-400"
-                                    >
-                                      <option value="">Select Discover Article...</option>
-                                      {articles.map((art) => (
-                                        <option key={art.id} value={art.id}>
-                                          {art.title.slice(0, 32)}...
-                                        </option>
-                                      ))}
-                                    </select>
-                                  ) : slide.actionType === 'url' ? (
-                                    <input
-                                      type="text"
-                                      disabled={!isSuperAdmin}
-                                      value={slide.actionTarget || ''}
-                                      placeholder="https://..."
-                                      onChange={(e) => handleUpdateSlideField(slide.id, 'actionTarget', e.target.value)}
-                                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400 font-mono text-[11px]"
-                                    />
-                                  ) : (
-                                    <select
-                                      disabled={!isSuperAdmin}
-                                      value={slide.actionTarget || '#rooms'}
-                                      onChange={(e) => handleUpdateSlideField(slide.id, 'actionTarget', e.target.value)}
-                                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-amber-400"
-                                    >
-                                      <option value="#rooms">Rooms & Suites (#rooms)</option>
-                                      <option value="#dining">Gastronomy & Dining (#dining)</option>
-                                      <option value="#amenities">Experiences & Spa (#amenities)</option>
-                                      <option value="#discover">Discover Articles (#discover)</option>
-                                      <option value="#gallery">Gallery (#gallery)</option>
-                                      <option value="#reviews">Testimonials (#reviews)</option>
-                                      <option value="#contact">Location & Contact (#contact)</option>
-                                    </select>
-                                  )}
+                                    value={slide.actionTarget || ''}
+                                    placeholder="/discover or /#dining"
+                                    onChange={(e) => handleUpdateSlideField(slide.id, 'actionTarget', e.target.value)}
+                                    className="w-32 bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-stone-300 font-mono disabled:opacity-60 focus:outline-none focus:border-amber-400"
+                                  />
                                 </div>
                               </div>
                             </div>
-
                           </div>
 
                           {/* Row 6: Media Type & Direct Media URL */}

@@ -407,7 +407,7 @@ export const initialNavMenus = [
   { id: 'nav-rooms', label: 'Rooms & Suites', href: '/#rooms', targetId: 'rooms', isExternal: false, visible: true, order: 2 },
   { id: 'nav-amenities', label: 'Experiences & Spa', href: '/#amenities', targetId: 'amenities', isExternal: false, visible: true, order: 3 },
   { id: 'nav-dining', label: 'Gastronomy', href: '/#dining', targetId: 'dining', isExternal: false, visible: true, order: 4 },
-  { id: 'nav-discover', label: 'Discover', href: '/#discover', targetId: 'discover', isExternal: false, visible: true, order: 5 },
+  { id: 'nav-discover', label: 'Discover', href: '/discover', targetId: '', isExternal: false, visible: true, order: 5 },
   { id: 'nav-gallery', label: 'Gallery', href: '/#gallery', targetId: 'gallery', isExternal: false, visible: true, order: 6 },
   { id: 'nav-reviews', label: 'Testimonials', href: '/#reviews', targetId: 'reviews', isExternal: false, visible: true, order: 7 },
   { id: 'nav-contact', label: 'Contact', href: '/#contact', targetId: 'contact', isExternal: false, visible: true, order: 8 }

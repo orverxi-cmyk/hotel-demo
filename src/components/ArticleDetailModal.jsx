@@ -267,3 +267,4 @@ export const ArticleDetailModal = ({ article, isOpen, onClose }) => {
     </div>
   );
 };
+

@@ -129,7 +129,8 @@ export const Navbar = ({ onOpenCMS }) => {
             {visibleMenus.map((item) => {
               const isHome = item.href === '/' || item.targetId === 'home';
               const isActive = (isHome && pathname === '/' && activeSection === 'home') ||
-                               (!isHome && pathname === '/' && activeSection === item.targetId);
+                               (!isHome && pathname === '/' && activeSection === item.targetId) ||
+                               (!isHome && pathname === item.href);
 
               if (item.isExternal || item.href.startsWith('http://') || item.href.startsWith('https://')) {
                 return (
@@ -226,7 +227,8 @@ export const Navbar = ({ onOpenCMS }) => {
             {visibleMenus.map((item) => {
               const isHome = item.href === '/' || item.targetId === 'home';
               const isActive = (isHome && pathname === '/' && activeSection === 'home') ||
-                               (!isHome && pathname === '/' && activeSection === item.targetId);
+                               (!isHome && pathname === '/' && activeSection === item.targetId) ||
+                               (!isHome && pathname === item.href);
 
               if (item.isExternal || item.href.startsWith('http://') || item.href.startsWith('https://')) {
                 return (

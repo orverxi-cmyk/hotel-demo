@@ -140,6 +140,11 @@ service cloud.firestore {
       allow write: if isSuperAdmin(); // Super Admin only
     }
 
+    match /articles/{articleId} {
+      allow read: if true; // Public guest display for discover articles
+      allow write: if isSuperAdmin(); // Super Admin only
+    }
+
     // ===============================================================
     // 7. TRANSACTIONAL EMAILS & NOTIFICATIONS PIPELINE (/mail/{mailId})
     // ===============================================================

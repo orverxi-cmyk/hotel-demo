@@ -176,24 +176,14 @@ export const Hero = ({ onSelectArticleById }) => {
             
             <div className={`space-y-4 transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
               
-              {/* Hotel & Slide Kicker */}
+              {/* Star Rating */}
               <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[10px] text-amber-200 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  <span className="font-mono">{active.number} / {String(slides.length).padStart(2, '0')}</span>
-                </div>
-
-                <div className="flex text-amber-400 gap-0.5">
+                <div className="flex text-amber-400 gap-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 fill-amber-400" />
+                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
                   ))}
                 </div>
               </div>
-
-              {/* Service Category Tag */}
-              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300/90 font-bold block">
-                {active.badge}
-              </span>
 
               {/* Title & Description */}
               <div className="space-y-2">
@@ -225,53 +215,39 @@ export const Hero = ({ onSelectArticleById }) => {
             {/* Bottom Actions & Controls */}
             <div className="space-y-4 pt-4 border-t border-white/10 mt-4">
               
-              {/* Primary Call to Action */}
+              {/* Primary Call to Action -> Directly Links to Discover Article / Destination */}
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => {
-                    if (active.ctaAction === 'article' && active.ctaArticleId) {
-                      if (onSelectArticleById) {
-                        onSelectArticleById(active.ctaArticleId);
-                        return;
-                      }
-                    }
-                    if (active.ctaAction === 'url' && active.ctaUrl) {
-                      window.location.href = active.ctaUrl;
-                      return;
-                    }
-                    openBookingModal();
-                  }}
-                  className="w-full py-3 px-4 rounded-xl text-slate-950 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
-                  style={{ backgroundColor: 'var(--color-secondary)' }}
-                >
-                  <span>{active.ctaLabel || 'Reserve Experience'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    const isArticle = active.actionType === 'article' || active.actionTarget?.startsWith('article:');
-                    if (isArticle) {
-                      const artId = active.actionArticleId || active.actionTarget?.replace('article:', '');
+                    const dest = active.destinationLink || active.ctaUrl || '/discover';
+                    if (dest.startsWith('/discover?article=')) {
+                      const artId = dest.split('article=')[1];
                       if (artId && onSelectArticleById) {
                         onSelectArticleById(artId);
                         return;
                       }
                     }
-                    if (active.actionTarget) {
-                      if (active.actionTarget.startsWith('#')) {
-                        const el = document.querySelector(active.actionTarget);
-                        if (el) {
-                          el.scrollIntoView({ behavior: 'smooth' });
-                          return;
-                        }
+                    window.location.href = dest;
+                  }}
+                  className="w-full py-3 px-4 rounded-xl text-slate-950 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+                  style={{ backgroundColor: 'var(--color-secondary)' }}
+                >
+                  <span>{active.ctaLabel || 'Read Discover Story'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sec = active.actionTarget || active.secondaryLink || '/discover';
+                    if (sec.startsWith('#')) {
+                      const el = document.querySelector(sec);
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' });
+                        return;
                       }
-                      window.location.href = active.actionTarget;
-                    } else {
-                      const el = document.querySelector('#rooms');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
                     }
+                    window.location.href = sec;
                   }}
                   className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-white/10 text-center cursor-pointer"
                 >
@@ -279,29 +255,26 @@ export const Hero = ({ onSelectArticleById }) => {
                 </button>
               </div>
 
-              {/* Mini Carousel Controls & Slide indicator */}
+              {/* Mini Carousel Controls */}
               <div className="flex items-center justify-between pt-1">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={prevSlide}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer"
                     aria-label="Previous slide"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <button
                     onClick={nextSlide}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer"
                     aria-label="Next slide"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
-                  <span className="text-[11px] font-mono text-stone-400 ml-1">
-                    {active.number} <span className="text-stone-600">/</span> {String(slides.length).padStart(2, '0')}
-                  </span>
                 </div>
 
-                <span className="text-[10px] text-stone-400 italic truncate max-w-[100px]">
+                <span className="text-[10px] text-stone-400 italic truncate max-w-[120px]">
                   {theme?.hotelName || 'The Grand Aurelia'}
                 </span>
               </div>
