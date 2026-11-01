@@ -5,13 +5,56 @@
 :root {
   --color-primary: #0f2b48;
   --color-primary-hover: #091b2e;
+  --color-primary-active: #050f1a;
   --color-primary-light: #1b4975;
   --color-primary-soft: #eef4f9;
+  --color-primary-contrast: #ffffff;
 
   --color-secondary: #c5a059;
   --color-secondary-hover: #a68442;
+  --color-secondary-active: #8e6f33;
   --color-secondary-light: #dfbf7f;
   --color-secondary-soft: #fbf7ee;
+  --color-secondary-contrast: #111827;
+
+  --color-background: #fdfbf7;
+  --color-bg: #fdfbf7;
+  --color-surface: #ffffff;
+  --color-hover: #a68442;
+  --color-active: #8e6f33;
+  --color-text-main: #111827;
+  --color-text-surface: #111827;
+}
+
+body {
+  background-color: var(--color-background, #fdfbf7);
+  color: var(--color-text-main, #1e293b);
+  transition: background-color 250ms ease, color 250ms ease;
+}
+
+/* Dynamic Brand Interactive Hover & Active states */
+button[style*="--color-secondary"]:hover,
+a[style*="--color-secondary"]:hover,
+.btn-brand-secondary:hover {
+  background-color: var(--color-secondary-hover, var(--color-hover)) !important;
+}
+
+button[style*="--color-secondary"]:active,
+a[style*="--color-secondary"]:active,
+.btn-brand-secondary:active {
+  background-color: var(--color-secondary-active, var(--color-active)) !important;
+}
+
+button[style*="--color-primary"]:hover,
+a[style*="--color-primary"]:hover,
+.btn-brand-primary:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+button[style*="--color-primary"]:active,
+a[style*="--color-primary"]:active,
+.btn-brand-primary:active {
+  background-color: var(--color-primary-active, var(--color-primary-hover)) !important;
 }
 
 * {

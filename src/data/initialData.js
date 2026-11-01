@@ -4,7 +4,12 @@ export const themePresets = [
     name: "Royal Sapphire & Gold",
     description: "Classic aristocratic Mediterranean luxury",
     primary: "#0f2b48",
+    primaryHover: "#091b2e",
     secondary: "#c5a059",
+    secondaryHover: "#a68442",
+    backgroundColor: "#fdfbf7",
+    surfaceColor: "#ffffff",
+    activeColor: "#8e6f33",
     category: "Luxury Classic"
   },
   {
@@ -12,7 +17,12 @@ export const themePresets = [
     name: "Emerald Haven & Champagne",
     description: "Eco-luxury, botanical retreats & alpine resorts",
     primary: "#143d2b",
+    primaryHover: "#0d291d",
     secondary: "#d4af37",
+    secondaryHover: "#b3922b",
+    backgroundColor: "#fbfdfc",
+    surfaceColor: "#ffffff",
+    activeColor: "#93771f",
     category: "Botanical & Nature"
   },
   {
@@ -20,7 +30,12 @@ export const themePresets = [
     name: "Bordeaux Heritage & Bronze",
     description: "Rich vintage winery estates and heritage manors",
     primary: "#481123",
+    primaryHover: "#300a16",
     secondary: "#bf8a48",
+    secondaryHover: "#a07137",
+    backgroundColor: "#fdfaf7",
+    surfaceColor: "#ffffff",
+    activeColor: "#825b29",
     category: "Heritage & Winery"
   },
   {
@@ -28,7 +43,12 @@ export const themePresets = [
     name: "Amalfi Azure & Terracotta",
     description: "Vibrant coastal charm & Mediterranean seaside resorts",
     primary: "#034a74",
+    primaryHover: "#023350",
     secondary: "#d46a4e",
+    secondaryHover: "#b8543a",
+    backgroundColor: "#f7fbfe",
+    surfaceColor: "#ffffff",
+    activeColor: "#96422d",
     category: "Coastal & Resort"
   },
   {
@@ -36,7 +56,12 @@ export const themePresets = [
     name: "Monaco Noir & Platinum",
     description: "Ultra-modern chic boutique hotel in metropolitan capitals",
     primary: "#161a1d",
+    primaryHover: "#0b0d0e",
     secondary: "#ba9e6e",
+    secondaryHover: "#9d8354",
+    backgroundColor: "#0f141c",
+    surfaceColor: "#1a202c",
+    activeColor: "#826a40",
     category: "Modern Minimalist"
   },
   {
@@ -44,14 +69,24 @@ export const themePresets = [
     name: "Santorini Mist & Sunset",
     description: "Warm sunset glow for island villas & serene getaways",
     primary: "#1d3557",
+    primaryHover: "#112239",
     secondary: "#e76f51",
+    secondaryHover: "#cc5437",
+    backgroundColor: "#fdf8f5",
+    surfaceColor: "#ffffff",
+    activeColor: "#ad4128",
     category: "Island & Sunset"
   }
 ];
 
 export const defaultTheme = {
   primaryColor: "#0f2b48",
+  primaryHoverColor: "#091b2e",
   secondaryColor: "#c5a059",
+  secondaryHoverColor: "#a68442",
+  backgroundColor: "#fdfbf7",
+  surfaceColor: "#ffffff",
+  activeColor: "#8e6f33",
   hotelName: "The Grand Aurelia",
   hotelSubtitle: "Luxury Resort & Botanical Spa",
   location: "Costa Smeralda, Sardinia, Italy",

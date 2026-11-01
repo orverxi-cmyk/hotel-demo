@@ -79,6 +79,7 @@ import {
   initialArticles,
   subscribeArticles
 } from '../../services/storageService';
+import { adjustLightness } from '../../utils/colorUtils';
 
 export const AdminPortal = ({ 
   onClose, 
@@ -686,19 +687,49 @@ export const AdminPortal = ({
   
   // Local theme form state
   const [themeForm, setThemeForm] = useState({
-    primaryColor: theme.primaryColor,
-    secondaryColor: theme.secondaryColor,
-    hotelName: theme.hotelName,
-    hotelSubtitle: theme.hotelSubtitle,
-    location: theme.location,
-    currency: theme.currency,
-    phone: theme.phone,
-    email: theme.email,
+    primaryColor: theme.primaryColor || '#0f2b48',
+    primaryHoverColor: theme.primaryHoverColor || '#091b2e',
+    secondaryColor: theme.secondaryColor || '#c5a059',
+    secondaryHoverColor: theme.secondaryHoverColor || '#a68442',
+    backgroundColor: theme.backgroundColor || '#fdfbf7',
+    surfaceColor: theme.surfaceColor || '#ffffff',
+    activeColor: theme.activeColor || '#8e6f33',
+    hotelName: theme.hotelName || '',
+    hotelSubtitle: theme.hotelSubtitle || '',
+    location: theme.location || '',
+    currency: theme.currency || '$',
+    phone: theme.phone || '',
+    email: theme.email || '',
     checkInTime: theme.checkInTime || '15:00',
     checkOutTime: theme.checkOutTime || '11:00',
-    heroImage: theme.heroImage,
+    heroImage: theme.heroImage || '',
     announcement: theme.announcement || ''
   });
+
+  useEffect(() => {
+    if (theme) {
+      setThemeForm(prev => ({
+        ...prev,
+        primaryColor: theme.primaryColor || prev.primaryColor || '#0f2b48',
+        primaryHoverColor: theme.primaryHoverColor || prev.primaryHoverColor || '#091b2e',
+        secondaryColor: theme.secondaryColor || prev.secondaryColor || '#c5a059',
+        secondaryHoverColor: theme.secondaryHoverColor || prev.secondaryHoverColor || '#a68442',
+        backgroundColor: theme.backgroundColor || prev.backgroundColor || '#fdfbf7',
+        surfaceColor: theme.surfaceColor || prev.surfaceColor || '#ffffff',
+        activeColor: theme.activeColor || prev.activeColor || '#8e6f33',
+        hotelName: theme.hotelName !== undefined ? theme.hotelName : prev.hotelName,
+        hotelSubtitle: theme.hotelSubtitle !== undefined ? theme.hotelSubtitle : prev.hotelSubtitle,
+        location: theme.location !== undefined ? theme.location : prev.location,
+        currency: theme.currency !== undefined ? theme.currency : prev.currency,
+        phone: theme.phone !== undefined ? theme.phone : prev.phone,
+        email: theme.email !== undefined ? theme.email : prev.email,
+        checkInTime: theme.checkInTime || prev.checkInTime,
+        checkOutTime: theme.checkOutTime || prev.checkOutTime,
+        heroImage: theme.heroImage || prev.heroImage,
+        announcement: theme.announcement !== undefined ? theme.announcement : prev.announcement
+      }));
+    }
+  }, [theme]);
 
   // Bookings filter
   const [bookingFilter, setBookingFilter] = useState('all');
@@ -757,6 +788,21 @@ export const AdminPortal = ({
     setThemeForm(prev => ({ ...prev, [field]: color }));
     // Instantly update live DOM for instant client feedback
     updateTheme({ [field]: color });
+  };
+
+  const autoDerivePrimaryHover = () => {
+    const derived = adjustLightness(themeForm.primaryColor || '#0f2b48', -15);
+    handleColorChange('primaryHoverColor', derived);
+  };
+
+  const autoDeriveSecondaryHover = () => {
+    const derived = adjustLightness(themeForm.secondaryColor || '#c5a059', -15);
+    handleColorChange('secondaryHoverColor', derived);
+  };
+
+  const autoDeriveActive = () => {
+    const derived = adjustLightness(themeForm.secondaryColor || '#c5a059', -25);
+    handleColorChange('activeColor', derived);
   };
 
   const handleSaveTheme = async (e) => {
@@ -1120,7 +1166,8 @@ export const AdminPortal = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
                   {presets.map((preset) => {
                     const isActive = theme.primaryColor.toLowerCase() === preset.primary.toLowerCase() && 
-                                     theme.secondaryColor.toLowerCase() === preset.secondary.toLowerCase();
+                                     theme.secondaryColor.toLowerCase() === preset.secondary.toLowerCase() &&
+                                     (!preset.backgroundColor || (theme.backgroundColor || '').toLowerCase() === preset.backgroundColor.toLowerCase());
                     return (
                       <div
                         key={preset.id}
@@ -1129,7 +1176,12 @@ export const AdminPortal = ({
                           setThemeForm(prev => ({
                             ...prev,
                             primaryColor: preset.primary,
-                            secondaryColor: preset.secondary
+                            primaryHoverColor: preset.primaryHover || adjustLightness(preset.primary, -15),
+                            secondaryColor: preset.secondary,
+                            secondaryHoverColor: preset.secondaryHover || adjustLightness(preset.secondary, -15),
+                            backgroundColor: preset.backgroundColor || '#fdfbf7',
+                            surfaceColor: preset.surfaceColor || '#ffffff',
+                            activeColor: preset.activeColor || adjustLightness(preset.secondary, -25)
                           }));
                         }}
                         className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
@@ -1152,20 +1204,38 @@ export const AdminPortal = ({
                         </div>
 
                         {/* Color Swatch Circles */}
-                        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-slate-800/80">
-                          <div className="flex items-center gap-2">
+                        <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800/80 text-[10px] font-mono text-stone-400">
+                          <div className="flex items-center gap-1.5 truncate">
                             <div 
-                              className="w-5 h-5 rounded-full border border-white/20 shadow-inner"
+                              className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0 shadow-inner"
                               style={{ backgroundColor: preset.primary }}
+                              title="Primary Brand"
                             />
-                            <span className="text-[11px] font-mono text-stone-400">{preset.primary}</span>
+                            <span className="truncate">Main: {preset.primary}</span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 truncate">
                             <div 
-                              className="w-5 h-5 rounded-full border border-white/20 shadow-inner"
+                              className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0 shadow-inner"
                               style={{ backgroundColor: preset.secondary }}
+                              title="Accent / CTA"
                             />
-                            <span className="text-[11px] font-mono text-stone-400">{preset.secondary}</span>
+                            <span className="truncate">CTA: {preset.secondary}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <div 
+                              className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0 shadow-inner"
+                              style={{ backgroundColor: preset.backgroundColor || '#fdfbf7' }}
+                              title="Background"
+                            />
+                            <span className="truncate">BG: {preset.backgroundColor || '#fdfbf7'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <div 
+                              className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0 shadow-inner"
+                              style={{ backgroundColor: preset.secondaryHover || preset.activeColor || '#a68442' }}
+                              title="Hover & Active"
+                            />
+                            <span className="truncate">Hover: {preset.secondaryHover || '#a68442'}</span>
                           </div>
                         </div>
                       </div>
@@ -1175,47 +1245,99 @@ export const AdminPortal = ({
               </div>
 
               {/* Custom Color Pickers & Live Values */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Main / Primary Color Picker */}
-                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
-                  <div>
+                {/* 1. Main & Primary Brand Colors */}
+                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-5">
+                  <div className="border-b border-slate-800 pb-3">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 block mb-0.5">Brand Identity</span>
                     <h4 className="text-sm font-bold text-white flex items-center justify-between">
-                      <span>Primary Color (Main Brand Color)</span>
-                      <span className="w-4 h-4 rounded-full border" style={{ backgroundColor: themeForm.primaryColor }} />
+                      <span>Primary & Header Colors</span>
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ backgroundColor: themeForm.primaryColor }} />
                     </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Powers navigation bar, hero atmosphere, primary headers, suite badges, and main cards.
+                    <p className="text-xs text-slate-400 mt-1">
+                      Powers navigation bar, headers, suite badges, and primary brand cards.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4 pt-2">
-                    <input
-                      type="color"
-                      value={themeForm.primaryColor}
-                      onChange={(e) => handleColorChange('primaryColor', e.target.value)}
-                      className="w-14 h-14 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1"
-                    />
-                    <div className="flex-1">
-                      <label className="text-[11px] uppercase font-mono text-slate-400 block mb-1">HEX Code</label>
+                  {/* Primary Color Picker */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-white">Primary Brand Color</label>
+                      <span className="text-[11px] font-mono text-slate-400">{themeForm.primaryColor}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={themeForm.primaryColor}
+                        onChange={(e) => handleColorChange('primaryColor', e.target.value)}
+                        className="w-12 h-12 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                      />
                       <input
                         type="text"
                         value={themeForm.primaryColor}
                         onChange={(e) => handleColorChange('primaryColor', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-amber-400"
+                        className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                        placeholder="#0f2b48"
                       />
                     </div>
-                  </div>
-
-                  {/* Quick Color Swatches */}
-                  <div className="pt-2">
-                    <span className="text-[11px] text-slate-400 block mb-2 font-mono">Popular Main Swatches:</span>
-                    <div className="flex gap-2">
+                    {/* Primary Swatches */}
+                    <div className="flex gap-1.5 pt-1">
                       {['#0f2b48', '#143d2b', '#481123', '#034a74', '#161a1d', '#1e293b', '#2c1810'].map((c) => (
                         <button
                           key={c}
+                          type="button"
                           onClick={() => handleColorChange('primaryColor', c)}
-                          className="w-7 h-7 rounded-lg border border-white/20 transition-transform hover:scale-110"
+                          className="w-6 h-6 rounded-lg border border-white/20 transition-transform hover:scale-110 shrink-0"
+                          style={{ backgroundColor: c }}
+                          title={c}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Primary Hover / Active Color Picker */}
+                  <div className="space-y-2 pt-3 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                          <span>Primary Hover / Active</span>
+                          <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: themeForm.primaryHoverColor }} />
+                        </label>
+                        <span className="text-[10px] text-slate-400">Pressed and hover state</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={autoDerivePrimaryHover}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 font-mono transition-colors"
+                        title="Auto-derive darker shade from Primary"
+                      >
+                        Auto-Derive
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={themeForm.primaryHoverColor}
+                        onChange={(e) => handleColorChange('primaryHoverColor', e.target.value)}
+                        className="w-12 h-12 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={themeForm.primaryHoverColor}
+                        onChange={(e) => handleColorChange('primaryHoverColor', e.target.value)}
+                        className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                        placeholder="#091b2e"
+                      />
+                    </div>
+                    {/* Primary Hover Swatches */}
+                    <div className="flex gap-1.5 pt-1">
+                      {['#091b2e', '#0d291d', '#300a16', '#023350', '#0b0d0e', '#0f172a', '#1a0e08'].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => handleColorChange('primaryHoverColor', c)}
+                          className="w-6 h-6 rounded-lg border border-white/20 transition-transform hover:scale-110 shrink-0"
                           style={{ backgroundColor: c }}
                           title={c}
                         />
@@ -1224,53 +1346,318 @@ export const AdminPortal = ({
                   </div>
                 </div>
 
-                {/* Secondary Color Picker */}
-                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
-                  <div>
+                {/* 2. Secondary, Hover & Active Action Colors */}
+                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-5">
+                  <div className="border-b border-slate-800 pb-3">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 block mb-0.5">Interactive & CTAs</span>
                     <h4 className="text-sm font-bold text-white flex items-center justify-between">
-                      <span>Secondary Color (Accent & Highlights)</span>
-                      <span className="w-4 h-4 rounded-full border" style={{ backgroundColor: themeForm.secondaryColor }} />
+                      <span>Secondary, Hover & Active</span>
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ backgroundColor: themeForm.secondaryColor }} />
                     </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Powers 'Book Now' CTAs, reservation buttons, star ratings, price tags, and seasonal highlights.
+                    <p className="text-xs text-slate-400 mt-1">
+                      Powers 'Book Now' CTAs, reservation buttons, star badges, and interactive click states.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4 pt-2">
-                    <input
-                      type="color"
-                      value={themeForm.secondaryColor}
-                      onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
-                      className="w-14 h-14 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1"
-                    />
-                    <div className="flex-1">
-                      <label className="text-[11px] uppercase font-mono text-slate-400 block mb-1">HEX Code</label>
+                  {/* Secondary Color Picker */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-white">Secondary / Accent Color</label>
+                      <span className="text-[11px] font-mono text-slate-400">{themeForm.secondaryColor}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={themeForm.secondaryColor}
+                        onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
+                        className="w-12 h-12 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                      />
                       <input
                         type="text"
                         value={themeForm.secondaryColor}
                         onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-amber-400"
+                        className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                        placeholder="#c5a059"
                       />
                     </div>
-                  </div>
-
-                  {/* Quick Accent Swatches */}
-                  <div className="pt-2">
-                    <span className="text-[11px] text-slate-400 block mb-2 font-mono">Popular Accent Swatches:</span>
-                    <div className="flex gap-2">
+                    {/* Secondary Swatches */}
+                    <div className="flex gap-1.5 pt-1">
                       {['#c5a059', '#d4af37', '#e76f51', '#bf8a48', '#ba9e6e', '#10b981', '#f59e0b'].map((c) => (
                         <button
                           key={c}
+                          type="button"
                           onClick={() => handleColorChange('secondaryColor', c)}
-                          className="w-7 h-7 rounded-lg border border-white/20 transition-transform hover:scale-110"
+                          className="w-6 h-6 rounded-lg border border-white/20 transition-transform hover:scale-110 shrink-0"
                           style={{ backgroundColor: c }}
                           title={c}
                         />
                       ))}
                     </div>
                   </div>
+
+                  {/* Secondary Hover Color Picker */}
+                  <div className="space-y-2 pt-3 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                          <span>Button Hover Color</span>
+                          <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: themeForm.secondaryHoverColor }} />
+                        </label>
+                        <span className="text-[10px] text-slate-400">Mouse-over hover state</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={autoDeriveSecondaryHover}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 font-mono transition-colors"
+                        title="Auto-derive shade from Secondary"
+                      >
+                        Auto-Derive
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={themeForm.secondaryHoverColor}
+                        onChange={(e) => handleColorChange('secondaryHoverColor', e.target.value)}
+                        className="w-12 h-12 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={themeForm.secondaryHoverColor}
+                        onChange={(e) => handleColorChange('secondaryHoverColor', e.target.value)}
+                        className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                        placeholder="#a68442"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Active / Pressed Color Picker */}
+                  <div className="space-y-2 pt-3 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                          <span>Active / Clicked Color</span>
+                          <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: themeForm.activeColor }} />
+                        </label>
+                        <span className="text-[10px] text-slate-400">Active click & tab selection</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={autoDeriveActive}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 font-mono transition-colors"
+                        title="Auto-derive active shade from Secondary"
+                      >
+                        Auto-Derive
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={themeForm.activeColor}
+                        onChange={(e) => handleColorChange('activeColor', e.target.value)}
+                        className="w-12 h-12 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={themeForm.activeColor}
+                        onChange={(e) => handleColorChange('activeColor', e.target.value)}
+                        className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                        placeholder="#8e6f33"
+                      />
+                    </div>
+                  </div>
                 </div>
 
+                {/* 3. Site Background & Surface Atmosphere */}
+                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-5">
+                  <div className="border-b border-slate-800 pb-3">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 block mb-0.5">Atmosphere & Canvas</span>
+                    <h4 className="text-sm font-bold text-white flex items-center justify-between">
+                      <span>Background & Surface</span>
+                      <span className="w-4 h-4 rounded-full border border-white/30" style={{ backgroundColor: themeForm.backgroundColor }} />
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Controls global page backdrop, section canvases, and guest reading backgrounds.
+                    </p>
+                  </div>
+
+                  {/* Site Background Color Picker */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-white">Global Background Color</label>
+                      <span className="text-[11px] font-mono text-slate-400">{themeForm.backgroundColor}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={themeForm.backgroundColor}
+                        onChange={(e) => handleColorChange('backgroundColor', e.target.value)}
+                        className="w-12 h-12 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={themeForm.backgroundColor}
+                        onChange={(e) => handleColorChange('backgroundColor', e.target.value)}
+                        className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                        placeholder="#fdfbf7"
+                      />
+                    </div>
+                    {/* Background Preset Swatches */}
+                    <div className="space-y-1 pt-1">
+                      <span className="text-[10px] text-slate-500 font-mono">Atmosphere Swatches:</span>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {[
+                          { name: 'Warm Ivory', hex: '#fdfbf7' },
+                          { name: 'Pure White', hex: '#ffffff' },
+                          { name: 'Pearl Frost', hex: '#f8fafc' },
+                          { name: 'Linen Sand', hex: '#f5f0eb' },
+                          { name: 'Midnight', hex: '#0f172a' },
+                          { name: 'Obsidian', hex: '#090d16' }
+                        ].map((bg) => (
+                          <button
+                            key={bg.hex}
+                            type="button"
+                            onClick={() => handleColorChange('backgroundColor', bg.hex)}
+                            className="flex items-center gap-1.5 p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-stone-300 text-left transition-all"
+                          >
+                            <span className="w-3 h-3 rounded-full border border-white/20 shrink-0" style={{ backgroundColor: bg.hex }} />
+                            <span className="truncate text-[10px]">{bg.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Surface / Card Color */}
+                  <div className="space-y-2 pt-3 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                        <span>Card Surface Color</span>
+                        <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: themeForm.surfaceColor }} />
+                      </label>
+                      <span className="text-[11px] font-mono text-slate-400">{themeForm.surfaceColor}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={themeForm.surfaceColor}
+                        onChange={(e) => handleColorChange('surfaceColor', e.target.value)}
+                        className="w-12 h-12 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={themeForm.surfaceColor}
+                        onChange={(e) => handleColorChange('surfaceColor', e.target.value)}
+                        className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
+                        placeholder="#ffffff"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* 4. Live Interactive Component State Sandbox */}
+              <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 block mb-0.5">Interactive Preview</span>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-400" />
+                      <span>Live State Sandbox (Hover & Click Tester)</span>
+                    </h4>
+                    <p className="text-xs text-slate-400">Test how your custom primary, secondary, hover, active, and background colors behave together in real time.</p>
+                  </div>
+                  <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Live Responsive</span>
+                  </span>
+                </div>
+
+                {/* Interactive Demo Surface Box */}
+                <div 
+                  className="p-6 rounded-2xl border border-slate-700/60 transition-all duration-300 shadow-inner"
+                  style={{ backgroundColor: themeForm.backgroundColor }}
+                >
+                  <div className="max-w-2xl mx-auto space-y-4">
+                    {/* Simulated Card on the Background */}
+                    <div 
+                      className="p-5 rounded-2xl shadow-lg border transition-all"
+                      style={{ 
+                        backgroundColor: themeForm.surfaceColor,
+                        borderColor: 'rgba(0,0,0,0.08)'
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span 
+                          className="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold"
+                          style={{ 
+                            backgroundColor: themeForm.primaryColor,
+                            color: '#ffffff'
+                          }}
+                        >
+                          Luxury Suite Demo
+                        </span>
+                        <span 
+                          className="text-xs font-serif font-bold"
+                          style={{ color: themeForm.primaryColor }}
+                        >
+                          {themeForm.currency}890 / night
+                        </span>
+                      </div>
+
+                      <h5 
+                        className="font-serif text-lg font-bold mb-1"
+                        style={{ color: themeForm.primaryColor }}
+                      >
+                        Presidential Plunge Pool Villa
+                      </h5>
+                      <p className="text-xs text-stone-500 mb-4">
+                        Experience the exact hover and active feedback configured above. Try hovering and clicking each button below.
+                      </p>
+
+                      {/* Interactive Buttons Container */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Secondary CTA Button */}
+                        <button
+                          type="button"
+                          className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 transition-all shadow-md active:scale-95"
+                          style={{ backgroundColor: themeForm.secondaryColor }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = themeForm.secondaryHoverColor}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = themeForm.secondaryColor}
+                          onMouseDown={(e) => e.currentTarget.style.backgroundColor = themeForm.activeColor}
+                          onMouseUp={(e) => e.currentTarget.style.backgroundColor = themeForm.secondaryHoverColor}
+                        >
+                          Book Suite Now (CTA)
+                        </button>
+
+                        {/* Primary Button */}
+                        <button
+                          type="button"
+                          className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white transition-all shadow-md active:scale-95"
+                          style={{ backgroundColor: themeForm.primaryColor }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = themeForm.primaryHoverColor}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = themeForm.primaryColor}
+                        >
+                          Explore Floorplan (Primary)
+                        </button>
+
+                        {/* Active Selection Badge */}
+                        <div 
+                          className="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold flex items-center gap-1.5"
+                          style={{ 
+                            backgroundColor: `${themeForm.activeColor}22`,
+                            color: themeForm.activeColor,
+                            border: `1px solid ${themeForm.activeColor}55`
+                          }}
+                        >
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeForm.activeColor }} />
+                          <span>Active Filter Pill</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Hotel Information Form */}

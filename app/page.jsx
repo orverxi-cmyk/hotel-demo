@@ -42,7 +42,13 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-slate-800 flex flex-col relative">
+    <div 
+      className="min-h-screen flex flex-col relative transition-colors duration-300"
+      style={{ 
+        backgroundColor: 'var(--color-background, #fdfbf7)',
+        color: 'var(--color-text-main, #1e293b)'
+      }}
+    >
       <Navbar />
       <main className="flex-1">
         <Hero onSelectArticleById={handleSelectArticleById} />

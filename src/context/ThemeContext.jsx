@@ -19,14 +19,14 @@ export const ThemeProvider = ({ children }) => {
     const cached = getCachedTheme();
     if (cached) {
       setTheme(cached);
-      applyThemeToDOM(cached.primaryColor, cached.secondaryColor);
+      applyThemeToDOM(cached);
     }
 
     // 2. Real-time subscription (Firestore onSnapshot + BroadcastChannel + Events)
     const unsubscribe = subscribeThemeSettings((newTheme) => {
       if (newTheme) {
         setTheme(newTheme);
-        applyThemeToDOM(newTheme.primaryColor, newTheme.secondaryColor);
+        applyThemeToDOM(newTheme);
       }
       setIsLoading(false);
     });
@@ -41,12 +41,7 @@ export const ThemeProvider = ({ children }) => {
     setTheme(updatedTheme);
 
     // Apply colors immediately to DOM
-    if (updates.primaryColor || updates.secondaryColor) {
-      applyThemeToDOM(
-        updates.primaryColor || theme.primaryColor,
-        updates.secondaryColor || theme.secondaryColor
-      );
-    }
+    applyThemeToDOM(updatedTheme);
 
     try {
       const res = await saveThemeSettings(updatedTheme);
@@ -67,7 +62,12 @@ export const ThemeProvider = ({ children }) => {
     if (!preset) return;
     await updateTheme({
       primaryColor: preset.primary,
-      secondaryColor: preset.secondary
+      primaryHoverColor: preset.primaryHover || undefined,
+      secondaryColor: preset.secondary,
+      secondaryHoverColor: preset.secondaryHover || undefined,
+      backgroundColor: preset.backgroundColor || '#fdfbf7',
+      surfaceColor: preset.surfaceColor || '#ffffff',
+      activeColor: preset.activeColor || preset.secondaryHover || undefined
     });
   };
 
