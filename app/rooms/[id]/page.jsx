@@ -7,7 +7,7 @@ import { useBooking } from '../../../src/context/BookingContext';
 import { useTheme } from '../../../src/context/ThemeContext';
 import { Navbar } from '../../../src/components/Navbar';
 import { Footer } from '../../../src/components/Footer';
-import { ArrowLeft, Users, Maximize2, Bed, Check, Sparkles, Calendar } from 'lucide-react';
+import { ArrowLeft, Users, Maximize2, Bed, Check, Sparkles, Calendar, MapPin } from 'lucide-react';
 
 export default function RoomDetailPage() {
   const params = useParams();
@@ -154,7 +154,11 @@ export default function RoomDetailPage() {
                 <div className="space-y-3 text-xs text-stone-600">
                   <div className="flex justify-between py-1 border-b border-stone-100">
                     <span>Resort Location:</span>
-                    <strong className="text-slate-900">{theme.location}</strong>
+                    <strong className="text-slate-900 text-right max-w-[200px]">{room.location || theme.location}</strong>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-100">
+                    <span>Total Inventory:</span>
+                    <strong className="text-slate-900">{room.quantity || 2} Units Portfolio</strong>
                   </div>
                   <div className="flex justify-between py-1 border-b border-stone-100">
                     <span>Check-In Time:</span>

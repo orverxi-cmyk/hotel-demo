@@ -106,6 +106,8 @@ export const initialRooms = [
     name: "Presidential Ocean Villa",
     category: "Villa",
     price: 890,
+    quantity: 2,
+    location: "North Cliffside Wing — Oceanfront Promontory (Level 1, Private Gates)",
     size: "180 m² / 1,940 sq ft",
     guests: 4,
     beds: "1 King Bed + 2 Queen Beds",
@@ -130,6 +132,8 @@ export const initialRooms = [
     name: "Royal Penthouse Suite",
     category: "Suite",
     price: 650,
+    quantity: 3,
+    location: "Crown Tower — Penthouse Floor 7 (Panoramic 360° Belvédère)",
     size: "125 m² / 1,345 sq ft",
     guests: 2,
     beds: "1 Ultra King Bed",
@@ -153,6 +157,8 @@ export const initialRooms = [
     name: "Deluxe Horizon Suite",
     category: "Suite",
     price: 440,
+    quantity: 5,
+    location: "West Sunset Wing — High Floors 3-5 (Direct Bay Overlook)",
     size: "85 m² / 915 sq ft",
     guests: 2,
     beds: "1 King Bed",
@@ -175,6 +181,8 @@ export const initialRooms = [
     name: "Executive Botanical Villa",
     category: "Villa",
     price: 380,
+    quantity: 4,
+    location: "Garden Enclave — East Botanical Pavilions (Courtyard Level)",
     size: "105 m² / 1,130 sq ft",
     guests: 4,
     beds: "2 Queen Beds",
@@ -197,6 +205,8 @@ export const initialRooms = [
     name: "Signature Heritage Room",
     category: "Deluxe",
     price: 280,
+    quantity: 6,
+    location: "Historical Manor Wing — 2nd Floor (Central Courtyard Fountains)",
     size: "55 m² / 590 sq ft",
     guests: 2,
     beds: "1 King Bed",
@@ -219,6 +229,8 @@ export const initialRooms = [
     name: "Grand Classic Deluxe",
     category: "Deluxe",
     price: 195,
+    quantity: 8,
+    location: "Pine Ridge Wing — 1st & 2nd Floors (Forest & Ridge Vista)",
     size: "42 m² / 450 sq ft",
     guests: 2,
     beds: "1 Queen Bed",
@@ -241,11 +253,14 @@ export const initialRooms = [
 export const initialBookings = [
   {
     id: "AUR-89214",
+    bookingType: "stay",
     guestName: "Lord Alistair Sterling",
     guestEmail: "alistair.sterling@mayfairclub.co.uk",
     guestPhone: "+44 7700 900142",
     roomId: "room-1",
     roomName: "Presidential Ocean Villa",
+    roomLocation: "North Cliffside Wing — Oceanfront Promontory (Level 1, Private Gates)",
+    quantity: 1,
     checkIn: "2026-11-12",
     checkOut: "2026-11-16",
     nights: 4,
@@ -255,16 +270,19 @@ export const initialBookings = [
     status: "Confirmed",
     paymentStatus: "Paid",
     createdAt: "2026-10-28T09:30:00Z",
-    addons: ["Airport Chauffeur Transfer", "Vintage Champagne on Arrival"],
+    addons: ["VIP Airport Chauffeur (Mercedes S-Class / Maybach)", "Chilled Dom Pérignon & Caviar on Arrival"],
     specialRequests: "Arriving by private jet at Olbia airport at 14:00. Please arrange chilled Dom Pérignon in room."
   },
   {
     id: "AUR-89215",
+    bookingType: "stay",
     guestName: "Dr. Elena Rostova",
     guestEmail: "elena.rostova@geneva-med.ch",
     guestPhone: "+41 22 555 0192",
     roomId: "room-2",
     roomName: "Royal Penthouse Suite",
+    roomLocation: "Crown Tower — Penthouse Floor 7 (Panoramic 360° Belvédère)",
+    quantity: 1,
     checkIn: "2026-10-29",
     checkOut: "2026-11-03",
     nights: 5,
@@ -274,16 +292,19 @@ export const initialBookings = [
     status: "Checked In",
     paymentStatus: "Paid",
     createdAt: "2026-10-20T14:15:00Z",
-    addons: ["Couple's 90-min Thermal Spa Treatment", "Daily Gourmet Champagne Breakfast"],
+    addons: ["Couple's 90-Min Botanical Spa & Massage", "Daily Gourmet Champagne Breakfast"],
     specialRequests: "Anniversary celebration. Prefer high floor terrace with maximum privacy."
   },
   {
     id: "AUR-89216",
+    bookingType: "stay",
     guestName: "Marcus Vance",
     guestEmail: "m.vance@vancetech.io",
     guestPhone: "+1 (415) 890-3411",
     roomId: "room-3",
     roomName: "Deluxe Horizon Suite",
+    roomLocation: "West Sunset Wing — High Floors 3-5 (Direct Bay Overlook)",
+    quantity: 1,
     checkIn: "2026-11-18",
     checkOut: "2026-11-21",
     nights: 3,
@@ -298,11 +319,14 @@ export const initialBookings = [
   },
   {
     id: "AUR-89217",
+    bookingType: "stay",
     guestName: "Sofia & Mateo Rossi",
     guestEmail: "sofia.rossi@milanodesign.it",
     guestPhone: "+39 02 4890 2231",
     roomId: "room-4",
     roomName: "Executive Botanical Villa",
+    roomLocation: "Garden Enclave — East Botanical Pavilions (Courtyard Level)",
+    quantity: 1,
     checkIn: "2026-10-22",
     checkOut: "2026-10-26",
     nights: 4,
@@ -312,16 +336,19 @@ export const initialBookings = [
     status: "Completed",
     paymentStatus: "Paid",
     createdAt: "2026-10-10T11:20:00Z",
-    addons: ["Airport Chauffeur Transfer", "Daily Gourmet Champagne Breakfast"],
+    addons: ["VIP Airport Chauffeur (Mercedes S-Class / Maybach)", "Daily Gourmet Champagne Breakfast"],
     specialRequests: "High chair for our toddler and feather-free hypoallergenic pillows."
   },
   {
     id: "AUR-89218",
+    bookingType: "stay",
     guestName: "James Tanaka",
     guestEmail: "j.tanaka@tokyocapital.jp",
     guestPhone: "+81 90 1234 5678",
     roomId: "room-6",
     roomName: "Grand Classic Deluxe",
+    roomLocation: "Pine Ridge Wing — 1st & 2nd Floors (Forest & Ridge Vista)",
+    quantity: 1,
     checkIn: "2026-11-01",
     checkOut: "2026-11-03",
     nights: 2,
@@ -333,6 +360,50 @@ export const initialBookings = [
     createdAt: "2026-10-15T16:45:00Z",
     addons: [],
     specialRequests: "Cancelled due to international flight schedule change."
+  },
+  {
+    id: "AUR-91402",
+    bookingType: "dining",
+    guestName: "Contessa Isabella Farnese",
+    guestEmail: "isabella.farnese@palazzofarnese.it",
+    guestPhone: "+39 06 6987 4120",
+    venueId: "dining-1",
+    venueName: "L'Orangerie Gastronomique",
+    venueLocation: "Central Palace Mezzanine — Glass Conservatory & Tasting Salon",
+    tableNumber: "T-01",
+    tableName: "Chef's Counter Front Row",
+    tableLocation: "Counter Facing Master Kitchen",
+    date: "2026-11-12",
+    timeSlot: "20:00",
+    guests: 2,
+    totalAmount: 380,
+    status: "Confirmed",
+    paymentStatus: "Paid (Demo Guarantee)",
+    createdAt: "2026-10-29T10:00:00Z",
+    addons: ["Master Sommelier Grand Cru Degustation Pairing"],
+    specialRequests: "Anniversary dinner. Shellfish allergy for guest 2."
+  },
+  {
+    id: "AUR-91403",
+    bookingType: "dining",
+    guestName: "Jonathan Sterling",
+    guestEmail: "j.sterling@sterlingcap.com",
+    guestPhone: "+1 (212) 555-0819",
+    venueId: "dining-2",
+    venueName: "The Cliffside Terrace & Raw Bar",
+    venueLocation: "North Promontory — 40m Above Sea Cliff Edge",
+    tableNumber: "CT-01",
+    tableName: "Front-Row Cliff Edge",
+    tableLocation: "Directly Overhanging Ocean Waves",
+    date: "2026-11-13",
+    timeSlot: "19:00",
+    guests: 2,
+    totalAmount: 260,
+    status: "Confirmed",
+    paymentStatus: "Paid (Demo Guarantee)",
+    createdAt: "2026-10-30T15:20:00Z",
+    addons: ["Royal Osetra Caviar & Vintage Krug Prelude"],
+    specialRequests: "Sunset photography vantage point preferred."
   }
 ];
 
@@ -572,18 +643,28 @@ Every residence features private gated beach access, secluded sun decks, and a d
   }
 ];
 
-// Gastronomy & Restaurant Venues / Tasting Menus
+// Gastronomy & Restaurant Venues / Tasting Menus & Private Tables
 export const initialDiningVenues = [
   {
     id: "dining-1",
     name: "L'Orangerie Gastronomique",
     accolade: "2 Michelin Stars",
-    type: "Haute Cuisine & Tasting Menus",
+    type: "Haute Cuisine & Degustation Menus",
     hours: "19:00 - 23:00",
+    location: "Central Palace Mezzanine — Glass Conservatory & Tasting Salon",
     image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800&q=80",
     description: "Under Executive Chef Marco Valenti, local organic sea treasures and estate herbs are transformed into sensory culinary art.",
     order: 1,
-    visible: true
+    visible: true,
+    timeSlots: ["19:00", "19:30", "20:00", "20:30", "21:00", "21:30"],
+    tables: [
+      { number: "T-01", name: "Chef's Counter Front Row", capacity: 2, location: "Counter Facing Master Kitchen", badge: "Kitchen View" },
+      { number: "T-02", name: "Grand Conservatory Window", capacity: 2, location: "Perimeter Glasshouse Overlooking Bay", badge: "Sunset Panoramic" },
+      { number: "T-03", name: "Imperial Round Salon", capacity: 4, location: "Mezzanine Centerpiece Alcove", badge: "Private Salon" },
+      { number: "T-04", name: "Orangery Citrus Promenade", capacity: 4, location: "Citrus Garden Terrace Promenade", badge: "Al Fresco Breeze" },
+      { number: "T-05", name: "Master Sommelier Long Table", capacity: 6, location: "Adjacent to Wine Chandelier Salon", badge: "Wine Pairing Suite" },
+      { number: "T-06", name: "Intimate Corner Pergola", capacity: 2, location: "Secluded Private Bay Corner", badge: "Romantic Seclusion" }
+    ]
   },
   {
     id: "dining-2",
@@ -591,10 +672,19 @@ export const initialDiningVenues = [
     accolade: "Oceanfront Vista",
     type: "Mediterranean Crudo & Sunset Aperitivo",
     hours: "12:00 - 22:30",
+    location: "North Promontory — 40m Above Sea Cliff Edge",
     image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
     description: "Perched 40 meters above crashing waves, serving chilled oysters, wild turbot carpaccio, and vintage champagne as the sun melts into the sea.",
     order: 2,
-    visible: true
+    visible: true,
+    timeSlots: ["12:30", "13:30", "18:00", "19:00", "20:00", "21:00"],
+    tables: [
+      { number: "CT-01", name: "Front-Row Cliff Edge", capacity: 2, location: "Directly Overhanging Ocean Waves", badge: "Ocean Drop" },
+      { number: "CT-02", name: "Sunset Horizon Deck", capacity: 4, location: "West-Facing Terraced Balcony", badge: "Golden Hour Prime" },
+      { number: "CT-03", name: "Raw Bar Marble High-Top", capacity: 2, location: "Adjacent to Oyster & Crudo Station", badge: "Live Shucking" },
+      { number: "CT-04", name: "Promontory Family Pavilion", capacity: 6, location: "Sheltered Canopy with 270° Sea Panorama", badge: "Executive Group" },
+      { number: "CT-05", name: "Torched Jetty Pergola", capacity: 4, location: "Lower Promenade Near Tide Rock", badge: "Ambient Flame" }
+    ]
   },
   {
     id: "dining-3",
@@ -602,11 +692,44 @@ export const initialDiningVenues = [
     accolade: "12,000 Rare Bottles",
     type: "Sommelier Masterclasses & Aged Spirits",
     hours: "17:00 - 01:00",
+    location: "Subterranean Level -1 — Historic 18th-Century Limestone Vault",
     image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80",
     description: "A subterranean cavern dating to the 18th century, offering private tastings of rare Sassicaia, Barolo, and hand-rolled Caribbean cigars.",
     order: 3,
-    visible: true
+    visible: true,
+    timeSlots: ["17:30", "18:30", "20:00", "21:30", "23:00"],
+    tables: [
+      { number: "V-01", name: "The Sommelier Oak Cask", capacity: 4, location: "Restored French Oak Barrel Table", badge: "Cellar Centerpiece" },
+      { number: "V-02", name: "Granite Archway Alcove", capacity: 2, location: "Historic Arch Under Chandelier", badge: "Candlelit Intimate" },
+      { number: "V-03", name: "Sassicaia Collector's Table", capacity: 6, location: "Surrounded by Grand Cru Vertical Racks", badge: "Vintage Vault" },
+      { number: "V-04", name: "Chesterfield Cigar Nook", capacity: 2, location: "Ventilated Leather Lounge Corner", badge: "Rare Spirits Salon" }
+    ]
   }
 ];
+
+export const availableDiningAddons = [
+  {
+    id: "addon-wine-pairing",
+    name: "Master Sommelier Grand Cru Degustation Pairing",
+    price: 180,
+    priceType: "per guest",
+    description: "Vertical vintage pairings from our 12,000-bottle subterranean vault curated by Master Sommelier."
+  },
+  {
+    id: "addon-caviar-prelude",
+    name: "Royal Osetra Caviar & Vintage Krug Prelude",
+    price: 220,
+    priceType: "one-time",
+    description: "50g tin of Royal Osetra caviar with warm blinis and a half bottle of Krug Grande Cuvée on arrival."
+  },
+  {
+    id: "addon-anniversary-cake",
+    name: "Artisan Valrhona Chocolate & Gold Leaf Celebration Cake",
+    price: 65,
+    priceType: "one-time",
+    description: "Handcrafted celebration centerpiece presented with champagne sparklers and personalized calligraphy."
+  }
+];
+
 
 

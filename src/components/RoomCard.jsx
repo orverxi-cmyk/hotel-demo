@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
-import { Users, Maximize2, Bed, Check, Sparkles, ChevronRight, Eye } from 'lucide-react';
+import { Users, Maximize2, Bed, Check, Sparkles, ChevronRight, Eye, MapPin } from 'lucide-react';
 
 export const RoomCard = ({ room, onSelectDetail }) => {
   const { theme } = useTheme();
@@ -82,10 +82,18 @@ export const RoomCard = ({ room, onSelectDetail }) => {
           {/* Room Title */}
           <Link 
             href={`/rooms/${room.id}`}
-            className="font-serif text-2xl font-bold text-slate-900 group-hover:text-amber-800 transition-colors mb-2 cursor-pointer line-clamp-1 block"
+            className="font-serif text-2xl font-bold text-slate-900 group-hover:text-amber-800 transition-colors mb-1.5 cursor-pointer line-clamp-1 block"
           >
             {room.name}
           </Link>
+
+          {/* Location Badge */}
+          {room.location && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-900 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200/60 mb-3">
+              <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <span className="truncate font-medium">{room.location}</span>
+            </div>
+          )}
 
           {/* Description */}
           <p className="text-stone-600 text-sm leading-relaxed mb-5 line-clamp-2">

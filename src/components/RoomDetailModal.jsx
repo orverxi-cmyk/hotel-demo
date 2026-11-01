@@ -3,7 +3,7 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
-import { X, Users, Maximize2, Bed, Check, Sparkles, Calendar, ShieldCheck } from 'lucide-react';
+import { X, Users, Maximize2, Bed, Check, Sparkles, Calendar, ShieldCheck, MapPin } from 'lucide-react';
 
 export const RoomDetailModal = ({ room, onClose }) => {
   const { theme } = useTheme();
@@ -59,6 +59,15 @@ export const RoomDetailModal = ({ room, onClose }) => {
         {/* Modal Body */}
         <div className="p-6 sm:p-8 space-y-8">
           
+          {/* Location & Resort Wing */}
+          {room.location && (
+            <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs">
+              <MapPin className="w-4 h-4 text-amber-700 shrink-0" />
+              <span><strong>Resort Location:</strong> {room.location}</span>
+              <span className="ml-auto text-amber-800 font-semibold font-mono">({room.quantity || 2} Units Inventory)</span>
+            </div>
+          )}
+
           {/* Key Specs Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-stone-50 border border-stone-200/60 text-center">
             <div>

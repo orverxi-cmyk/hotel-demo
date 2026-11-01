@@ -109,10 +109,43 @@ export const generateEmailTemplate = ({ type, booking, theme }) => {
       </div>
 
       <table class="folio-table">
+        ${booking.bookingType === 'dining' ? `
+        <tr>
+          <td class="label">Dining Venue:</td>
+          <td class="value">${booking.venueName || 'L\'Orangerie Gastronomique'}</td>
+        </tr>
+        <tr>
+          <td class="label">Table Reserved:</td>
+          <td class="value"><strong>Table ${booking.tableNumber || 'Prime'}</strong> — ${booking.tableName || 'Selected Table'}</td>
+        </tr>
+        ${booking.tableLocation ? `
+        <tr>
+          <td class="label">Table Location:</td>
+          <td class="value">${booking.tableLocation}</td>
+        </tr>` : ''}
+        <tr>
+          <td class="label">Date & Time Slot:</td>
+          <td class="value">${booking.date} at ${booking.timeSlot}</td>
+        </tr>
+        <tr>
+          <td class="label">Party Size:</td>
+          <td class="value">${booking.guests || 2} Guest(s)</td>
+        </tr>
+        ` : `
         <tr>
           <td class="label">Accommodation:</td>
           <td class="value">${booking.roomName || 'Luxury Suite'}</td>
         </tr>
+        ${booking.quantity ? `
+        <tr>
+          <td class="label">Quantity Reserved:</td>
+          <td class="value">${booking.quantity} ${booking.quantity === 1 ? 'Suite / Villa' : 'Suites / Villas'}</td>
+        </tr>` : ''}
+        ${booking.roomLocation || booking.location ? `
+        <tr>
+          <td class="label">Resort Location:</td>
+          <td class="value">${booking.roomLocation || booking.location}</td>
+        </tr>` : ''}
         <tr>
           <td class="label">Arrival & Departure:</td>
           <td class="value">${booking.checkIn} → ${booking.checkOut} (${booking.nights || 1} nights)</td>
@@ -121,6 +154,7 @@ export const generateEmailTemplate = ({ type, booking, theme }) => {
           <td class="label">Guests:</td>
           <td class="value">${booking.guests || 2} Registered Guest(s)</td>
         </tr>
+        `}
         ${booking.addons && booking.addons.length > 0 ? `
         <tr>
           <td class="label">Selected Inclusions:</td>
@@ -152,13 +186,18 @@ export const generateEmailTemplate = ({ type, booking, theme }) => {
 </html>
 `;
 
+  const isDining = booking.bookingType === 'dining';
   let subject = '';
   switch (type) {
     case 'BOOKING_SENT':
-      subject = `[Received] Reservation Ref: ${booking.id} - ${hotelName}`;
+      subject = isDining 
+        ? `[Received] Dining Reservation Ref: ${booking.id} (${booking.venueName || 'Table'}) - ${hotelName}`
+        : `[Received] Reservation Ref: ${booking.id} - ${hotelName}`;
       break;
     case 'BOOKING_CONFIRMED':
-      subject = `[Confirmed] Official Confirmation: Stay at ${hotelName} (Ref: ${booking.id})`;
+      subject = isDining
+        ? `[Confirmed] Table Confirmed: ${booking.venueName || 'Dining'} • Table ${booking.tableNumber || ''} (Ref: ${booking.id}) - ${hotelName}`
+        : `[Confirmed] Official Confirmation: Stay at ${hotelName} (Ref: ${booking.id})`;
       break;
     case 'BOOKING_CANCELLED':
       subject = `[Notice] Reservation Cancelled: Ref ${booking.id} - ${hotelName}`;

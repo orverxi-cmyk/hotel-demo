@@ -281,28 +281,61 @@ export const BookingTrackerModal = () => {
                     <div>{getStatusBadge(searchedBooking.status)}</div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <span className="text-stone-400 block">Primary Guest</span>
-                      <strong className="text-slate-900 text-sm">{searchedBooking.guestName}</strong>
-                      <span className="text-stone-500 text-[11px] block">{searchedBooking.guestEmail}</span>
+                  {searchedBooking.bookingType === 'dining' ? (
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="text-stone-400 block">Primary Guest</span>
+                        <strong className="text-slate-900 text-sm">{searchedBooking.guestName}</strong>
+                        <span className="text-stone-500 text-[11px] block">{searchedBooking.guestEmail}</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block">Dining Venue</span>
+                        <strong className="text-slate-900 text-sm">{searchedBooking.venueName}</strong>
+                        <span className="text-stone-500 text-[11px] block">{searchedBooking.guests} Guests</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block">Table Reserved</span>
+                        <strong className="text-amber-900 font-mono text-sm">Table {searchedBooking.tableNumber}</strong>
+                        <span className="text-stone-500 text-[11px] block">{searchedBooking.tableName}</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block">Date & Seating</span>
+                        <strong className="text-slate-900">{searchedBooking.date} at {searchedBooking.timeSlot}</strong>
+                        <span className="text-emerald-700 text-[10px] font-semibold block">{searchedBooking.paymentStatus || 'Guaranteed'}</span>
+                      </div>
+                      <div className="col-span-2 text-[11px] bg-stone-100 p-2 rounded-lg text-stone-600">
+                        <span><strong>Table Location:</strong> {searchedBooking.tableLocation} ({searchedBooking.venueLocation})</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-stone-400 block">Reserved Suite</span>
-                      <strong className="text-slate-900 text-sm">{searchedBooking.roomName}</strong>
-                      <span className="text-stone-500 text-[11px] block">{searchedBooking.guests} Guests</span>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="text-stone-400 block">Primary Guest</span>
+                        <strong className="text-slate-900 text-sm">{searchedBooking.guestName}</strong>
+                        <span className="text-stone-500 text-[11px] block">{searchedBooking.guestEmail}</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block">Reserved Suite</span>
+                        <strong className="text-slate-900 text-sm">{searchedBooking.roomName}</strong>
+                        <span className="text-amber-800 text-[11px] font-semibold block">{searchedBooking.quantity || 1} Suite(s) • {searchedBooking.guests} Guests</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block">Stay Dates</span>
+                        <strong className="text-slate-900">{searchedBooking.checkIn} → {searchedBooking.checkOut}</strong>
+                        <span className="text-stone-500 text-[11px] block">{searchedBooking.nights} Nights</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block">Total Folio</span>
+                        <strong className="font-serif text-base text-slate-900">{theme.currency}{searchedBooking.totalAmount}</strong>
+                        <span className="text-emerald-700 text-[10px] font-semibold block">{searchedBooking.paymentStatus || 'Guaranteed'}</span>
+                      </div>
+                      {searchedBooking.roomLocation && (
+                        <div className="col-span-2 text-[11px] bg-stone-100 p-2 rounded-lg text-stone-600">
+                          <span><strong>Resort Location:</strong> {searchedBooking.roomLocation}</span>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <span className="text-stone-400 block">Stay Dates</span>
-                      <strong className="text-slate-900">{searchedBooking.checkIn} → {searchedBooking.checkOut}</strong>
-                      <span className="text-stone-500 text-[11px] block">{searchedBooking.nights} Nights</span>
-                    </div>
-                    <div>
-                      <span className="text-stone-400 block">Total Folio</span>
-                      <strong className="font-serif text-base text-slate-900">{theme.currency}{searchedBooking.totalAmount}</strong>
-                      <span className="text-emerald-700 text-[10px] font-semibold block">{searchedBooking.paymentStatus || 'Guaranteed'}</span>
-                    </div>
-                  </div>
+                  )}
 
                   {searchedBooking.addons && searchedBooking.addons.length > 0 && (
                     <div className="pt-2 border-t border-stone-200 text-xs">

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
-import { Utensils, Award, Clock, Calendar, Wine } from 'lucide-react';
+import { Utensils, Award, Clock, Calendar, Wine, MapPin } from 'lucide-react';
 import { getCachedDiningVenues, subscribeDiningVenues, initialDiningVenues } from '../services/storageService';
 
 export const DiningSection = () => {
@@ -82,9 +82,17 @@ export const DiningSection = () => {
             {/* Description & Details */}
             <div className="p-6 flex-1 flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-2 text-xs text-stone-500 font-semibold mb-3">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>Service: {venue.hours}</span>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 font-semibold mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-700" />
+                    <span>{venue.hours}</span>
+                  </div>
+                  {venue.location && (
+                    <div className="flex items-center gap-1 text-stone-500 text-[11px]">
+                      <MapPin className="w-3 h-3 text-amber-600 shrink-0" />
+                      <span className="truncate">{venue.location}</span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-stone-600 text-sm leading-relaxed mb-6">
                   {venue.description}
@@ -94,8 +102,9 @@ export const DiningSection = () => {
               <div className="pt-4 border-t border-stone-100 flex items-center justify-between">
                 <span className="text-xs font-semibold text-stone-500">Dress Code: Resort Chic</span>
                 <button
-                  onClick={() => openBookingModal()}
-                  className="text-xs font-bold uppercase tracking-wider hover:underline flex items-center gap-1"
+                  type="button"
+                  onClick={() => openBookingModal(venue, 'dining')}
+                  className="text-xs font-bold uppercase tracking-wider hover:underline flex items-center gap-1 cursor-pointer"
                   style={{ color: 'var(--color-primary)' }}
                 >
                   <span>Book Table</span>

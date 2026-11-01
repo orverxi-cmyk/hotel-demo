@@ -1,7 +1,7 @@
 import { db, storage } from "../firebase";
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews, initialNavMenus, initialDiningVenues, initialArticles } from "../data/initialData";
+import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews, initialNavMenus, initialDiningVenues, availableDiningAddons, initialArticles } from "../data/initialData";
 
 const LS_THEME_KEY = "hotel_demo_theme";
 const LS_ROOMS_KEY = "hotel_demo_rooms";
@@ -10,7 +10,7 @@ const LS_NAV_MENUS_KEY = "hotel_demo_navigation_menus";
 const LS_DINING_KEY = "hotel_demo_dining_venues";
 const LS_ARTICLES_KEY = "hotel_demo_articles";
 
-export { initialNavMenus, initialDiningVenues, initialArticles };
+export { initialNavMenus, initialDiningVenues, availableDiningAddons, initialArticles };
 
 const isClient = typeof window !== "undefined";
 
@@ -162,7 +162,16 @@ export const getCachedRooms = () => {
     const cached = localStorage.getItem(LS_ROOMS_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((r) => {
+          const init = initialRooms.find((ir) => ir.id === r.id);
+          return {
+            ...r,
+            quantity: typeof r.quantity === 'number' && r.quantity > 0 ? r.quantity : (init?.quantity || 2),
+            location: r.location || init?.location || "Resort Wing Suite"
+          };
+        });
+      }
     }
   } catch (_) {}
   return initialRooms;
@@ -911,7 +920,17 @@ export const getCachedDiningVenues = () => {
     const cached = localStorage.getItem(LS_DINING_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((v) => {
+          const init = initialDiningVenues.find((iv) => iv.id === v.id);
+          return {
+            ...v,
+            location: v.location || init?.location || "Hotel Promenade",
+            timeSlots: v.timeSlots || init?.timeSlots || ["19:00", "20:00", "21:00"],
+            tables: Array.isArray(v.tables) && v.tables.length > 0 ? v.tables : (init?.tables || [])
+          };
+        });
+      }
     }
   } catch (_) {}
   return initialDiningVenues;

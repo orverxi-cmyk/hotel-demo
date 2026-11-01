@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initialRooms, initialBookings } from '../data/initialData';
+import { initialRooms, initialBookings, initialDiningVenues } from '../data/initialData';
 import { useTheme } from './ThemeContext';
 import {
   loadRooms,
@@ -12,7 +12,9 @@ import {
   updateBookingStatus,
   resetAllDemoData,
   getCachedRooms,
-  subscribeRooms
+  subscribeRooms,
+  getCachedDiningVenues,
+  subscribeDiningVenues
 } from '../services/storageService';
 import { sendBookingStatusEmail, getBookingEmailLogs } from '../services/emailService';
 
@@ -21,6 +23,7 @@ const BookingContext = createContext();
 export const BookingProvider = ({ children }) => {
   const { theme } = useTheme();
   const [rooms, setRooms] = useState([]);
+  const [diningVenues, setDiningVenues] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,9 +35,14 @@ export const BookingProvider = ({ children }) => {
     roomType: 'all'
   });
 
-  // Modal states
+  // Modal & Mode states
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingMode, setBookingMode] = useState('stay'); // 'stay' | 'dining'
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [selectedTableNumber, setSelectedTableNumber] = useState(null);
+
+  // Tracker & Notification states
   const [isTrackerModalOpen, setIsTrackerModalOpen] = useState(false);
   const [trackedBookingCode, setTrackedBookingCode] = useState('');
   const [activeNotification, setActiveNotification] = useState(null);
@@ -60,7 +68,18 @@ export const BookingProvider = ({ children }) => {
       setIsLoading(false);
     });
 
-    // 3. Load bookings
+    // 3. Load & subscribe dining venues
+    const cachedVenues = getCachedDiningVenues();
+    if (cachedVenues && cachedVenues.length > 0) {
+      setDiningVenues(cachedVenues);
+    }
+    const unsubscribeDining = subscribeDiningVenues((newVenues) => {
+      if (newVenues && newVenues.length > 0) {
+        setDiningVenues(newVenues);
+      }
+    });
+
+    // 4. Load bookings
     const fetchBookings = async () => {
       try {
         const loadedBookings = await loadBookings();
@@ -72,11 +91,132 @@ export const BookingProvider = ({ children }) => {
     };
     fetchBookings();
 
-    return () => unsubscribeRooms();
+    return () => {
+      unsubscribeRooms();
+      unsubscribeDining();
+    };
   }, []);
 
-  const openBookingModal = (room = null) => {
-    setSelectedRoom(room || rooms[0] || null);
+  // --- AVAILABILITY ENGINES ---
+
+  /**
+   * Calculates room availability for a given date range by checking
+   * overlapping active stay bookings against the room's total inventory quantity.
+   */
+  const getRoomAvailability = (roomId, checkIn, checkOut) => {
+    const room = rooms.find(r => r.id === roomId);
+    const totalQuantity = (room && typeof room.quantity === 'number' && room.quantity > 0) ? room.quantity : 2;
+
+    if (!roomId || !checkIn || !checkOut) {
+      return {
+        totalQuantity,
+        bookedCount: 0,
+        remainingCount: totalQuantity,
+        isAvailable: totalQuantity > 0
+      };
+    }
+
+    // Find active overlapping stay reservations
+    const activeBookings = bookings.filter(b => {
+      const isStay = b.bookingType !== 'dining' && (!b.type || b.type !== 'dining');
+      if (!isStay || b.roomId !== roomId) return false;
+      if (!['Confirmed', 'Checked In', 'Pending'].includes(b.status)) return false;
+      // Overlap condition: booking starts before requested checkout AND ends after requested checkin
+      return (b.checkIn < checkOut && b.checkOut > checkIn);
+    });
+
+    // Calculate peak units booked on any single night in requested range
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    let peakBooked = 0;
+
+    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      let bookedForNight = 0;
+
+      for (const b of activeBookings) {
+        if (b.checkIn <= dateStr && b.checkOut > dateStr) {
+          const qty = (typeof b.quantity === 'number' && b.quantity > 0) ? b.quantity : 1;
+          bookedForNight += qty;
+        }
+      }
+
+      if (bookedForNight > peakBooked) {
+        peakBooked = bookedForNight;
+      }
+    }
+
+    const remainingCount = Math.max(0, totalQuantity - peakBooked);
+
+    return {
+      totalQuantity,
+      bookedCount: peakBooked,
+      remainingCount,
+      isAvailable: remainingCount > 0
+    };
+  };
+
+  /**
+   * Calculates dining table availability for a specific venue, date, and time slot.
+   */
+  const getDiningAvailability = (venueId, date, timeSlot) => {
+    const venue = diningVenues.find(v => v.id === venueId) || initialDiningVenues.find(v => v.id === venueId);
+    const tables = venue?.tables || [];
+    const totalTables = tables.length;
+
+    if (!venueId || !date || !timeSlot) {
+      return {
+        reservedTableNumbers: [],
+        availableTables: tables,
+        totalTables,
+        isFullyBooked: false
+      };
+    }
+
+    // Find active dining reservations matching venueId, date, timeSlot
+    const activeDining = bookings.filter(b => {
+      const isDining = b.bookingType === 'dining' || b.type === 'dining';
+      if (!isDining) return false;
+      if (b.venueId !== venueId || b.date !== date || b.timeSlot !== timeSlot) return false;
+      return ['Confirmed', 'Checked In', 'Pending'].includes(b.status);
+    });
+
+    const reservedTableNumbers = activeDining.map(b => b.tableNumber).filter(Boolean);
+    const availableTables = tables.filter(t => !reservedTableNumbers.includes(t.number));
+
+    return {
+      reservedTableNumbers,
+      availableTables,
+      totalTables,
+      isFullyBooked: totalTables > 0 && availableTables.length === 0
+    };
+  };
+
+  const isTableAvailable = (venueId, date, timeSlot, tableNumber) => {
+    if (!venueId || !date || !timeSlot || !tableNumber) return true;
+    const { reservedTableNumbers } = getDiningAvailability(venueId, date, timeSlot);
+    return !reservedTableNumbers.includes(tableNumber);
+  };
+
+  // --- MODAL CONTROLS ---
+
+  const openBookingModal = (item = null, mode = 'stay') => {
+    const isDining = mode === 'dining' || item?.tables || item?.accolade || (item?.id && item.id.startsWith('dining-'));
+    if (isDining) {
+      setBookingMode('dining');
+      setSelectedVenue(item || diningVenues[0] || initialDiningVenues[0] || null);
+      setSelectedTableNumber(null);
+    } else {
+      setBookingMode('stay');
+      setSelectedRoom(item || rooms[0] || initialRooms[0] || null);
+    }
+    setIsBookingModalOpen(true);
+  };
+
+  const openDiningModal = (venue = null, tableNumber = null) => {
+    setBookingMode('dining');
+    setSelectedVenue(venue || diningVenues[0] || initialDiningVenues[0] || null);
+    setSelectedTableNumber(tableNumber || null);
     setIsBookingModalOpen(true);
   };
 
@@ -91,8 +231,30 @@ export const BookingProvider = ({ children }) => {
     setIsTrackerModalOpen(true);
   };
 
-  // Create new reservation with automated status email dispatch
+  // Create new reservation (Stay or Dining) with inventory & table constraint checks
   const createReservation = async (reservationData) => {
+    const isDining = reservationData.bookingType === 'dining' || reservationData.type === 'dining';
+
+    // 1. Inventory & Availability Pre-flight Validation
+    if (isDining) {
+      const { venueId, date, timeSlot, tableNumber } = reservationData;
+      if (!isTableAvailable(venueId, date, timeSlot, tableNumber)) {
+        const errorMsg = `Table ${tableNumber} has just been reserved for ${timeSlot} on ${date}. Please select another table.`;
+        showNotification(errorMsg, 'error');
+        throw new Error(errorMsg);
+      }
+    } else {
+      const { roomId, checkIn, checkOut, quantity = 1 } = reservationData;
+      const { remainingCount, isAvailable } = getRoomAvailability(roomId, checkIn, checkOut);
+      if (!isAvailable || remainingCount < quantity) {
+        const errorMsg = remainingCount === 0 
+          ? `This suite is completely booked for the selected dates. Please choose another suite or alternative dates.` 
+          : `Only ${remainingCount} suite(s) available for your selected dates (requested: ${quantity}).`;
+        showNotification(errorMsg, 'error');
+        throw new Error(errorMsg);
+      }
+    }
+
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     const bookingId = `AUR-${randomNum}`;
     const initialStatus = reservationData.status || 'Confirmed';
@@ -100,6 +262,7 @@ export const BookingProvider = ({ children }) => {
     const newBooking = {
       ...reservationData,
       id: bookingId,
+      bookingType: isDining ? 'dining' : 'stay',
       status: initialStatus,
       paymentStatus: 'Paid (Demo Guarantee)',
       createdAt: new Date().toISOString()
@@ -108,7 +271,7 @@ export const BookingProvider = ({ children }) => {
     setBookings(prev => [newBooking, ...prev]);
     await saveBooking(newBooking);
 
-    // 1. Immediately send BOOKING_SENT status email
+    // 1. Send initial BOOKING_SENT status email
     try {
       await sendBookingStatusEmail({
         type: 'BOOKING_SENT',
@@ -119,7 +282,7 @@ export const BookingProvider = ({ children }) => {
       console.warn("Automated BOOKING_SENT email notice:", err);
     }
 
-    // 2. If initially Confirmed, also dispatch BOOKING_CONFIRMED email
+    // 2. If Confirmed, dispatch BOOKING_CONFIRMED email
     if (initialStatus === 'Confirmed') {
       try {
         await sendBookingStatusEmail({
@@ -132,7 +295,8 @@ export const BookingProvider = ({ children }) => {
       }
     }
 
-    showNotification(`Reservation ${bookingId} submitted! Status email delivered to ${newBooking.guestEmail}`);
+    const desc = isDining ? `Table reservation ${bookingId} confirmed!` : `Stay reservation ${bookingId} confirmed!`;
+    showNotification(`${desc} Status email delivered to ${newBooking.guestEmail}`);
     return newBooking;
   };
 
@@ -209,7 +373,9 @@ export const BookingProvider = ({ children }) => {
   const addRoom = async (roomData) => {
     const newRoom = {
       ...roomData,
-      id: `room-${Date.now()}`
+      id: `room-${Date.now()}`,
+      quantity: Number(roomData.quantity) || 2,
+      location: roomData.location || "Resort Wing Suite"
     };
     setRooms(prev => [newRoom, ...prev]);
     await saveRoom(newRoom);
@@ -217,9 +383,14 @@ export const BookingProvider = ({ children }) => {
   };
 
   const updateRoom = async (roomData) => {
-    setRooms(prev => prev.map(r => (r.id === roomData.id ? roomData : r)));
-    await saveRoom(roomData);
-    showNotification(`Room "${roomData.name}" updated successfully`);
+    const sanitized = {
+      ...roomData,
+      quantity: Number(roomData.quantity) || 2,
+      location: roomData.location || "Resort Wing Suite"
+    };
+    setRooms(prev => prev.map(r => (r.id === sanitized.id ? sanitized : r)));
+    await saveRoom(sanitized);
+    showNotification(`Room "${sanitized.name}" updated successfully`);
   };
 
   const deleteRoom = async (roomId) => {
@@ -246,13 +417,22 @@ export const BookingProvider = ({ children }) => {
   return (
     <BookingContext.Provider value={{
       rooms,
+      diningVenues,
       bookings,
       isLoading,
       searchParams,
       setSearchParams,
+      bookingMode,
+      setBookingMode,
       isBookingModalOpen,
       selectedRoom,
+      setSelectedRoom,
+      selectedVenue,
+      setSelectedVenue,
+      selectedTableNumber,
+      setSelectedTableNumber,
       openBookingModal,
+      openDiningModal,
       closeBookingModal,
       isTrackerModalOpen,
       setIsTrackerModalOpen,
@@ -263,6 +443,9 @@ export const BookingProvider = ({ children }) => {
       changeBookingStatus,
       resendBookingEmail,
       getBookingEmailLogs,
+      getRoomAvailability,
+      getDiningAvailability,
+      isTableAvailable,
       addRoom,
       updateRoom,
       deleteRoom,

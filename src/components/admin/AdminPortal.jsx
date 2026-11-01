@@ -780,6 +780,7 @@ export const AdminPortal = ({
 
   // Bookings filter
   const [bookingFilter, setBookingFilter] = useState('all');
+  const [bookingTypeFilter, setBookingTypeFilter] = useState('all'); // 'all', 'stay', 'dining'
   const [bookingSearch, setBookingSearch] = useState('');
   const [selectedBookingDetail, setSelectedBookingDetail] = useState(null);
 
@@ -819,6 +820,8 @@ export const AdminPortal = ({
     name: '',
     category: 'Suite',
     price: 350,
+    quantity: 2,
+    location: 'North Cliffside Wing — Oceanfront Promontory',
     size: '75 m² / 800 sq ft',
     guests: 2,
     beds: '1 King Bed',
@@ -860,12 +863,24 @@ export const AdminPortal = ({
 
   // Filtered bookings
   const filteredBookings = bookings.filter(b => {
-    const matchesFilter = bookingFilter === 'all' || b.status.toLowerCase() === bookingFilter.toLowerCase();
-    const matchesSearch = !bookingSearch || 
-      b.guestName.toLowerCase().includes(bookingSearch.toLowerCase()) ||
-      b.id.toLowerCase().includes(bookingSearch.toLowerCase()) ||
-      b.roomName.toLowerCase().includes(bookingSearch.toLowerCase());
-    return matchesFilter && matchesSearch;
+    const isDining = b.bookingType === 'dining' || b.type === 'dining';
+    const matchesType = bookingTypeFilter === 'all' 
+      ? true 
+      : bookingTypeFilter === 'dining' 
+      ? isDining 
+      : !isDining;
+
+    const matchesStatus = bookingFilter === 'all' || (b.status && b.status.toLowerCase() === bookingFilter.toLowerCase());
+
+    const searchLower = bookingSearch ? bookingSearch.toLowerCase() : '';
+    const guestMatch = b.guestName && b.guestName.toLowerCase().includes(searchLower);
+    const idMatch = b.id && b.id.toLowerCase().includes(searchLower);
+    const nameMatch = (b.roomName && b.roomName.toLowerCase().includes(searchLower)) ||
+                      (b.venueName && b.venueName.toLowerCase().includes(searchLower)) ||
+                      (b.tableName && b.tableName.toLowerCase().includes(searchLower));
+
+    const matchesSearch = !searchLower || guestMatch || idMatch || nameMatch;
+    return matchesType && matchesStatus && matchesSearch;
   });
 
   // Analytics KPIs
@@ -3182,14 +3197,14 @@ export const AdminPortal = ({
           {activeTab === 'bookings' && (
             <div className="space-y-6 animate-fade-in">
               
-              {/* Header with Search and Filter */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:w-64">
+              {/* Header with Search and Dual Filters */}
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                <div className="flex items-center gap-2 w-full lg:w-auto">
+                  <div className="relative flex-1 lg:w-64">
                     <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
-                      placeholder="Search by guest or reference..."
+                      placeholder="Search guest, folio code, or table..."
                       value={bookingSearch}
                       onChange={(e) => setBookingSearch(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
@@ -3197,21 +3212,60 @@ export const AdminPortal = ({
                   </div>
                 </div>
 
-                {/* Filter Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-                  {['all', 'confirmed', 'checked in', 'completed', 'cancelled'].map((status) => (
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Type Filter */}
+                  <div className="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px]">
                     <button
-                      key={status}
-                      onClick={() => setBookingFilter(status)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize whitespace-nowrap transition-all ${
-                        bookingFilter === status
+                      type="button"
+                      onClick={() => setBookingTypeFilter('all')}
+                      className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                        bookingTypeFilter === 'all'
                           ? 'bg-amber-400 text-slate-950 shadow'
-                          : 'bg-slate-900 text-slate-400 hover:text-white'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                     >
-                      {status}
+                      All Folios ({bookings.length})
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setBookingTypeFilter('stay')}
+                      className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                        bookingTypeFilter === 'stay'
+                          ? 'bg-amber-400 text-slate-950 shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Suites & Villas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingTypeFilter('dining')}
+                      className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                        bookingTypeFilter === 'dining'
+                          ? 'bg-amber-400 text-slate-950 shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Dining Tables
+                    </button>
+                  </div>
+
+                  {/* Status Pills */}
+                  <div className="flex items-center gap-1 overflow-x-auto pb-1 lg:pb-0">
+                    {['all', 'confirmed', 'checked in', 'completed', 'cancelled'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setBookingFilter(status)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize whitespace-nowrap transition-all ${
+                          bookingFilter === status
+                            ? 'bg-amber-400 text-slate-950 shadow'
+                            : 'bg-slate-900 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -3223,66 +3277,99 @@ export const AdminPortal = ({
                       <tr>
                         <th className="py-3 px-4">Reference</th>
                         <th className="py-3 px-4">Guest Information</th>
-                        <th className="py-3 px-4">Suite Reserved</th>
-                        <th className="py-3 px-4">Stay Dates</th>
+                        <th className="py-3 px-4">Reservation Category & Units</th>
+                        <th className="py-3 px-4">Schedule / Dates</th>
                         <th className="py-3 px-4">Total Amount</th>
                         <th className="py-3 px-4">Status</th>
                         <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                      {filteredBookings.map((b) => (
-                        <tr key={b.id} className="hover:bg-slate-900/40 transition-colors">
-                          <td className="py-3.5 px-4 font-mono font-bold text-amber-300">
-                            {b.id}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <span className="font-semibold text-white block">{b.guestName}</span>
-                            <span className="text-[11px] text-slate-400">{b.guestEmail}</span>
-                          </td>
-                          <td className="py-3.5 px-4 font-medium">
-                            {b.roomName}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <span className="block font-medium">{b.checkIn} → {b.checkOut}</span>
-                            <span className="text-[10px] text-slate-400">{b.nights} nights • {b.guests} guests</span>
-                          </td>
-                          <td className="py-3.5 px-4 font-mono font-bold text-white">
-                            {theme.currency}{b.totalAmount}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <select
-                              value={b.status}
-                              onChange={(e) => changeBookingStatus(b.id, e.target.value)}
-                              className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border cursor-pointer focus:outline-none ${
-                                b.status === 'Confirmed' 
-                                  ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40' 
-                                  : b.status === 'Checked In'
-                                  ? 'bg-blue-950/50 text-blue-300 border-blue-500/40'
-                                  : b.status === 'Completed'
-                                  ? 'bg-stone-800 text-stone-300 border-stone-600'
-                                  : b.status === 'Cancelled'
-                                  ? 'bg-rose-950/50 text-rose-300 border-rose-500/40'
-                                  : 'bg-amber-950/50 text-amber-300 border-amber-500/40'
-                              }`}
-                            >
-                              <option value="Confirmed" className="bg-slate-900 text-white">Confirmed</option>
-                              <option value="Checked In" className="bg-slate-900 text-white">Checked In</option>
-                              <option value="Completed" className="bg-slate-900 text-white">Completed</option>
-                              <option value="Pending" className="bg-slate-900 text-white">Pending</option>
-                              <option value="Cancelled" className="bg-slate-900 text-white">Cancelled</option>
-                            </select>
-                          </td>
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              onClick={() => setSelectedBookingDetail(b)}
-                              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-stone-200 text-[11px] font-semibold transition-all"
-                            >
-                              Details
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredBookings.map((b) => {
+                        const isDining = b.bookingType === 'dining' || b.type === 'dining';
+                        return (
+                          <tr key={b.id} className="hover:bg-slate-900/40 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-bold text-amber-300">
+                              <span className="block">{b.id}</span>
+                              <span className={`inline-block px-1.5 py-0.2 rounded text-[9px] uppercase font-mono mt-0.5 ${
+                                isDining ? 'bg-amber-950 text-amber-400 border border-amber-500/30' : 'bg-blue-950 text-blue-300 border border-blue-500/30'
+                              }`}>
+                                {isDining ? 'Dining' : 'Stay'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="font-semibold text-white block">{b.guestName}</span>
+                              <span className="text-[11px] text-slate-400">{b.guestEmail}</span>
+                            </td>
+                            <td className="py-3.5 px-4 font-medium">
+                              {isDining ? (
+                                <div>
+                                  <span className="font-semibold text-white block">{b.venueName}</span>
+                                  <span className="text-[11px] text-amber-300 font-mono">
+                                    Table {b.tableNumber} • {b.tableName}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 block truncate">{b.tableLocation}</span>
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className="font-semibold text-white block">{b.roomName}</span>
+                                  <span className="text-[11px] text-amber-300 font-semibold">
+                                    {b.quantity || 1} {b.quantity === 1 ? 'Suite' : 'Suites'} Reserved
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 block truncate">{b.roomLocation}</span>
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {isDining ? (
+                                <div>
+                                  <span className="block font-medium text-white">{b.date} at {b.timeSlot}</span>
+                                  <span className="text-[10px] text-slate-400">{b.guests} guests</span>
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className="block font-medium text-white">{b.checkIn} → {b.checkOut}</span>
+                                  <span className="text-[10px] text-slate-400">{b.nights} nights • {b.guests} guests</span>
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 font-mono font-bold text-white">
+                              {theme.currency}{b.totalAmount}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <select
+                                value={b.status}
+                                onChange={(e) => changeBookingStatus(b.id, e.target.value)}
+                                className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border cursor-pointer focus:outline-none ${
+                                  b.status === 'Confirmed' 
+                                    ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40' 
+                                    : b.status === 'Checked In'
+                                    ? 'bg-blue-950/50 text-blue-300 border-blue-500/40'
+                                    : b.status === 'Completed'
+                                    ? 'bg-stone-800 text-stone-300 border-stone-600'
+                                    : b.status === 'Cancelled'
+                                    ? 'bg-rose-950/50 text-rose-300 border-rose-500/40'
+                                    : 'bg-amber-950/50 text-amber-300 border-amber-500/40'
+                                }`}
+                              >
+                                <option value="Confirmed" className="bg-slate-900 text-white">Confirmed</option>
+                                <option value="Checked In" className="bg-slate-900 text-white">Checked In</option>
+                                <option value="Completed" className="bg-slate-900 text-white">Completed</option>
+                                <option value="Pending" className="bg-slate-900 text-white">Pending</option>
+                                <option value="Cancelled" className="bg-slate-900 text-white">Cancelled</option>
+                              </select>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => setSelectedBookingDetail(b)}
+                                className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-stone-200 text-[11px] font-semibold transition-all cursor-pointer"
+                              >
+                                Details
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
 
@@ -3314,6 +3401,8 @@ export const AdminPortal = ({
                         name: '',
                         category: 'Suite',
                         price: 350,
+                        quantity: 2,
+                        location: 'North Cliffside Wing — Oceanfront Promontory',
                         size: '75 m² / 800 sq ft',
                         guests: 2,
                         beds: '1 King Bed',
@@ -3367,27 +3456,47 @@ export const AdminPortal = ({
                         <h4 className="font-serif text-base font-bold text-white line-clamp-1">{room.name}</h4>
                         <p className="text-xs text-slate-400 line-clamp-2">{room.description}</p>
                         
-                        <div className="pt-2 flex items-center gap-3 text-[11px] text-slate-400">
+                        <div className="pt-1 flex items-center gap-1.5 text-[11px] text-amber-300">
+                          <MapPin className="w-3 h-3 text-amber-400 shrink-0" />
+                          <span className="truncate">{room.location || "North Cliffside Wing — Oceanfront Promontory"}</span>
+                        </div>
+
+                        <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400">
                           <span>{room.size}</span>
                           <span>•</span>
                           <span>{room.guests} Guests</span>
                           <span>•</span>
-                          <span>{room.beds}</span>
+                          <span className="text-amber-400 font-semibold">{room.quantity || 2} Units Inventory</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="p-4 border-t border-slate-800/80 bg-slate-900/40 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          disabled={!isSuperAdmin}
-                          value={room.price}
-                          onChange={(e) => isSuperAdmin && updateRoom({ ...room, price: Number(e.target.value) })}
-                          className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-white disabled:opacity-60"
-                          title={isSuperAdmin ? "Instant price editor" : "Price editing locked to Super Admin"}
-                        />
-                        <span className="text-[10px] text-slate-500">Rate</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            disabled={!isSuperAdmin}
+                            value={room.price}
+                            onChange={(e) => isSuperAdmin && updateRoom({ ...room, price: Number(e.target.value) })}
+                            className="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-white disabled:opacity-60"
+                            title={isSuperAdmin ? "Instant price editor" : "Price editing locked to Super Admin"}
+                          />
+                          <span className="text-[10px] text-slate-500">Rate</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min={1}
+                            disabled={!isSuperAdmin}
+                            value={room.quantity || 2}
+                            onChange={(e) => isSuperAdmin && updateRoom({ ...room, quantity: Math.max(1, Number(e.target.value)) })}
+                            className="w-12 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-white disabled:opacity-60"
+                            title={isSuperAdmin ? "Instant inventory units editor" : "Inventory editing locked to Super Admin"}
+                          />
+                          <span className="text-[10px] text-slate-500">Units</span>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-1.5">
@@ -3745,8 +3854,14 @@ export const AdminPortal = ({
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Suite & Investment</span>
-                  <strong className="text-white text-sm block mt-0.5">{selectedBookingDetail.roomName}</strong>
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                    {selectedBookingDetail.bookingType === 'dining' ? 'Dining Venue & Table' : 'Suite & Quantity'}
+                  </span>
+                  <strong className="text-white text-sm block mt-0.5">
+                    {selectedBookingDetail.bookingType === 'dining' 
+                      ? `${selectedBookingDetail.venueName} • Table ${selectedBookingDetail.tableNumber}` 
+                      : `${selectedBookingDetail.roomName} (${selectedBookingDetail.quantity || 1} Suite${(selectedBookingDetail.quantity || 1) > 1 ? 's' : ''})`}
+                  </strong>
                   <span className="font-mono text-sm text-amber-400 font-bold block mt-0.5">
                     {theme.currency}{selectedBookingDetail.totalAmount}
                   </span>
@@ -3754,12 +3869,29 @@ export const AdminPortal = ({
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-slate-400 block text-[10px] uppercase font-semibold mb-1">Stay Duration</span>
-                <span className="text-stone-200 font-medium">
-                  {selectedBookingDetail.checkIn} to {selectedBookingDetail.checkOut} ({selectedBookingDetail.nights} nights • {selectedBookingDetail.guests} guests)
-                </span>
-              </div>
+              {selectedBookingDetail.bookingType === 'dining' ? (
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Table & Venue Location</span>
+                  <p className="text-stone-200 font-medium">
+                    Table {selectedBookingDetail.tableNumber} ({selectedBookingDetail.tableName}) • <em>{selectedBookingDetail.tableLocation}</em>
+                  </p>
+                  <p className="text-[11px] text-amber-300">
+                    Seating: <strong>{selectedBookingDetail.date} at {selectedBookingDetail.timeSlot}</strong> • {selectedBookingDetail.guests} Guests
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Stay Duration & Location</span>
+                  <span className="text-stone-200 font-medium block">
+                    {selectedBookingDetail.checkIn} to {selectedBookingDetail.checkOut} ({selectedBookingDetail.nights} nights • {selectedBookingDetail.guests} guests)
+                  </span>
+                  {selectedBookingDetail.roomLocation && (
+                    <span className="text-[11px] text-amber-300 block">
+                      <strong>Resort Location:</strong> {selectedBookingDetail.roomLocation}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {selectedBookingDetail.addons && selectedBookingDetail.addons.length > 0 && (
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
@@ -3973,6 +4105,34 @@ export const AdminPortal = ({
                     <option value="Suite">Suite</option>
                     <option value="Deluxe">Deluxe</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Total Inventory Units (Quantity)</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    disabled={!isSuperAdmin}
+                    value={roomFormData.quantity || 2}
+                    onChange={(e) => setRoomFormData({ ...roomFormData, quantity: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-mono disabled:opacity-60"
+                    placeholder="e.g. 2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Resort Wing & Location</label>
+                  <input
+                    type="text"
+                    required
+                    disabled={!isSuperAdmin}
+                    value={roomFormData.location || ''}
+                    onChange={(e) => setRoomFormData({ ...roomFormData, location: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white disabled:opacity-60"
+                    placeholder="e.g. North Cliffside Wing — Oceanfront Promontory"
+                  />
                 </div>
               </div>
 
