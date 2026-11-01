@@ -5,3 +5,4 @@ export default async function DynamicDiscoverPage({ params }) {
   const id = resolvedParams?.id || '';
   redirect(id ? `/discover?article=${id}` : '/discover');
 }
+
