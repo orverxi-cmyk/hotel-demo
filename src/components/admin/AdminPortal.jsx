@@ -10,6 +10,7 @@ import {
   BedDouble, 
   BarChart3, 
   X, 
+  Menu,
   Check, 
   RefreshCw, 
   Save, 
@@ -102,6 +103,7 @@ export const AdminPortal = ({
   } = useBooking();
 
   const [isSyncingAll, setIsSyncingAll] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Folio email logs & preview state
   const [folioEmailLogs, setFolioEmailLogs] = useState([]);
@@ -782,228 +784,250 @@ export const AdminPortal = ({
   const occupancyRate = Math.min(100, Math.round((activeBookingsCount / (rooms.length || 1)) * 100));
   const averageDailyRate = Math.round(totalRevenue / Math.max(1, bookings.filter(b => b.status !== 'Cancelled').reduce((sum, b) => sum + (Number(b.nights) || 1), 0)));
 
+  const adminTabs = [
+    { id: 'theme', label: 'Branding & Colors', icon: Palette, description: 'Hotel identity, palette & typography' },
+    { id: 'slider', label: 'Hero Slider & Media', icon: Film, count: sliderSlides.length, description: 'Homepage showcase & discovery links' },
+    { id: 'menus', label: 'Navigation & Menus', icon: Compass, count: navMenus.length, description: 'Header navigation items' },
+    { id: 'articles', label: 'Discover Articles', icon: BookOpen, count: articles.length, description: 'Editorial stories & multi-photo articles' },
+    { id: 'bookings', label: 'Bookings Manager', icon: CalendarDays, count: bookings.length, description: 'Guest reservations & booking folios' },
+    { id: 'rooms', label: 'Suites & Inventory', icon: BedDouble, count: rooms.length, description: 'Room specifications & night rates' },
+    { id: 'analytics', label: 'Revenue & Analytics', icon: BarChart3, description: 'Financial metrics & occupancy KPIs' },
+    ...(isSuperAdmin ? [{ id: 'users', label: 'Admins & Roles', icon: Users, badge: 'Super Admin', description: 'RBAC administrator credentials' }] : [])
+  ];
+
+  const currentTab = adminTabs.find(t => t.id === activeTab) || adminTabs[0];
+
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900 text-slate-100 flex flex-col overflow-hidden animate-fade-in font-sans">
+    <div className="fixed inset-0 z-50 bg-slate-900 text-slate-100 flex overflow-hidden animate-fade-in font-sans">
       
-      {/* CMS Top Header */}
-      <header className="bg-slate-950 border-b border-slate-800 px-4 sm:px-8 py-3.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onClose}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-300 text-xs font-semibold transition-all"
-            title="Return to the live hotel website"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">View Website</span>
-          </button>
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden animate-fade-in"
+          aria-hidden="true"
+        />
+      )}
 
-          <div className="h-5 w-px bg-slate-800 hidden sm:block" />
-
-          <div className="flex items-center gap-2.5">
-            <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center font-serif text-sm font-bold text-slate-950 shadow-md"
-              style={{ backgroundColor: 'var(--color-secondary)' }}
-            >
-              CMS
+      {/* Left Sidebar */}
+      <aside 
+        className={`fixed md:static inset-y-0 left-0 z-50 w-72 lg:w-76 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0 shadow-2xl md:shadow-none transition-transform duration-300 ease-in-out ${
+          isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        {/* Top Header & Identity */}
+        <div className="p-4 sm:p-5 border-b border-slate-800/80">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center font-serif text-base font-bold text-slate-950 shadow-md ring-1 ring-white/10"
+                style={{ backgroundColor: 'var(--color-secondary)' }}
+              >
+                {theme.hotelName ? theme.hotelName.substring(0, 2).toUpperCase() : 'CMS'}
+              </div>
+              <div className="min-w-0">
+                <h1 className="font-bold text-sm text-white tracking-wide truncate">
+                  {theme.hotelName || 'Luxury Hotel'}
+                </h1>
+                <p className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Admin CMS</span>
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-sm text-white flex items-center gap-2 flex-wrap">
-                <span>{theme.hotelName} Admin CMS</span>
+
+            {/* Mobile Close Button */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="md:hidden p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Admin Role Status Badge */}
+          <div className="mt-4 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 {isSuperAdmin ? (
-                  <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center gap-1.5 shadow-sm">
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Super Admin ({userEmail})</span>
-                  </span>
+                  <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
                 ) : (
-                  <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-sky-950/90 text-sky-300 border border-sky-500/40 flex items-center gap-1.5 shadow-sm">
-                    <Lock className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Normal Admin ({userEmail}) • View Only</span>
-                  </span>
+                  <Lock className="w-4 h-4 text-sky-400 shrink-0" />
                 )}
-              </h1>
-              <p className="text-[11px] text-slate-400">
-                Centralized Reservation Engine & Brand Identity Manager
-              </p>
+                <div className="min-w-0">
+                  <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">
+                    {isSuperAdmin ? 'Super Administrator' : 'Normal Admin'}
+                  </span>
+                  <span className="text-xs text-stone-300 font-mono truncate block" title={userEmail}>
+                    {userEmail}
+                  </span>
+                </div>
+              </div>
+              {isSuperAdmin ? (
+                <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 shrink-0">
+                  Root
+                </span>
+              ) : (
+                <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-500/30 shrink-0">
+                  Staff
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Sync status & Actions */}
-        <div className="flex items-center gap-2">
-          {/* Cloud Sync Button (Super Admin Only) */}
-          {isSuperAdmin && (
-            <button
-              onClick={handleSyncAll}
-              disabled={isSyncingAll}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-xs font-semibold transition-all disabled:opacity-50"
-              title="Upload and seed all theme, rooms, bookings, and content directly to Firebase Firestore"
-            >
-              <UploadCloud className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{isSyncingAll ? 'Uploading...' : 'Sync All to Firestore'}</span>
-            </button>
-          )}
+        {/* Vertical Nav Tab List */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          <div className="px-3 pb-2 text-[10px] font-mono tracking-widest uppercase text-slate-500 font-semibold">
+            Management & Studio
+          </div>
 
-          {/* Reset Demo Button (Super Admin Only) */}
-          {isSuperAdmin && (
-            <button
-              onClick={resetDemo}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-300 text-xs font-semibold border border-slate-700 transition-all"
-              title="Reset all rooms, bookings and theme to initial demo state"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span className="hidden xl:inline">Reset Demo</span>
-            </button>
-          )}
+          {adminTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all group ${
+                  isActive
+                    ? 'bg-amber-400/15 text-amber-300 font-semibold shadow-sm border border-amber-400/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                    isActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-300'
+                  }`} />
+                  <span className="truncate">{tab.label}</span>
+                </div>
 
-          {/* Sign Out Button */}
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                  {tab.count !== undefined && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold ${
+                      isActive
+                        ? 'bg-amber-400/25 text-amber-200'
+                        : 'bg-slate-800/80 text-slate-400 group-hover:text-stone-300'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                  {tab.badge && (
+                    <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                      {tab.badge}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sidebar Footer Actions */}
+        <div className="p-3 sm:p-4 border-t border-slate-800/80 space-y-2 bg-slate-950/80">
+          <button
+            onClick={onClose}
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-stone-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-all group shadow-sm"
+            title="Return to the live hotel website"
+          >
+            <div className="flex items-center gap-2.5">
+              <ArrowLeft className="w-4 h-4 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
+              <span>View Website</span>
+            </div>
+            <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300" />
+          </button>
+
           {onLogout && (
             <button
               onClick={onLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-500/30 text-rose-300 text-xs font-semibold transition-all"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:text-rose-100 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/20 transition-all group"
               title="Sign out of Admin session"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Sign Out</span>
+              <LogOut className="w-4 h-4 text-rose-400 group-hover:text-rose-300" />
+              <span>Sign Out</span>
             </button>
           )}
-
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all ml-1"
-            aria-label="Exit CMS"
-            title="Return to website"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Navigation Tabs */}
-      <div className="bg-slate-950/70 border-b border-slate-800 px-4 sm:px-8 flex items-center gap-2 overflow-x-auto shrink-0">
-        <button
-          onClick={() => setActiveTab('theme')}
-          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
-            activeTab === 'theme'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Palette className="w-4 h-4" />
-          <span>Branding & Theme Colors</span>
-        </button>
+      {/* Right Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-900">
+        
+        {/* Top Action & Breadcrumb Header */}
+        <header className="bg-slate-950 border-b border-slate-800 px-4 sm:px-8 py-3.5 flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile Hamburger Menu Button */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-stone-300 transition-all border border-slate-700 shrink-0"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
 
-        <button
-          onClick={() => setActiveTab('slider')}
-          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
-            activeTab === 'slider'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Film className="w-4 h-4" />
-          <span>Hero Slider & Media</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-stone-300">
-            {sliderSlides.length}
-          </span>
-        </button>
+            {/* Breadcrumb Display */}
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs text-slate-500 font-mono hidden sm:inline">CMS</span>
+              <span className="text-slate-600 hidden sm:inline">/</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <currentTab.icon className="w-4 h-4 text-amber-400 shrink-0" />
+                <h2 className="font-bold text-sm text-white truncate">{currentTab.label}</h2>
+              </div>
+              <span className="text-xs text-slate-400 hidden xl:inline truncate border-l border-slate-800 pl-2 ml-1">
+                {currentTab.description}
+              </span>
+            </div>
+          </div>
 
-        <button
-          onClick={() => setActiveTab('menus')}
-          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
-            activeTab === 'menus'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Compass className="w-4 h-4" />
-          <span>Navigation & Menus</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-stone-300">
-            {navMenus.length}
-          </span>
-        </button>
+          {/* Sync status & Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Cloud Sync Button (Super Admin Only) */}
+            {isSuperAdmin && (
+              <button
+                onClick={handleSyncAll}
+                disabled={isSyncingAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-xs font-semibold transition-all disabled:opacity-50"
+                title="Upload and seed all theme, rooms, bookings, and content directly to Firebase Firestore"
+              >
+                <UploadCloud className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isSyncingAll ? 'Uploading...' : 'Sync All to Firestore'}</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => setActiveTab('articles')}
-          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
-            activeTab === 'articles'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <BookOpen className="w-4 h-4" />
-          <span>Discover Articles</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-stone-300">
-            {articles.length}
-          </span>
-        </button>
+            {/* Reset Demo Button (Super Admin Only) */}
+            {isSuperAdmin && (
+              <button
+                onClick={resetDemo}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-300 text-xs font-semibold border border-slate-700 transition-all"
+                title="Reset all rooms, bookings and theme to initial demo state"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">Reset Demo</span>
+              </button>
+            )}
 
-        <button
-          onClick={() => setActiveTab('bookings')}
-          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap relative ${
-            activeTab === 'bookings'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <CalendarDays className="w-4 h-4" />
-          <span>Bookings Manager</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-stone-300">
-            {bookings.length}
-          </span>
-        </button>
+            {/* Close CMS */}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all ml-1"
+              aria-label="Exit CMS"
+              title="Return to website"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </header>
 
-        <button
-          onClick={() => setActiveTab('rooms')}
-          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
-            activeTab === 'rooms'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <BedDouble className="w-4 h-4" />
-          <span>Suites & Inventory</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-stone-300">
-            {rooms.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
-            activeTab === 'analytics'
-              ? 'border-amber-400 text-amber-300 bg-slate-900/50'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          <span>Revenue & Analytics</span>
-        </button>
-
-        {/* TAB 5: ADMINS & ROLES (SUPER ADMIN ONLY) */}
-        {isSuperAdmin && (
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-2 py-3 px-4 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
-              activeTab === 'users'
-                ? 'border-amber-400 text-amber-300 bg-slate-900/50'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Admins & Roles</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30">
-              Super Admin
-            </span>
-          </button>
-        )}
-      </div>
-
-      {/* Main CMS Viewport */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-900/50">
-        <div className="max-w-6xl mx-auto">
-          
-          {/* TAB 1: BRANDING & THEME STUDIO */}
-          {activeTab === 'theme' && (
+        {/* Main CMS Viewport */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-900/50">
+          <div className="max-w-6xl mx-auto">
+            
+            {/* TAB 1: BRANDING & THEME STUDIO */}
+            {activeTab === 'theme' && (
             <div className="space-y-8 animate-fade-in">
               
               {/* Introduction Card */}
@@ -3194,6 +3218,7 @@ export const AdminPortal = ({
           )}
 
         </div>
+      </div>
       </div>
 
       {/* Booking Detail Modal */}
