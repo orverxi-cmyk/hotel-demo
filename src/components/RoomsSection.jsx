@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useBooking } from '../context/BookingContext';
 import { useTheme } from '../context/ThemeContext';
 import { RoomCard } from './RoomCard';
 import { RoomDetailModal } from './RoomDetailModal';
 import { Sparkles, SlidersHorizontal } from 'lucide-react';
+import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const RoomsSection = () => {
   const { rooms, searchParams, setSearchParams } = useBooking();
@@ -14,6 +15,14 @@ export const RoomsSection = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
   const [inspectingRoom, setInspectingRoom] = useState(null);
+  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().rooms);
+
+  useEffect(() => {
+    const unsub = subscribeSectionHeaders((all) => {
+      if (all && all.rooms) setSectionHeaders(all.rooms);
+    });
+    return () => unsub();
+  }, []);
 
   // Filter and sort rooms
   const filteredRooms = useMemo(() => {
@@ -54,13 +63,13 @@ export const RoomsSection = () => {
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-3"
           style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-primary)' }}>
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Bespoke Accommodations</span>
+          <span>{sectionHeaders?.eyebrow || "Bespoke Accommodations"}</span>
         </div>
         <h2 className="font-serif text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight mb-4">
-          Sanctuaries of Refined Elegance
+          {sectionHeaders?.title || "Sanctuaries of Refined Elegance"}
         </h2>
         <p className="text-stone-600 text-base sm:text-lg font-light leading-relaxed">
-          Each residence is individually curated with natural materials, handcrafted Italian furnishings, and unobstructed Mediterranean vistas.
+          {sectionHeaders?.subtitle || "Each residence is individually curated with natural materials, handcrafted Italian furnishings, and unobstructed Mediterranean vistas."}
         </p>
       </div>
 

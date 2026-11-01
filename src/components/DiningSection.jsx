@@ -4,12 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
 import { Utensils, Award, Clock, Calendar, Wine, MapPin } from 'lucide-react';
-import { getCachedDiningVenues, subscribeDiningVenues, initialDiningVenues } from '../services/storageService';
+import { getCachedDiningVenues, subscribeDiningVenues, initialDiningVenues, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const DiningSection = () => {
   const { theme } = useTheme();
   const { openBookingModal } = useBooking();
   const [venues, setVenues] = useState(initialDiningVenues);
+  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().dining);
 
   useEffect(() => {
     const cached = getCachedDiningVenues();
@@ -23,7 +24,14 @@ export const DiningSection = () => {
       }
     });
 
-    return () => unsubscribe();
+    const unsubscribeHeaders = subscribeSectionHeaders((all) => {
+      if (all && all.dining) setSectionHeaders(all.dining);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeHeaders();
+    };
   }, []);
 
   const visibleVenues = venues.filter(v => v.visible !== false);
@@ -37,13 +45,13 @@ export const DiningSection = () => {
           className="inline-block px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-3"
           style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-primary)' }}
         >
-          Gastronomy & Libations
+          {sectionHeaders?.eyebrow || "Gastronomy & Libations"}
         </span>
         <h2 className="font-serif text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight mb-4">
-          A Symphony of Epicurean Artistry
+          {sectionHeaders?.title || "A Symphony of Epicurean Artistry"}
         </h2>
         <p className="text-stone-600 text-base sm:text-lg font-light leading-relaxed">
-          Embark on an unforgettable gastronomic journey guided by award-winning culinary masters and international sommeliers.
+          {sectionHeaders?.subtitle || "Embark on an unforgettable gastronomic journey guided by award-winning culinary masters and international sommeliers."}
         </p>
       </div>
 

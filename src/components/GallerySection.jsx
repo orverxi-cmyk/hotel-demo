@@ -1,11 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Eye, Maximize2 } from 'lucide-react';
+import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const GallerySection = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().gallery);
+
+  useEffect(() => {
+    const unsub = subscribeSectionHeaders((all) => {
+      if (all && all.gallery) setSectionHeaders(all.gallery);
+    });
+    return () => unsub();
+  }, []);
 
   const images = [
     {
@@ -53,13 +62,13 @@ export const GallerySection = () => {
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-14">
           <span className="inline-block px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-widest text-amber-300 bg-amber-400/10 border border-amber-400/20 mb-3">
-            Visual Story
+            {sectionHeaders?.eyebrow || "Visual Story"}
           </span>
           <h2 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight mb-4">
-            Moments of Sublime Beauty
+            {sectionHeaders?.title || "Moments of Sublime Beauty"}
           </h2>
           <p className="text-stone-400 text-base sm:text-lg font-light leading-relaxed">
-            Immerse yourself in snapshots of idyllic afternoons, sunset champagne toasts, and serene botanical spaces.
+            {sectionHeaders?.subtitle || "Immerse yourself in snapshots of idyllic afternoons, sunset champagne toasts, and serene botanical spaces."}
           </p>
         </div>
 

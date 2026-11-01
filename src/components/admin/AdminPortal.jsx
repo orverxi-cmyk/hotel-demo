@@ -50,7 +50,10 @@ import {
   Link2,
   BookOpen,
   Images,
-  FileText
+  FileText,
+  LayoutTemplate,
+  RotateCcw,
+  MapPin
 } from 'lucide-react';
 import { 
   syncAllContentToFirestore, 
@@ -77,7 +80,12 @@ import {
   deleteArticle,
   resetArticles,
   initialArticles,
-  subscribeArticles
+  subscribeArticles,
+  initialSectionHeaders,
+  getCachedSectionHeaders,
+  subscribeSectionHeaders,
+  saveSectionHeaders,
+  resetSectionHeaders
 } from '../../services/storageService';
 import { adjustLightness } from '../../utils/colorUtils';
 
@@ -892,8 +900,171 @@ export const AdminPortal = ({
   const occupancyRate = Math.min(100, Math.round((activeBookingsCount / (rooms.length || 1)) * 100));
   const averageDailyRate = Math.round(totalRevenue / Math.max(1, bookings.filter(b => b.status !== 'Cancelled').reduce((sum, b) => sum + (Number(b.nights) || 1), 0)));
 
+  // Section Titles & Editorial Copy state
+  const [sectionHeadersData, setSectionHeadersData] = useState(() => getCachedSectionHeaders());
+  const [isSavingHeaders, setIsSavingHeaders] = useState(false);
+  const [selectedHeaderSectionFilter, setSelectedHeaderSectionFilter] = useState('all');
+
+  useEffect(() => {
+    const unsubscribe = subscribeSectionHeaders((headers) => {
+      if (headers && typeof headers === 'object') {
+        setSectionHeadersData(headers);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleHeaderFieldChange = (sectionKey, field, value) => {
+    setSectionHeadersData(prev => ({
+      ...prev,
+      [sectionKey]: {
+        ...(prev?.[sectionKey] || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSaveAllHeaders = async () => {
+    try {
+      setIsSavingHeaders(true);
+      await saveSectionHeaders(sectionHeadersData);
+      showNotification("All 7 section titles & copy saved and synced successfully!");
+    } catch (err) {
+      console.error("Save section headers error:", err);
+      showNotification(`Save notice: ${err?.message || 'Section headers saved locally'}`);
+    } finally {
+      setIsSavingHeaders(false);
+    }
+  };
+
+  const handleSaveSingleHeaderSection = async (sectionKey, sectionLabel) => {
+    try {
+      setIsSavingHeaders(true);
+      await saveSectionHeaders(sectionHeadersData);
+      showNotification(`"${sectionLabel}" section title and copy saved!`);
+    } catch (err) {
+      console.error("Save single section error:", err);
+      showNotification(`Save notice: ${err?.message || 'Section saved locally'}`);
+    } finally {
+      setIsSavingHeaders(false);
+    }
+  };
+
+  const handleResetHeaders = async () => {
+    if (!isSuperAdmin) {
+      showNotification("Reset restricted to Super Administrator.");
+      return;
+    }
+    if (window.confirm("Reset all 7 section titles and copy to default Mediterranean luxury text?")) {
+      setSectionHeadersData(initialSectionHeaders);
+      await resetSectionHeaders();
+      showNotification("Section titles & copy reset to defaults!");
+    }
+  };
+
+  const handleResetSingleSectionHeader = async (sectionKey, sectionLabel) => {
+    if (!isSuperAdmin) {
+      showNotification("Reset restricted to Super Administrator.");
+      return;
+    }
+    if (window.confirm(`Reset "${sectionLabel}" title and copy to factory default?`)) {
+      const defaultSec = initialSectionHeaders[sectionKey] || {};
+      const updated = {
+        ...sectionHeadersData,
+        [sectionKey]: { ...defaultSec }
+      };
+      setSectionHeadersData(updated);
+      await saveSectionHeaders(updated);
+      showNotification(`"${sectionLabel}" reset to factory default!`);
+    }
+  };
+
+  const SECTION_CONFIGS = [
+    {
+      key: 'rooms',
+      name: 'Accommodations',
+      fullTitle: 'Bespoke Accommodations',
+      badge: 'Suites & Private Villas',
+      anchor: '#rooms',
+      icon: BedDouble,
+      defaultEyebrow: 'Bespoke Accommodations',
+      defaultTitle: 'Sanctuaries of Refined Elegance',
+      defaultSubtitle: 'Each residence is individually curated with natural materials, handcrafted Italian furnishings, and unobstructed Mediterranean vistas.'
+    },
+    {
+      key: 'amenities',
+      name: 'Curated Amenities',
+      fullTitle: 'Curated Hotel Experiences',
+      badge: 'Resort Amenities',
+      anchor: '#amenities',
+      icon: Sparkles,
+      defaultEyebrow: 'Curated Hotel Experiences',
+      defaultTitle: 'Unrivaled World-Class Amenities',
+      defaultSubtitle: 'Every moment at our resort is tailored to exceed imagination — from thermal spa rituals to private yacht expeditions across the turquoise Mediterranean.'
+    },
+    {
+      key: 'dining',
+      name: 'Gastronomy & Libations',
+      fullTitle: 'Gastronomy & Libations',
+      badge: 'Michelin Dining & Cellar',
+      anchor: '#dining',
+      icon: UtensilsCrossed,
+      defaultEyebrow: 'Gastronomy & Libations',
+      defaultTitle: 'A Symphony of Epicurean Artistry',
+      defaultSubtitle: 'Embark on an unforgettable gastronomic journey guided by award-winning culinary masters and international sommeliers.'
+    },
+    {
+      key: 'discover',
+      name: 'Discover & Stories',
+      fullTitle: 'Discover & Editorial Stories',
+      badge: 'Chronicles & Heritage',
+      anchor: '#discover',
+      icon: BookOpen,
+      defaultEyebrow: 'Discover & Editorial Stories',
+      defaultTitle: 'Curated Chronicles of Mediterranean Living',
+      defaultSubtitle: 'Unveil the secrets of our estate: Michelin-starred culinary artistry, Riva yacht charters, ancient subterranean cellars, and holistic botanical wellness.'
+    },
+    {
+      key: 'gallery',
+      name: 'Visual Story',
+      fullTitle: 'Visual Story',
+      badge: 'Resort Imagery & Moments',
+      anchor: '#gallery',
+      icon: Images,
+      defaultEyebrow: 'Visual Story',
+      defaultTitle: 'Moments of Sublime Beauty',
+      defaultSubtitle: 'Immerse yourself in snapshots of idyllic afternoons, sunset champagne toasts, and serene botanical spaces.'
+    },
+    {
+      key: 'reviews',
+      name: 'Guest Acclaim',
+      fullTitle: 'Guest Acclaim',
+      badge: 'Verified Residencies & Acclaim',
+      anchor: '#reviews',
+      icon: ShieldCheck,
+      isReview: true,
+      defaultEyebrow: 'Guest Acclaim',
+      defaultTitle: 'Praised by Discerning Travelers',
+      defaultRatingScore: '4.98 / 5.0',
+      defaultRatingCount: '(420+ Verified Residencies)',
+      defaultSubtitle: 'Read authentic feedback and impressions from our esteemed international guests.'
+    },
+    {
+      key: 'location',
+      name: 'Location & Concierge',
+      fullTitle: 'Location & Concierge',
+      badge: 'Arrival, Transfers & Concierge',
+      anchor: '#location',
+      icon: Compass,
+      defaultEyebrow: 'Location & Concierge',
+      defaultTitle: 'Arrive in Absolute Tranquility',
+      defaultSubtitle: 'Nestled along the emerald coast, easily reachable by helicopter transfer, private yacht dock, or luxury chauffeur.'
+    }
+  ];
+
   const adminTabs = [
     { id: 'theme', label: 'Branding & Colors', icon: Palette, description: 'Hotel identity, palette & typography' },
+    { id: 'headers', label: 'Section Titles & Copy', icon: LayoutTemplate, count: 7, description: 'Eyebrow tags, titles & descriptions across 7 sections' },
     { id: 'slider', label: 'Hero Slider & Media', icon: Film, count: sliderSlides.length, description: 'Homepage showcase & discovery links' },
     { id: 'menus', label: 'Navigation & Menus', icon: Compass, count: navMenus.length, description: 'Header navigation items' },
     { id: 'articles', label: 'Discover Articles', icon: BookOpen, count: articles.length, description: 'Editorial stories & multi-photo articles' },
@@ -1854,6 +2025,314 @@ export const AdminPortal = ({
                 </div>
               </form>
 
+            </div>
+          )}
+
+          {/* TAB: SECTION TITLES & EDITORIAL COPY */}
+          {activeTab === 'headers' && (
+            <div className="space-y-6 animate-fade-in">
+              {/* Header card */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+                      Homepage Presentation & Content Architecture
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-500/30">
+                      7 Landing Sections
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white font-serif">
+                    Section Titles & Editorial Copy
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-2xl mt-1 leading-relaxed">
+                    Customise the luxury eyebrow tags, primary serif headlines, and editorial descriptions for all 7 homepage sections. Changes update instantly across all guest visits through real-time Firestore sync and local caching.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {isSuperAdmin && (
+                    <button
+                      onClick={handleResetHeaders}
+                      className="px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-stone-300 border border-slate-700 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                      title="Reset all 7 section titles & copy to default Mediterranean luxury text"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Reset All Defaults</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSaveAllHeaders}
+                    disabled={isSavingHeaders}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center gap-2 shadow-lg transition-all hover:scale-105 active:scale-95 shrink-0 disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                  >
+                    {isSavingHeaders ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>{isSavingHeaders ? 'Saving...' : 'Save All Section Headers'}</span>
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-stone-200 border border-slate-700 flex items-center gap-1.5 transition-all"
+                    title="View updates on live hotel website"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>View Live Site</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Navigation Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => setSelectedHeaderSectionFilter('all')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
+                    selectedHeaderSectionFilter === 'all'
+                      ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/20'
+                      : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60'
+                  }`}
+                >
+                  All Sections (7)
+                </button>
+                {SECTION_CONFIGS.map((cfg) => {
+                  const IconComp = cfg.icon;
+                  const isSelected = selectedHeaderSectionFilter === cfg.key;
+                  return (
+                    <button
+                      key={cfg.key}
+                      type="button"
+                      onClick={() => setSelectedHeaderSectionFilter(cfg.key)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                        isSelected
+                          ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/20'
+                          : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60'
+                      }`}
+                    >
+                      <IconComp className="w-3.5 h-3.5 opacity-80" />
+                      <span>{cfg.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 7 Section Cards List */}
+              <div className="space-y-6">
+                {SECTION_CONFIGS.filter(cfg => selectedHeaderSectionFilter === 'all' || cfg.key === selectedHeaderSectionFilter).map((cfg) => {
+                  const IconComp = cfg.icon;
+                  const secData = sectionHeadersData?.[cfg.key] || {};
+                  const currentEyebrow = secData.eyebrow ?? cfg.defaultEyebrow;
+                  const currentTitle = secData.title ?? cfg.defaultTitle;
+                  const currentSubtitle = secData.subtitle ?? cfg.defaultSubtitle;
+                  const currentRatingScore = secData.ratingScore ?? cfg.defaultRatingScore ?? '4.98 / 5.0';
+                  const currentRatingCount = secData.ratingCount ?? cfg.defaultRatingCount ?? '(420+ Verified Residencies)';
+
+                  return (
+                    <div 
+                      key={cfg.key}
+                      className="p-6 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-slate-700/80 transition-all shadow-xl space-y-6"
+                    >
+                      {/* Section Card Top Header */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                            <IconComp className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-base font-bold text-white font-serif">
+                                {cfg.fullTitle}
+                              </h4>
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-800 text-amber-300 border border-slate-700">
+                                {cfg.badge}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 font-mono mt-0.5">
+                              Anchor: <span className="text-amber-400">{cfg.anchor}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {isSuperAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleResetSingleSectionHeader(cfg.key, cfg.name)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-stone-300 border border-slate-700 flex items-center gap-1.5 transition-all"
+                              title="Reset this section to factory default copy"
+                            >
+                              <RotateCcw className="w-3 h-3 text-amber-400" />
+                              <span>Revert</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleSaveSingleHeaderSection(cfg.key, cfg.name)}
+                            disabled={isSavingHeaders}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center gap-1.5 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                            <span>Save Section</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Main Grid: Form Inputs (Left) & Real-time Live Preview (Right) */}
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        {/* Left Side: Inputs */}
+                        <div className="lg:col-span-7 space-y-4">
+                          {/* Eyebrow Input */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-semibold text-slate-200">
+                                Eyebrow Tag / Category Badge
+                              </label>
+                              <span className="text-[10px] text-slate-500 font-mono">
+                                Uppercase luxury label
+                              </span>
+                            </div>
+                            <input
+                              type="text"
+                              value={currentEyebrow}
+                              onChange={(e) => handleHeaderFieldChange(cfg.key, 'eyebrow', e.target.value)}
+                              placeholder={`e.g. ${cfg.defaultEyebrow}`}
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm font-medium focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 transition-all placeholder:text-slate-600"
+                            />
+                          </div>
+
+                          {/* Title Input */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-semibold text-slate-200">
+                                Main Section Headline / Title
+                              </label>
+                              <span className="text-[10px] text-slate-500 font-mono">
+                                Serif display headline
+                              </span>
+                            </div>
+                            <input
+                              type="text"
+                              value={currentTitle}
+                              onChange={(e) => handleHeaderFieldChange(cfg.key, 'title', e.target.value)}
+                              placeholder={`e.g. ${cfg.defaultTitle}`}
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm font-serif font-semibold focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 transition-all placeholder:text-slate-600"
+                            />
+                          </div>
+
+                          {/* For Reviews: Rating inputs */}
+                          {cfg.isReview && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                              <div>
+                                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                                  Rating Score
+                                </label>
+                                <input
+                                  type="text"
+                                  value={currentRatingScore}
+                                  onChange={(e) => handleHeaderFieldChange(cfg.key, 'ratingScore', e.target.value)}
+                                  placeholder="4.98 / 5.0"
+                                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono font-bold focus:outline-none focus:border-amber-400"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                                  Verified Reviews Count
+                                </label>
+                                <input
+                                  type="text"
+                                  value={currentRatingCount}
+                                  onChange={(e) => handleHeaderFieldChange(cfg.key, 'ratingCount', e.target.value)}
+                                  placeholder="(420+ Verified Residencies)"
+                                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Subtitle Textarea */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-semibold text-slate-200">
+                                Section Introductory Narrative / Subtitle
+                              </label>
+                              <span className="text-[10px] text-slate-500 font-mono">
+                                Editorial summary paragraph
+                              </span>
+                            </div>
+                            <textarea
+                              rows={3}
+                              value={currentSubtitle}
+                              onChange={(e) => handleHeaderFieldChange(cfg.key, 'subtitle', e.target.value)}
+                              placeholder={`e.g. ${cfg.defaultSubtitle}`}
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-xs leading-relaxed focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 transition-all placeholder:text-slate-600 resize-y"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Right Side: Live Website Preview */}
+                        <div className="lg:col-span-5">
+                          <div className="rounded-xl p-5 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-amber-500/20 shadow-inner relative flex flex-col justify-between min-h-[220px]">
+                            {/* Live Preview Header Pill */}
+                            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                              <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400 uppercase tracking-wider font-semibold">
+                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                <span>Guest View Preview</span>
+                              </div>
+                              <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
+                                {cfg.anchor}
+                              </span>
+                            </div>
+
+                            {/* Section Header Live Preview Content */}
+                            <div className="space-y-2.5">
+                              <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                                <span className="text-[11px] font-mono uppercase tracking-widest text-amber-400 font-semibold">
+                                  {currentEyebrow || 'Section Eyebrow'}
+                                </span>
+                              </div>
+
+                              <h3 className="text-xl md:text-2xl font-serif text-white tracking-wide leading-tight font-normal">
+                                {currentTitle || 'Section Headline'}
+                              </h3>
+
+                              {cfg.isReview && (
+                                <div className="flex items-center gap-3 py-1">
+                                  <div className="flex text-amber-400 text-xs tracking-tighter">
+                                    {'★★★★★'}
+                                  </div>
+                                  <span className="text-xs font-mono font-bold text-amber-300">
+                                    {currentRatingScore}
+                                  </span>
+                                  <span className="text-xs text-slate-400 font-mono">
+                                    {currentRatingCount}
+                                  </span>
+                                </div>
+                              )}
+
+                              <p className="text-xs text-stone-300 font-light leading-relaxed max-w-md pt-1">
+                                {currentSubtitle || 'Section introductory copy text goes here...'}
+                              </p>
+                            </div>
+
+                            {/* Footer helper */}
+                            <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                              <span>Synced to Firestore</span>
+                              <span className="text-emerald-400 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                Live Reactive
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

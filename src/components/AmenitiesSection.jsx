@@ -1,12 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { hotelAmenities } from '../data/initialData';
 import { Sparkles, Utensils, Waves, Anchor, Wine, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useBooking } from '../context/BookingContext';
+import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const AmenitiesSection = () => {
   const { openBookingModal } = useBooking();
+  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().amenities);
+
+  useEffect(() => {
+    const unsub = subscribeSectionHeaders((all) => {
+      if (all && all.amenities) setSectionHeaders(all.amenities);
+    });
+    return () => unsub();
+  }, []);
 
   const iconMap = {
     Sparkles: Sparkles,
@@ -27,13 +36,13 @@ export const AmenitiesSection = () => {
             className="inline-block px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-3"
             style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-primary)' }}
           >
-            Curated Hotel Experiences
+            {sectionHeaders?.eyebrow || "Curated Hotel Experiences"}
           </span>
           <h2 className="font-serif text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight mb-4">
-            Unrivaled World-Class Amenities
+            {sectionHeaders?.title || "Unrivaled World-Class Amenities"}
           </h2>
           <p className="text-stone-600 text-base sm:text-lg font-light leading-relaxed">
-            Every moment at our resort is tailored to exceed imagination — from thermal spa rituals to private yacht expeditions across the turquoise Mediterranean.
+            {sectionHeaders?.subtitle || "Every moment at our resort is tailored to exceed imagination — from thermal spa rituals to private yacht expeditions across the turquoise Mediterranean."}
           </p>
         </div>
 

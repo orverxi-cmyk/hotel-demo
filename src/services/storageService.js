@@ -1,7 +1,7 @@
 import { db, storage } from "../firebase";
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews, initialNavMenus, initialDiningVenues, availableDiningAddons, initialArticles } from "../data/initialData";
+import { defaultTheme, initialRooms, initialBookings, hotelAmenities, guestReviews, initialNavMenus, initialDiningVenues, availableDiningAddons, initialArticles, initialSectionHeaders } from "../data/initialData";
 
 const LS_THEME_KEY = "hotel_demo_theme";
 const LS_ROOMS_KEY = "hotel_demo_rooms";
@@ -9,8 +9,9 @@ const LS_BOOKINGS_KEY = "hotel_demo_bookings";
 const LS_NAV_MENUS_KEY = "hotel_demo_navigation_menus";
 const LS_DINING_KEY = "hotel_demo_dining_venues";
 const LS_ARTICLES_KEY = "hotel_demo_articles";
+const LS_SECTION_HEADERS_KEY = "hotel_demo_section_headers";
 
-export { initialNavMenus, initialDiningVenues, availableDiningAddons, initialArticles };
+export { initialNavMenus, initialDiningVenues, availableDiningAddons, initialArticles, initialSectionHeaders };
 
 const isClient = typeof window !== "undefined";
 
@@ -1169,3 +1170,167 @@ export const deleteArticle = async (articleId) => {
 export const resetArticles = async () => {
   return await saveArticles(initialArticles);
 };
+
+// --- SECTION HEADERS & PAGE COPY MANAGEMENT ---
+export const getCachedSectionHeaders = () => {
+  if (!isClient) return initialSectionHeaders;
+  try {
+    const cached = localStorage.getItem(LS_SECTION_HEADERS_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && typeof parsed === 'object') {
+        return {
+          ...initialSectionHeaders,
+          ...parsed,
+          rooms: { ...initialSectionHeaders.rooms, ...(parsed.rooms || {}) },
+          amenities: { ...initialSectionHeaders.amenities, ...(parsed.amenities || {}) },
+          dining: { ...initialSectionHeaders.dining, ...(parsed.dining || {}) },
+          discover: { ...initialSectionHeaders.discover, ...(parsed.discover || {}) },
+          gallery: { ...initialSectionHeaders.gallery, ...(parsed.gallery || {}) },
+          reviews: { ...initialSectionHeaders.reviews, ...(parsed.reviews || {}) },
+          location: { ...initialSectionHeaders.location, ...(parsed.location || {}) }
+        };
+      }
+    }
+  } catch (_) {}
+  return initialSectionHeaders;
+};
+
+export const subscribeSectionHeaders = (callback) => {
+  const initial = getCachedSectionHeaders();
+  if (initial) callback(initial);
+
+  let unsubscribeFirestore = () => {};
+  try {
+    const headersDocRef = doc(db, "content", "section_headers");
+    unsubscribeFirestore = onSnapshot(headersDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && typeof data === 'object') {
+          const merged = {
+            ...initialSectionHeaders,
+            ...data,
+            rooms: { ...initialSectionHeaders.rooms, ...(data.rooms || {}) },
+            amenities: { ...initialSectionHeaders.amenities, ...(data.amenities || {}) },
+            dining: { ...initialSectionHeaders.dining, ...(data.dining || {}) },
+            discover: { ...initialSectionHeaders.discover, ...(data.discover || {}) },
+            gallery: { ...initialSectionHeaders.gallery, ...(data.gallery || {}) },
+            reviews: { ...initialSectionHeaders.reviews, ...(data.reviews || {}) },
+            location: { ...initialSectionHeaders.location, ...(data.location || {}) }
+          };
+          if (isClient) {
+            localStorage.setItem(LS_SECTION_HEADERS_KEY, JSON.stringify(merged));
+          }
+          callback(merged);
+        }
+      }
+    }, (err) => {
+      console.warn("Section headers onSnapshot note:", err?.message);
+    });
+  } catch (_) {}
+
+  let bc = null;
+  try {
+    bc = new BroadcastChannel(CMS_BROADCAST_CHANNEL);
+    bc.onmessage = (e) => {
+      if (e.data?.type === "hotel_section_headers_updated" && e.data?.payload) {
+        callback(e.data.payload);
+      }
+    };
+  } catch (_) {}
+
+  const handleCustomEvent = (e) => {
+    if (e.detail && typeof e.detail === 'object') callback(e.detail);
+  };
+
+  const handleStorageEvent = (e) => {
+    if (e.key === LS_SECTION_HEADERS_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (parsed && typeof parsed === 'object') callback(parsed);
+      } catch (_) {}
+    }
+  };
+
+  if (isClient) {
+    window.addEventListener("hotel_section_headers_updated", handleCustomEvent);
+    window.addEventListener("storage", handleStorageEvent);
+  }
+
+  return () => {
+    unsubscribeFirestore();
+    if (bc) { try { bc.close(); } catch (_) {} }
+    if (isClient) {
+      window.removeEventListener("hotel_section_headers_updated", handleCustomEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    }
+  };
+};
+
+export const loadSectionHeaders = async () => {
+  const cached = getCachedSectionHeaders();
+  let headers = cached;
+
+  try {
+    const headersDocRef = doc(db, "content", "section_headers");
+    const snapshot = await getDoc(headersDocRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      if (data && typeof data === 'object') {
+        headers = {
+          ...initialSectionHeaders,
+          ...data,
+          rooms: { ...initialSectionHeaders.rooms, ...(data.rooms || {}) },
+          amenities: { ...initialSectionHeaders.amenities, ...(data.amenities || {}) },
+          dining: { ...initialSectionHeaders.dining, ...(data.dining || {}) },
+          discover: { ...initialSectionHeaders.discover, ...(data.discover || {}) },
+          gallery: { ...initialSectionHeaders.gallery, ...(data.gallery || {}) },
+          reviews: { ...initialSectionHeaders.reviews, ...(data.reviews || {}) },
+          location: { ...initialSectionHeaders.location, ...(data.location || {}) }
+        };
+        if (isClient) {
+          localStorage.setItem(LS_SECTION_HEADERS_KEY, JSON.stringify(headers));
+        }
+      }
+    } else {
+      await setDoc(headersDocRef, initialSectionHeaders).catch(() => {});
+    }
+  } catch (err) {
+    console.warn("Using local section headers:", err?.message);
+  }
+
+  return headers;
+};
+
+export const saveSectionHeaders = async (headersData) => {
+  const merged = {
+    ...initialSectionHeaders,
+    ...headersData,
+    rooms: { ...initialSectionHeaders.rooms, ...(headersData.rooms || {}) },
+    amenities: { ...initialSectionHeaders.amenities, ...(headersData.amenities || {}) },
+    dining: { ...initialSectionHeaders.dining, ...(headersData.dining || {}) },
+    discover: { ...initialSectionHeaders.discover, ...(headersData.discover || {}) },
+    gallery: { ...initialSectionHeaders.gallery, ...(headersData.gallery || {}) },
+    reviews: { ...initialSectionHeaders.reviews, ...(headersData.reviews || {}) },
+    location: { ...initialSectionHeaders.location, ...(headersData.location || {}) }
+  };
+
+  if (isClient) {
+    localStorage.setItem(LS_SECTION_HEADERS_KEY, JSON.stringify(merged));
+    broadcastUpdate("hotel_section_headers_updated", merged);
+  }
+
+  try {
+    const headersDocRef = doc(db, "content", "section_headers");
+    await setDoc(headersDocRef, { ...merged, updatedAt: new Date().toISOString() }, { merge: true });
+    return { success: true, syncedToCloud: true };
+  } catch (err) {
+    console.warn("Firestore saveSectionHeaders note:", err?.message);
+    return { success: true, syncedToCloud: false, error: err?.message };
+  }
+};
+
+export const resetSectionHeaders = async () => {
+  return await saveSectionHeaders(initialSectionHeaders);
+};
+

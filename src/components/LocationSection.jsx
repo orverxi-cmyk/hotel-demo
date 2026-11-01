@@ -1,13 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { MapPin, Phone, Mail, Clock, Send, Plane, Compass, CheckCircle } from 'lucide-react';
+import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const LocationSection = () => {
   const { theme } = useTheme();
   const [inquirySent, setInquirySent] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().location);
+
+  useEffect(() => {
+    const unsub = subscribeSectionHeaders((all) => {
+      if (all && all.location) setSectionHeaders(all.location);
+    });
+    return () => unsub();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -28,13 +37,13 @@ export const LocationSection = () => {
             className="inline-block px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-3"
             style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-primary)' }}
           >
-            Location & Concierge
+            {sectionHeaders?.eyebrow || "Location & Concierge"}
           </span>
           <h2 className="font-serif text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight mb-4">
-            Arrive in Absolute Tranquility
+            {sectionHeaders?.title || "Arrive in Absolute Tranquility"}
           </h2>
           <p className="text-stone-600 text-base sm:text-lg font-light leading-relaxed">
-            Nestled along the emerald coast, easily reachable by helicopter transfer, private yacht dock, or luxury chauffeur.
+            {sectionHeaders?.subtitle || "Nestled along the emerald coast, easily reachable by helicopter transfer, private yacht dock, or luxury chauffeur."}
           </p>
         </div>
 

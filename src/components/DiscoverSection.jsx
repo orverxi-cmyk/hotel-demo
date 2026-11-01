@@ -13,12 +13,15 @@ import {
 import { 
   getCachedArticles, 
   subscribeArticles, 
-  initialArticles 
+  initialArticles,
+  getCachedSectionHeaders,
+  subscribeSectionHeaders
 } from '../services/storageService';
 
 export const DiscoverSection = ({ onSelectArticle }) => {
   const [articles, setArticles] = useState(initialArticles);
   const [mounted, setMounted] = useState(false);
+  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().discover);
 
   useEffect(() => {
     // 1. Immediately hydrate with cached articles (0 ms flash-free)
@@ -35,7 +38,14 @@ export const DiscoverSection = ({ onSelectArticle }) => {
       }
     });
 
-    return () => unsubscribe();
+    const unsubscribeHeaders = subscribeSectionHeaders((all) => {
+      if (all && all.discover) setSectionHeaders(all.discover);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeHeaders();
+    };
   }, []);
 
   const visibleArticles = articles.filter(a => a.visible !== false);
@@ -58,15 +68,15 @@ export const DiscoverSection = ({ onSelectArticle }) => {
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-mono uppercase tracking-widest text-amber-300">
             <Compass className="w-3.5 h-3.5 text-amber-400" />
-            <span>Discover & Editorial Stories</span>
+            <span>{sectionHeaders?.eyebrow || "Discover & Editorial Stories"}</span>
           </div>
           
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
-            Curated Chronicles of Mediterranean Living
+            {sectionHeaders?.title || "Curated Chronicles of Mediterranean Living"}
           </h2>
 
           <p className="text-stone-300 text-sm sm:text-base font-light leading-relaxed">
-            Unveil the secrets of our estate: Michelin-starred culinary artistry, Riva yacht charters, ancient subterranean cellars, and holistic botanical wellness.
+            {sectionHeaders?.subtitle || "Unveil the secrets of our estate: Michelin-starred culinary artistry, Riva yacht charters, ancient subterranean cellars, and holistic botanical wellness."}
           </p>
         </div>
 

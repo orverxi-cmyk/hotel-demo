@@ -1,10 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { guestReviews } from '../data/initialData';
 import { Star, CheckCircle, Quote } from 'lucide-react';
+import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const ReviewsSection = () => {
+  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().reviews);
+
+  useEffect(() => {
+    const unsub = subscribeSectionHeaders((all) => {
+      if (all && all.reviews) setSectionHeaders(all.reviews);
+    });
+    return () => unsub();
+  }, []);
   return (
     <section id="reviews" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       
@@ -14,10 +23,10 @@ export const ReviewsSection = () => {
           className="inline-block px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-3"
           style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-primary)' }}
         >
-          Guest Acclaim
+          {sectionHeaders?.eyebrow || "Guest Acclaim"}
         </span>
         <h2 className="font-serif text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight mb-4">
-          Praised by Discerning Travelers
+          {sectionHeaders?.title || "Praised by Discerning Travelers"}
         </h2>
         <div className="flex items-center justify-center gap-2 mb-4">
           <div className="flex text-amber-400">
@@ -25,8 +34,12 @@ export const ReviewsSection = () => {
               <Star key={i} className="w-5 h-5 fill-amber-400" />
             ))}
           </div>
-          <span className="font-serif text-xl font-bold text-slate-900 ml-2">4.98 / 5.0</span>
-          <span className="text-xs text-stone-500 font-medium">(420+ Verified Residencies)</span>
+          <span className="font-serif text-xl font-bold text-slate-900 ml-2">
+            {sectionHeaders?.ratingScore || "4.98 / 5.0"}
+          </span>
+          <span className="text-xs text-stone-500 font-medium">
+            {sectionHeaders?.ratingCount || "(420+ Verified Residencies)"}
+          </span>
         </div>
       </div>
 
