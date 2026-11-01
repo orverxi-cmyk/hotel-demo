@@ -392,6 +392,7 @@ export const syncAllContentToFirestore = async () => {
     bookings: 0,
     amenities: false,
     reviews: false,
+    articles: false,
     error: null
   };
 
@@ -419,6 +420,11 @@ export const syncAllContentToFirestore = async () => {
     // 5. Reviews
     await setDoc(doc(db, "content", "reviews"), { items: guestReviews });
     results.reviews = true;
+
+    // 6. Discover Articles
+    const currentArticles = await loadArticles();
+    await setDoc(doc(db, "content", "articles"), { items: currentArticles, updatedAt: new Date().toISOString() });
+    results.articles = true;
 
     return { success: true, results };
   } catch (err) {

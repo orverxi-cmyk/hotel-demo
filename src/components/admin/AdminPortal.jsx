@@ -224,6 +224,7 @@ export const AdminPortal = ({
   // Discover Articles & Editorial Stories State
   const [articles, setArticles] = useState(initialArticles);
   const [isAddingArticle, setIsAddingArticle] = useState(false);
+  const [isSavingArticle, setIsSavingArticle] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
   const [articleFormData, setArticleFormData] = useState({
     title: '',
@@ -285,10 +286,25 @@ export const AdminPortal = ({
 
   const handleOpenEditArticle = (art) => {
     setEditingArticle(art);
+    const photos = Array.isArray(art.photos) && art.photos.length > 0
+      ? [...art.photos]
+      : (art.coverImage ? [art.coverImage] : []);
+    const cover = art.coverImage || (photos.length > 0 ? photos[0] : '');
+
     setArticleFormData({
+      title: art.title || '',
+      subtitle: art.subtitle || '',
+      category: art.category || 'Haute Gastronomy',
+      readTime: art.readTime || '4 min read',
+      date: art.date || 'October 2026',
+      author: art.author || '',
+      content: art.content || '',
+      highlights: Array.isArray(art.highlights) ? [...art.highlights] : [],
+      linkedSlideId: art.linkedSlideId || '',
+      visible: art.visible !== false,
       ...art,
-      photos: Array.isArray(art.photos) ? [...art.photos] : (art.coverImage ? [art.coverImage] : []),
-      highlights: Array.isArray(art.highlights) ? [...art.highlights] : []
+      coverImage: cover,
+      photos: photos
     });
     setNewPhotoUrlInput('');
     setNewArticleHighlightInput('');
@@ -296,39 +312,70 @@ export const AdminPortal = ({
   };
 
   const handleSaveArticleForm = async (e) => {
-    e.preventDefault();
-    if (!isSuperAdmin) return;
-    if (!articleFormData.title.trim()) {
-      showNotification("Please provide an Article Title.");
+    if (e && e.preventDefault) e.preventDefault();
+
+    if (!isSuperAdmin) {
+      showNotification("Permission restricted: Only Super Administrators can save Discover articles.");
       return;
     }
 
-    const photosClean = (articleFormData.photos || []).filter(p => typeof p === 'string' && p.trim().length > 0);
-    const cover = articleFormData.coverImage.trim() || (photosClean.length > 0 ? photosClean[0] : '');
-
-    const articleToSave = {
-      ...articleFormData,
-      id: editingArticle ? editingArticle.id : `article-${Date.now()}-${articleFormData.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-      title: articleFormData.title.trim(),
-      subtitle: articleFormData.subtitle?.trim() || '',
-      coverImage: cover,
-      photos: photosClean.length > 0 ? photosClean : [cover],
-      order: editingArticle ? editingArticle.order : (articles.length + 1),
-      updatedAt: new Date().toISOString()
-    };
-
-    let updatedList;
-    if (editingArticle) {
-      updatedList = articles.map(a => a.id === editingArticle.id ? articleToSave : a);
-    } else {
-      updatedList = [...articles, articleToSave];
+    const titleClean = (articleFormData.title || '').trim();
+    if (!titleClean) {
+      showNotification("Please provide an Article Headline Title.");
+      return;
     }
 
-    setArticles(updatedList);
-    setIsAddingArticle(false);
-    setEditingArticle(null);
-    await saveArticles(updatedList);
-    showNotification(`Article "${articleToSave.title}" saved successfully with ${articleToSave.photos.length} photos!`);
+    setIsSavingArticle(true);
+    try {
+      const photosClean = (articleFormData.photos || [])
+        .filter(p => typeof p === 'string' && p.trim().length > 0)
+        .map(p => p.trim());
+
+      const rawCover = typeof articleFormData.coverImage === 'string' ? articleFormData.coverImage.trim() : '';
+      const cover = rawCover || (photosClean.length > 0 ? photosClean[0] : 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1600&q=80');
+
+      const finalPhotos = photosClean.length > 0 
+        ? (photosClean.includes(cover) ? photosClean : [cover, ...photosClean])
+        : [cover];
+
+      const articleToSave = {
+        ...articleFormData,
+        id: editingArticle?.id || `article-${Date.now()}-${titleClean.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        title: titleClean,
+        subtitle: (articleFormData.subtitle || '').trim(),
+        category: (articleFormData.category || 'Haute Gastronomy').trim(),
+        author: (articleFormData.author || 'Estate Concierge & Sommelier').trim(),
+        date: (articleFormData.date || 'October 2026').trim(),
+        readTime: (articleFormData.readTime || '4 min read').trim(),
+        coverImage: cover,
+        photos: finalPhotos,
+        content: (articleFormData.content || '').trim(),
+        highlights: (articleFormData.highlights || []).filter(h => typeof h === 'string' && h.trim().length > 0),
+        linkedSlideId: articleFormData.linkedSlideId || '',
+        visible: articleFormData.visible !== false,
+        order: editingArticle?.order !== undefined ? editingArticle.order : (articles.length + 1),
+        updatedAt: new Date().toISOString()
+      };
+
+      let updatedList;
+      if (editingArticle) {
+        updatedList = articles.map(a => a.id === editingArticle.id ? articleToSave : a);
+      } else {
+        updatedList = [articleToSave, ...articles];
+      }
+
+      setArticles(updatedList);
+      setIsAddingArticle(false);
+      setEditingArticle(null);
+
+      await saveArticles(updatedList);
+      showNotification(`Article "${articleToSave.title}" saved successfully with ${articleToSave.photos.length} photos!`);
+    } catch (err) {
+      console.error("Failed to save article:", err);
+      showNotification(`Save notice: ${err.message || 'Article saved to local session'}`);
+    } finally {
+      setIsSavingArticle(false);
+    }
   };
 
   const handleDeleteArticle = async (articleId, articleTitle) => {
@@ -2737,7 +2784,7 @@ export const AdminPortal = ({
                     </button>
                   </div>
 
-                  <form onSubmit={handleSaveArticleForm} className="space-y-5 text-xs">
+                  <form onSubmit={handleSaveArticleForm} noValidate className="space-y-5 text-xs">
                     
                     {/* Title & Subtitle */}
                     <div className="grid grid-cols-1 gap-4">
@@ -2844,10 +2891,37 @@ export const AdminPortal = ({
                         </label>
                       </div>
 
+                      {/* Main Cover Image Display & Direct Input */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800">
+                        {articleFormData.coverImage ? (
+                          <img 
+                            src={articleFormData.coverImage} 
+                            alt="Cover preview" 
+                            className="w-16 h-12 object-cover rounded-lg border border-amber-400 shrink-0" 
+                          />
+                        ) : (
+                          <div className="w-16 h-12 rounded-lg bg-slate-900 border border-dashed border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">
+                            No Cover
+                          </div>
+                        )}
+                        <div className="flex-1 w-full min-w-0">
+                          <label className="text-[10px] font-mono uppercase text-amber-300 font-semibold block mb-1">
+                            Primary Cover Image URL
+                          </label>
+                          <input
+                            type="text"
+                            value={articleFormData.coverImage || ''}
+                            placeholder="Primary cover photo URL (auto-set from gallery or paste custom URL)"
+                            onChange={(e) => setArticleFormData(prev => ({ ...prev, coverImage: e.target.value }))}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-amber-400 font-mono text-xs"
+                          />
+                        </div>
+                      </div>
+
                       {/* Add Photo by Direct URL */}
                       <div className="flex items-center gap-2">
                         <input
-                          type="url"
+                          type="text"
                           value={newPhotoUrlInput}
                           placeholder="Or paste high-resolution photo URL (https://images.unsplash.com/...)"
                           onChange={(e) => setNewPhotoUrlInput(e.target.value)}
@@ -2857,37 +2931,59 @@ export const AdminPortal = ({
                         <button
                           type="button"
                           onClick={handleAddPhotoUrl}
-                          className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-200 font-semibold text-xs border border-slate-700"
+                          className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-200 font-semibold text-xs border border-slate-700 shrink-0"
                         >
                           Add URL
                         </button>
                       </div>
 
                       {/* Photo Grid Preview & Reorder/Delete */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 pt-2">
-                        {(articleFormData.photos || []).map((photoUrl, pIdx) => (
-                          <div 
-                            key={pIdx} 
-                            className="relative aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950 group"
-                          >
-                            <img
-                              src={photoUrl}
-                              alt={`Photo ${pIdx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/75 text-amber-300">
-                              #{pIdx + 1}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveArticlePhoto(pIdx)}
-                              className="absolute top-1 right-1 p-1 rounded-full bg-rose-600/80 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Remove photo"
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 pt-2">
+                        {(articleFormData.photos || []).map((photoUrl, pIdx) => {
+                          const isCover = (articleFormData.coverImage || articleFormData.photos[0]) === photoUrl;
+                          return (
+                            <div 
+                              key={pIdx} 
+                              className={`relative aspect-video rounded-xl overflow-hidden border bg-slate-950 group transition-all ${
+                                isCover ? 'border-amber-400 ring-2 ring-amber-400/40' : 'border-slate-700'
+                              }`}
                             >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
+                              <img
+                                src={photoUrl}
+                                alt={`Photo ${pIdx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-black/80 text-amber-300">
+                                #{pIdx + 1}
+                              </div>
+
+                              {/* Primary Cover Badge / Selector */}
+                              {isCover ? (
+                                <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold bg-amber-400 text-slate-950 shadow-md">
+                                  Primary Cover
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setArticleFormData(prev => ({ ...prev, coverImage: photoUrl }))}
+                                  className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-mono bg-black/80 hover:bg-amber-400 hover:text-slate-950 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Set as main cover photo"
+                                >
+                                  Make Cover
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveArticlePhoto(pIdx)}
+                                className="absolute top-1 right-1 p-1 rounded-full bg-rose-600/80 hover:bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remove photo"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
                         {(!articleFormData.photos || articleFormData.photos.length === 0) && (
                           <div className="col-span-full py-6 text-center text-slate-500 italic border border-dashed border-slate-800 rounded-xl">
                             No photos added yet. Upload or enter a photo URL above.
@@ -2957,18 +3053,24 @@ export const AdminPortal = ({
                     <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                       <button
                         type="button"
+                        disabled={isSavingArticle}
                         onClick={() => setIsAddingArticle(false)}
-                        className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-stone-300 font-semibold text-xs transition-colors"
+                        className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-stone-300 font-semibold text-xs transition-colors disabled:opacity-50"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-6 py-2.5 rounded-xl text-slate-950 font-bold uppercase tracking-wider text-xs shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                        disabled={isSavingArticle}
+                        className="px-6 py-2.5 rounded-xl text-slate-950 font-bold uppercase tracking-wider text-xs shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                         style={{ backgroundColor: 'var(--color-secondary)' }}
                       >
-                        <Save className="w-4 h-4" />
-                        <span>Save Article & Gallery</span>
+                        {isSavingArticle ? (
+                          <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        <span>{isSavingArticle ? 'Saving Article...' : 'Save Article & Gallery'}</span>
                       </button>
                     </div>
 
