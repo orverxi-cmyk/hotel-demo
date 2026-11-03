@@ -792,7 +792,34 @@ export const initialSectionHeaders = {
     eyebrow: "Location & Concierge",
     title: "Arrive in Absolute Tranquility",
     subtitle: "Nestled along the emerald coast, easily reachable by helicopter transfer, private yacht dock, or luxury chauffeur.",
-    visible: true
+    visible: true,
+    // Contact Cards
+    addressTitle: "Resort Sanctuary Address",
+    addressValue: "Your Location",
+    phoneTitle: "24/7 Royal Concierge",
+    phoneValue: "+250 788 000 000",
+    emailTitle: "Direct Inquiries",
+    emailValue: "youremail@yourdomain.rw",
+    checkInCheckOutTitle: "Check-in / Check-out Times",
+    checkInTime: "15:00",
+    checkOutTime: "11:00",
+    // Arrival / Transfer Badges
+    arrivalOption1Title: "Private Helipad",
+    arrivalOption1Subtitle: "Coordinates: 41°08'N 9°32'E",
+    arrivalOption2Title: "Deepwater Berth",
+    arrivalOption2Subtitle: "Accommodates yachts up to 65m",
+    // Royal Concierge Inquiry Form
+    formTitle: "Speak with the Royal Concierge",
+    formSubtitle: "Have specific travel requirements, yacht charter inquiries, or bespoke dining requests? Our concierge team will respond within 60 minutes.",
+    fieldNameLabel: "Your Full Name",
+    fieldNamePlaceholder: "e.g. Lady Vivienne Montgomery",
+    fieldEmailLabel: "Email Address",
+    fieldEmailPlaceholder: "name@domain.com",
+    fieldMessageLabel: "Bespoke Request or Inquiry",
+    fieldMessagePlaceholder: "Tell us about your upcoming stay, private event, dietary restrictions, or transport needs...",
+    buttonText: "Transmit Inquiry to Concierge",
+    successTitle: "Inquiry Received",
+    successMessage: "Thank you! Our head concierge has received your request and will contact you promptly."
   }
 };
 

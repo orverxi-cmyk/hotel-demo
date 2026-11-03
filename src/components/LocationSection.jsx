@@ -69,8 +69,12 @@ export const LocationSection = () => {
                   <MapPin className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="font-serif text-lg font-bold text-slate-900">Resort Sanctuary Address</h4>
-                  <p className="text-stone-600 text-sm mt-1 leading-relaxed">{theme.location}</p>
+                  <h4 className="font-serif text-lg font-bold text-slate-900">
+                    {sectionHeaders?.addressTitle || "Resort Sanctuary Address"}
+                  </h4>
+                  <p className="text-stone-600 text-sm mt-1 leading-relaxed">
+                    {sectionHeaders?.addressValue || theme.location || "Your Location"}
+                  </p>
                 </div>
               </div>
 
@@ -82,8 +86,12 @@ export const LocationSection = () => {
                   <Phone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="font-serif text-lg font-bold text-slate-900">24/7 Royal Concierge</h4>
-                  <p className="text-stone-600 text-sm mt-1">{theme.phone}</p>
+                  <h4 className="font-serif text-lg font-bold text-slate-900">
+                    {sectionHeaders?.phoneTitle || "24/7 Royal Concierge"}
+                  </h4>
+                  <p className="text-stone-600 text-sm mt-1">
+                    {sectionHeaders?.phoneValue || theme.phone || "+250 788 000 000"}
+                  </p>
                 </div>
               </div>
 
@@ -95,8 +103,12 @@ export const LocationSection = () => {
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="font-serif text-lg font-bold text-slate-900">Direct Inquiries</h4>
-                  <p className="text-stone-600 text-sm mt-1">{theme.email}</p>
+                  <h4 className="font-serif text-lg font-bold text-slate-900">
+                    {sectionHeaders?.emailTitle || "Direct Inquiries"}
+                  </h4>
+                  <p className="text-stone-600 text-sm mt-1">
+                    {sectionHeaders?.emailValue || theme.email || "youremail@yourdomain.rw"}
+                  </p>
                 </div>
               </div>
 
@@ -108,9 +120,11 @@ export const LocationSection = () => {
                   <Clock className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="font-serif text-lg font-bold text-slate-900">Check-in / Check-out Times</h4>
+                  <h4 className="font-serif text-lg font-bold text-slate-900">
+                    {sectionHeaders?.checkInCheckOutTitle || "Check-in / Check-out Times"}
+                  </h4>
                   <p className="text-stone-600 text-sm mt-1">
-                    Check-in: <strong>{theme.checkInTime || '15:00'}</strong> • Check-out: <strong>{theme.checkOutTime || '11:00'}</strong>
+                    Check-in: <strong>{sectionHeaders?.checkInTime || theme.checkInTime || '15:00'}</strong> • Check-out: <strong>{sectionHeaders?.checkOutTime || theme.checkOutTime || '11:00'}</strong>
                   </p>
                 </div>
               </div>
@@ -122,15 +136,23 @@ export const LocationSection = () => {
               <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex items-center gap-3">
                 <Plane className="w-8 h-8 text-amber-600 shrink-0" />
                 <div className="text-xs">
-                  <span className="font-bold text-slate-900 block">Private Helipad</span>
-                  <span className="text-stone-500">Coordinates: 41°08'N 9°32'E</span>
+                  <span className="font-bold text-slate-900 block">
+                    {sectionHeaders?.arrivalOption1Title || "Private Helipad"}
+                  </span>
+                  <span className="text-stone-500">
+                    {sectionHeaders?.arrivalOption1Subtitle || "Coordinates: 41°08'N 9°32'E"}
+                  </span>
                 </div>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex items-center gap-3">
                 <Compass className="w-8 h-8 text-amber-600 shrink-0" />
                 <div className="text-xs">
-                  <span className="font-bold text-slate-900 block">Deepwater Berth</span>
-                  <span className="text-stone-500">Accommodates yachts up to 65m</span>
+                  <span className="font-bold text-slate-900 block">
+                    {sectionHeaders?.arrivalOption2Title || "Deepwater Berth"}
+                  </span>
+                  <span className="text-stone-500">
+                    {sectionHeaders?.arrivalOption2Subtitle || "Accommodates yachts up to 65m"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -140,30 +162,32 @@ export const LocationSection = () => {
           {/* Direct Concierge Inquiry Form */}
           <div className="bg-white p-8 sm:p-10 rounded-3xl border border-stone-200 shadow-xl">
             <h3 className="font-serif text-2xl font-bold text-slate-900 mb-2">
-              Speak with the Royal Concierge
+              {sectionHeaders?.formTitle || "Speak with the Royal Concierge"}
             </h3>
             <p className="text-stone-600 text-sm mb-6">
-              Have specific travel requirements, yacht charter inquiries, or bespoke dining requests? Our concierge team will respond within 60 minutes.
+              {sectionHeaders?.formSubtitle || "Have specific travel requirements, yacht charter inquiries, or bespoke dining requests? Our concierge team will respond within 60 minutes."}
             </p>
 
             {inquirySent ? (
               <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center animate-fade-in">
                 <CheckCircle className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
-                <h4 className="font-serif text-lg font-bold text-emerald-900">Inquiry Received</h4>
+                <h4 className="font-serif text-lg font-bold text-emerald-900">
+                  {sectionHeaders?.successTitle || "Inquiry Received"}
+                </h4>
                 <p className="text-emerald-700 text-sm mt-1">
-                  Thank you! Our head concierge has received your request and will contact you promptly.
+                  {sectionHeaders?.successMessage || "Thank you! Our head concierge has received your request and will contact you promptly."}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">
-                    Your Full Name
+                    {sectionHeaders?.fieldNameLabel || "Your Full Name"}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Lady Vivienne Montgomery"
+                    placeholder={sectionHeaders?.fieldNamePlaceholder || "e.g. Lady Vivienne Montgomery"}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
@@ -172,12 +196,12 @@ export const LocationSection = () => {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">
-                    Email Address
+                    {sectionHeaders?.fieldEmailLabel || "Email Address"}
                   </label>
                   <input
                     type="email"
                     required
-                    placeholder="name@domain.com"
+                    placeholder={sectionHeaders?.fieldEmailPlaceholder || "name@domain.com"}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
@@ -186,12 +210,12 @@ export const LocationSection = () => {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">
-                    Bespoke Request or Inquiry
+                    {sectionHeaders?.fieldMessageLabel || "Bespoke Request or Inquiry"}
                   </label>
                   <textarea
                     rows={4}
                     required
-                    placeholder="Tell us about your upcoming stay, private event, dietary restrictions, or transport needs..."
+                    placeholder={sectionHeaders?.fieldMessagePlaceholder || "Tell us about your upcoming stay, private event, dietary restrictions, or transport needs..."}
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
@@ -204,7 +228,7 @@ export const LocationSection = () => {
                   style={{ backgroundColor: 'var(--color-secondary)' }}
                 >
                   <Send className="w-4 h-4" />
-                  <span>Transmit Inquiry to Concierge</span>
+                  <span>{sectionHeaders?.buttonText || "Transmit Inquiry to Concierge"}</span>
                 </button>
               </form>
             )}

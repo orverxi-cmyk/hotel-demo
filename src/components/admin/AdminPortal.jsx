@@ -54,7 +54,11 @@ import {
   LayoutTemplate,
   RotateCcw,
   MapPin,
-  Star
+  Star,
+  Phone,
+  Plane,
+  Send,
+  MessageSquare
 } from 'lucide-react';
 import { 
   syncAllContentToFirestore, 
@@ -116,6 +120,7 @@ export const AdminPortal = ({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [navMenuFilter, setNavMenuFilter] = useState('all'); // 'all', 'visible', 'hidden'
+  const [contactSubTab, setContactSubTab] = useState('contact'); // 'contact', 'arrival', 'form'
 
   // Folio email logs & preview state
   const [folioEmailLogs, setFolioEmailLogs] = useState([]);
@@ -1118,8 +1123,9 @@ export const AdminPortal = ({
       name: 'Location & Concierge',
       fullTitle: 'Location & Concierge',
       badge: 'Arrival, Transfers & Concierge',
-      anchor: '#location',
+      anchor: '#contact',
       icon: Compass,
+      isLocation: true,
       defaultEyebrow: 'Location & Concierge',
       defaultTitle: 'Arrive in Absolute Tranquility',
       defaultSubtitle: 'Nestled along the emerald coast, easily reachable by helicopter transfer, private yacht dock, or luxury chauffeur.'
@@ -2320,6 +2326,34 @@ export const AdminPortal = ({
                     ? Number(secData.stars) 
                     : (parseFloat(currentRatingScore) || (cfg.defaultStars ?? 5));
 
+                  // Contact section elements
+                  const addressTitle = secData.addressTitle !== undefined ? secData.addressTitle : "Resort Sanctuary Address";
+                  const addressValue = secData.addressValue !== undefined ? secData.addressValue : (theme.location || "Your Location");
+                  const phoneTitle = secData.phoneTitle !== undefined ? secData.phoneTitle : "24/7 Royal Concierge";
+                  const phoneValue = secData.phoneValue !== undefined ? secData.phoneValue : (theme.phone || "+250 788 000 000");
+                  const emailTitle = secData.emailTitle !== undefined ? secData.emailTitle : "Direct Inquiries";
+                  const emailValue = secData.emailValue !== undefined ? secData.emailValue : (theme.email || "youremail@yourdomain.rw");
+                  const checkInCheckOutTitle = secData.checkInCheckOutTitle !== undefined ? secData.checkInCheckOutTitle : "Check-in / Check-out Times";
+                  const checkInTime = secData.checkInTime !== undefined ? secData.checkInTime : (theme.checkInTime || "15:00");
+                  const checkOutTime = secData.checkOutTime !== undefined ? secData.checkOutTime : (theme.checkOutTime || "11:00");
+
+                  const arrivalOption1Title = secData.arrivalOption1Title !== undefined ? secData.arrivalOption1Title : "Private Helipad";
+                  const arrivalOption1Subtitle = secData.arrivalOption1Subtitle !== undefined ? secData.arrivalOption1Subtitle : "Coordinates: 41°08'N 9°32'E";
+                  const arrivalOption2Title = secData.arrivalOption2Title !== undefined ? secData.arrivalOption2Title : "Deepwater Berth";
+                  const arrivalOption2Subtitle = secData.arrivalOption2Subtitle !== undefined ? secData.arrivalOption2Subtitle : "Accommodates yachts up to 65m";
+
+                  const formTitle = secData.formTitle !== undefined ? secData.formTitle : "Speak with the Royal Concierge";
+                  const formSubtitle = secData.formSubtitle !== undefined ? secData.formSubtitle : "Have specific travel requirements, yacht charter inquiries, or bespoke dining requests? Our concierge team will respond within 60 minutes.";
+                  const fieldNameLabel = secData.fieldNameLabel !== undefined ? secData.fieldNameLabel : "Your Full Name";
+                  const fieldNamePlaceholder = secData.fieldNamePlaceholder !== undefined ? secData.fieldNamePlaceholder : "e.g. Lady Vivienne Montgomery";
+                  const fieldEmailLabel = secData.fieldEmailLabel !== undefined ? secData.fieldEmailLabel : "Email Address";
+                  const fieldEmailPlaceholder = secData.fieldEmailPlaceholder !== undefined ? secData.fieldEmailPlaceholder : "name@domain.com";
+                  const fieldMessageLabel = secData.fieldMessageLabel !== undefined ? secData.fieldMessageLabel : "Bespoke Request or Inquiry";
+                  const fieldMessagePlaceholder = secData.fieldMessagePlaceholder !== undefined ? secData.fieldMessagePlaceholder : "Tell us about your upcoming stay, private event, dietary restrictions, or transport needs...";
+                  const buttonText = secData.buttonText !== undefined ? secData.buttonText : "Transmit Inquiry to Concierge";
+                  const successTitle = secData.successTitle !== undefined ? secData.successTitle : "Inquiry Received";
+                  const successMessage = secData.successMessage !== undefined ? secData.successMessage : "Thank you! Our head concierge has received your request and will contact you promptly.";
+
                   return (
                     <div 
                       key={cfg.key}
@@ -2576,6 +2610,408 @@ export const AdminPortal = ({
                               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-xs leading-relaxed focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 transition-all placeholder:text-slate-600 resize-y"
                             />
                           </div>
+
+                          {/* Contact Section Special Element Editors */}
+                          {cfg.isLocation && (
+                            <div className="space-y-4 pt-3 border-t border-slate-800">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Compass className="w-4 h-4 text-amber-400" />
+                                  <span className="text-xs font-bold text-white uppercase tracking-wider">
+                                    Contact & Concierge Elements
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-amber-300 font-mono bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                                  All Cards, Arrival & Form
+                                </span>
+                              </div>
+
+                              {/* Sub-tab selection bar */}
+                              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-medium">
+                                <button
+                                  type="button"
+                                  onClick={() => setContactSubTab('contact')}
+                                  className={`py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                                    contactSubTab === 'contact'
+                                      ? 'bg-amber-400 text-slate-950 font-bold shadow-sm'
+                                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                                  }`}
+                                >
+                                  <MapPin className="w-3.5 h-3.5" />
+                                  <span className="truncate">1. Contact Cards</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setContactSubTab('arrival')}
+                                  className={`py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                                    contactSubTab === 'arrival'
+                                      ? 'bg-amber-400 text-slate-950 font-bold shadow-sm'
+                                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                                  }`}
+                                >
+                                  <Plane className="w-3.5 h-3.5" />
+                                  <span className="truncate">2. Arrival Badges</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setContactSubTab('form')}
+                                  className={`py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                                    contactSubTab === 'form'
+                                      ? 'bg-amber-400 text-slate-950 font-bold shadow-sm'
+                                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                                  }`}
+                                >
+                                  <Send className="w-3.5 h-3.5" />
+                                  <span className="truncate">3. Concierge Form</span>
+                                </button>
+                              </div>
+
+                              {/* SUB-PANEL 1: CONTACT CARDS & TIMINGS */}
+                              {contactSubTab === 'contact' && (
+                                <div className="space-y-4 p-4 rounded-xl bg-slate-900/70 border border-slate-800 animate-fade-in text-xs">
+                                  {/* Item 1: Address */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-800/60">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Address Card Headline
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressTitle}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'addressTitle', e.target.value)}
+                                        placeholder="Resort Sanctuary Address"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-medium focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Resort Physical Location
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={addressValue}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'addressValue', e.target.value)}
+                                        placeholder="Your Location"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-medium focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Item 2: Phone */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-800/60">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Concierge Phone Headline
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={phoneTitle}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'phoneTitle', e.target.value)}
+                                        placeholder="24/7 Royal Concierge"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-medium focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Concierge Phone Number
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={phoneValue}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'phoneValue', e.target.value)}
+                                        placeholder="+250 788 000 000"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Item 3: Email */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-800/60">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Email Card Headline
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={emailTitle}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'emailTitle', e.target.value)}
+                                        placeholder="Direct Inquiries"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-medium focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Direct Contact Email
+                                      </label>
+                                      <input
+                                        type="email"
+                                        value={emailValue}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'emailValue', e.target.value)}
+                                        placeholder="youremail@yourdomain.rw"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Item 4: Check-in & Check-out */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="sm:col-span-1">
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Hours Headline
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={checkInCheckOutTitle}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'checkInCheckOutTitle', e.target.value)}
+                                        placeholder="Check-in / Check-out Times"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-medium focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Check-in Time
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={checkInTime}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'checkInTime', e.target.value)}
+                                        placeholder="15:00"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Check-out Time
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={checkOutTime}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'checkOutTime', e.target.value)}
+                                        placeholder="11:00"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* SUB-PANEL 2: ARRIVAL OPTIONS BADGES */}
+                              {contactSubTab === 'arrival' && (
+                                <div className="space-y-4 p-4 rounded-xl bg-slate-900/70 border border-slate-800 animate-fade-in text-xs">
+                                  {/* Helipad */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-800/60">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                                        <Plane className="w-3.5 h-3.5 text-amber-400" />
+                                        <span>Arrival Option 1 Title</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={arrivalOption1Title}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'arrivalOption1Title', e.target.value)}
+                                        placeholder="Private Helipad"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-medium focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Coordinates / Transfer Specs
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={arrivalOption1Subtitle}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'arrivalOption1Subtitle', e.target.value)}
+                                        placeholder="Coordinates: 41°08'N 9°32'E"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Deepwater Berth */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                                        <Compass className="w-3.5 h-3.5 text-amber-400" />
+                                        <span>Arrival Option 2 Title</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={arrivalOption2Title}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'arrivalOption2Title', e.target.value)}
+                                        placeholder="Deepwater Berth"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-medium focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Berth Capacity / Details
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={arrivalOption2Subtitle}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'arrivalOption2Subtitle', e.target.value)}
+                                        placeholder="Accommodates yachts up to 65m"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-medium focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* SUB-PANEL 3: CONCIERGE INQUIRY FORM */}
+                              {contactSubTab === 'form' && (
+                                <div className="space-y-4 p-4 rounded-xl bg-slate-900/70 border border-slate-800 animate-fade-in text-xs">
+                                  <div>
+                                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                      Form Main Headline
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={formTitle}
+                                      onChange={(e) => handleHeaderFieldChange(cfg.key, 'formTitle', e.target.value)}
+                                      placeholder="Speak with the Royal Concierge"
+                                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-serif font-bold text-sm focus:outline-none focus:border-amber-400"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                      Form Subtitle / Response Commitment
+                                    </label>
+                                    <textarea
+                                      rows={2}
+                                      value={formSubtitle}
+                                      onChange={(e) => handleHeaderFieldChange(cfg.key, 'formSubtitle', e.target.value)}
+                                      placeholder="Have specific travel requirements, yacht charter inquiries, or bespoke dining requests? Our concierge team will respond within 60 minutes."
+                                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-amber-400 resize-y"
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800/60">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Name Field Label
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={fieldNameLabel}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'fieldNameLabel', e.target.value)}
+                                        placeholder="Your Full Name"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Name Field Placeholder
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={fieldNamePlaceholder}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'fieldNamePlaceholder', e.target.value)}
+                                        placeholder="e.g. Lady Vivienne Montgomery"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Email Field Label
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={fieldEmailLabel}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'fieldEmailLabel', e.target.value)}
+                                        placeholder="Email Address"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Email Field Placeholder
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={fieldEmailPlaceholder}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'fieldEmailPlaceholder', e.target.value)}
+                                        placeholder="name@domain.com"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Inquiry Message Label
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={fieldMessageLabel}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'fieldMessageLabel', e.target.value)}
+                                        placeholder="Bespoke Request or Inquiry"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Inquiry Message Placeholder
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={fieldMessagePlaceholder}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'fieldMessagePlaceholder', e.target.value)}
+                                        placeholder="Tell us about your upcoming stay, private event, dietary restrictions, or transport needs..."
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800/60">
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Submit Button Text
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={buttonText}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'buttonText', e.target.value)}
+                                        placeholder="Transmit Inquiry to Concierge"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white font-bold focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Success Alert Title
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={successTitle}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'successTitle', e.target.value)}
+                                        placeholder="Inquiry Received"
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                                        Success Alert Message
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={successMessage}
+                                        onChange={(e) => handleHeaderFieldChange(cfg.key, 'successMessage', e.target.value)}
+                                        placeholder="Thank you! Our head concierge has received your request..."
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {/* Right Side: Live Website Preview */}
@@ -2637,6 +3073,69 @@ export const AdminPortal = ({
                               <p className="text-xs text-stone-300 font-light leading-relaxed max-w-md pt-1">
                                 {currentSubtitle || 'Section introductory copy text goes here...'}
                               </p>
+
+                              {/* Special Location & Concierge Preview Card */}
+                              {cfg.isLocation && (
+                                <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-2.5">
+                                  {/* Contact Cards Preview */}
+                                  <div className="p-2.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-1.5 text-[11px]">
+                                    <div className="flex items-center gap-2">
+                                      <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                      <span className="font-bold text-white truncate">{addressTitle}:</span>
+                                      <span className="text-slate-400 truncate">{addressValue}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Phone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                      <span className="font-bold text-white truncate">{phoneTitle}:</span>
+                                      <span className="text-amber-300 font-mono text-[10px]">{phoneValue}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                      <span className="font-bold text-white truncate">{emailTitle}:</span>
+                                      <span className="text-slate-400 text-[10px] truncate">{emailValue}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                      <span className="text-slate-300 text-[10px]">
+                                        {checkInCheckOutTitle}: In {checkInTime} • Out {checkOutTime}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Arrival Badges Preview */}
+                                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                    <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1.5">
+                                      <Plane className="w-3 h-3 text-amber-400 shrink-0" />
+                                      <div className="min-w-0">
+                                        <span className="font-bold text-white block truncate">{arrivalOption1Title}</span>
+                                        <span className="text-slate-400 block truncate font-mono text-[9px]">{arrivalOption1Subtitle}</span>
+                                      </div>
+                                    </div>
+                                    <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-1.5">
+                                      <Compass className="w-3 h-3 text-amber-400 shrink-0" />
+                                      <div className="min-w-0">
+                                        <span className="font-bold text-white block truncate">{arrivalOption2Title}</span>
+                                        <span className="text-slate-400 block truncate text-[9px]">{arrivalOption2Subtitle}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Inquiry Form Preview Card */}
+                                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-[11px]">
+                                    <span className="font-serif font-bold text-white block truncate">{formTitle}</span>
+                                    <p className="text-slate-400 text-[10px] line-clamp-1">{formSubtitle}</p>
+                                    <div className="pt-1 flex items-center justify-between gap-2">
+                                      <span className="text-[9px] font-mono text-slate-500 uppercase truncate">
+                                        {fieldNameLabel} • {fieldEmailLabel}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-bold text-[9px] flex items-center gap-1 shadow-sm shrink-0">
+                                        <Send className="w-2.5 h-2.5" />
+                                        <span>{buttonText}</span>
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             {/* Footer helper */}
