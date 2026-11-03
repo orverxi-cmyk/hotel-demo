@@ -94,12 +94,39 @@ export const Hero = ({ onSelectArticleById }) => {
 
   const active = slides[currentSlide] || slides[0] || initialSliderSlides[0];
 
+  const heroBgColor = theme?.heroBgColor || '#020617';
+  const heroImage = theme?.heroImage;
+  const heroOverlayOpacity = theme?.heroOverlayOpacity !== undefined ? Number(theme.heroOverlayOpacity) : 0.65;
+  const heroBgBlur = theme?.heroBgBlur ? Number(theme.heroBgBlur) : 0;
+
   return (
     <section 
-      className="relative pt-28 pb-16 bg-slate-950 text-white overflow-hidden"
+      className="relative pt-28 pb-16 text-white overflow-hidden transition-colors duration-500"
+      style={{ backgroundColor: heroBgColor }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
+      {/* Optional Custom Background Backdrop Image */}
+      {heroImage ? (
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-all duration-700 pointer-events-none"
+          style={{ 
+            backgroundImage: `url(${heroImage})`,
+            filter: heroBgBlur > 0 ? `blur(${heroBgBlur}px)` : undefined,
+            transform: heroBgBlur > 0 ? 'scale(1.06)' : undefined
+          }}
+        />
+      ) : null}
+
+      {/* Customizable Darkness Overlay for Contrast & Readability */}
+      <div 
+        className="absolute inset-0 transition-opacity duration-500 pointer-events-none"
+        style={{ 
+          backgroundColor: heroBgColor,
+          opacity: heroImage ? heroOverlayOpacity : 0
+        }}
+      />
+
       {/* Ambient background glow */}
       <div 
         className="absolute top-0 right-1/4 w-[600px] h-[600px] rounded-full blur-[180px] opacity-20 pointer-events-none"

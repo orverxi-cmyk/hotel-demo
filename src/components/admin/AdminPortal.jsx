@@ -134,6 +134,54 @@ export const AdminPortal = ({
   const [uploadingSlideId, setUploadingSlideId] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // Hero section background upload state
+  const [uploadingHeroBg, setUploadingHeroBg] = useState(false);
+  const [heroBgUploadProgress, setHeroBgUploadProgress] = useState(0);
+
+  const handleHeroBgUpload = async (file) => {
+    if (!isSuperAdmin) {
+      showNotification("Upload restricted to Super Administrator.");
+      return;
+    }
+    if (!file) return;
+
+    try {
+      setUploadingHeroBg(true);
+      setHeroBgUploadProgress(0);
+      const res = await uploadMediaFile(file, 'hero-bg', (p) => {
+        setHeroBgUploadProgress(p);
+      });
+      if (res && res.url) {
+        setThemeForm(prev => ({
+          ...prev,
+          heroImage: res.url
+        }));
+        await updateTheme({ heroImage: res.url });
+        showNotification("Hero background photo uploaded and published!");
+      }
+    } catch (err) {
+      showNotification(`Upload failed: ${err.message}`);
+    } finally {
+      setUploadingHeroBg(false);
+      setHeroBgUploadProgress(0);
+    }
+  };
+
+  const handleSaveHeroBackground = async () => {
+    if (!isSuperAdmin) return;
+    try {
+      await updateTheme({
+        heroImage: themeForm.heroImage,
+        heroBgColor: themeForm.heroBgColor,
+        heroOverlayOpacity: themeForm.heroOverlayOpacity,
+        heroBgBlur: themeForm.heroBgBlur
+      });
+      showNotification("Hero background settings published successfully!");
+    } catch (err) {
+      showNotification(`Save notice: ${err.message || 'Saved locally'}`);
+    }
+  };
+
   useEffect(() => {
     const fetchSlider = async () => {
       const data = await loadSliderSlides();
@@ -758,6 +806,9 @@ export const AdminPortal = ({
     checkInTime: theme.checkInTime || '15:00',
     checkOutTime: theme.checkOutTime || '11:00',
     heroImage: theme.heroImage || '',
+    heroBgColor: theme.heroBgColor || '#020617',
+    heroOverlayOpacity: theme.heroOverlayOpacity !== undefined ? Number(theme.heroOverlayOpacity) : 0.65,
+    heroBgBlur: theme.heroBgBlur !== undefined ? Number(theme.heroBgBlur) : 0,
     announcement: theme.announcement || ''
   });
 
@@ -780,7 +831,10 @@ export const AdminPortal = ({
         email: theme.email !== undefined ? theme.email : prev.email,
         checkInTime: theme.checkInTime || prev.checkInTime,
         checkOutTime: theme.checkOutTime || prev.checkOutTime,
-        heroImage: theme.heroImage || prev.heroImage,
+        heroImage: theme.heroImage !== undefined ? theme.heroImage : prev.heroImage,
+        heroBgColor: theme.heroBgColor || prev.heroBgColor || '#020617',
+        heroOverlayOpacity: theme.heroOverlayOpacity !== undefined ? Number(theme.heroOverlayOpacity) : (prev.heroOverlayOpacity !== undefined ? Number(prev.heroOverlayOpacity) : 0.65),
+        heroBgBlur: theme.heroBgBlur !== undefined ? Number(theme.heroBgBlur) : (prev.heroBgBlur !== undefined ? Number(prev.heroBgBlur) : 0),
         announcement: theme.announcement !== undefined ? theme.announcement : prev.announcement
       }));
     }
@@ -1980,14 +2034,112 @@ export const AdminPortal = ({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Hero Background Photo URL</label>
-                  <input
-                    type="url"
-                    value={themeForm.heroImage}
-                    onChange={(e) => setThemeForm({ ...themeForm, heroImage: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-400 font-mono text-xs"
-                  />
+                <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-semibold text-white flex items-center gap-2">
+                        <span>Hero Section Background Backdrop</span>
+                        {themeForm.heroImage && (
+                          <span className="text-[10px] font-mono text-emerald-400">● Photo Active</span>
+                        )}
+                      </label>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Controls the backdrop image & canvas color behind the homepage hero slider and booking search bar.
+                      </p>
+                    </div>
+                    {themeForm.heroImage && isSuperAdmin && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setThemeForm(prev => ({ ...prev, heroImage: '' }));
+                          await updateTheme({ heroImage: '' });
+                          showNotification("Hero background photo cleared.");
+                        }}
+                        className="text-[10px] text-rose-400 hover:text-rose-300 font-mono transition-colors flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Remove Photo</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <label className={`px-4 py-2.5 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      uploadingHeroBg
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 cursor-wait'
+                        : 'bg-slate-800 hover:bg-slate-700 text-stone-200 border-slate-700 hover:border-amber-400/40'
+                    }`}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingHeroBg || !isSuperAdmin}
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleHeroBgUpload(file);
+                        }}
+                      />
+                      <Upload className="w-4 h-4 text-amber-400" />
+                      <span>{uploadingHeroBg ? `Uploading ${heroBgUploadProgress}%...` : 'Upload Background Photo'}</span>
+                    </label>
+
+                    <input
+                      type="url"
+                      value={themeForm.heroImage}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setThemeForm(prev => ({ ...prev, heroImage: val }));
+                        updateTheme({ heroImage: val });
+                      }}
+                      placeholder="Or enter photo URL (https://images.unsplash.com/...)"
+                      className="flex-1 bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-amber-400 placeholder:text-slate-600"
+                    />
+                  </div>
+
+                  {/* Darkness Overlay & Hero Color */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-slate-300">Darkness Overlay</label>
+                        <span className="text-xs font-mono font-bold text-amber-400">
+                          {Math.round((themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65) * 100)}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="0.95"
+                        step="0.05"
+                        value={themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setThemeForm(prev => ({ ...prev, heroOverlayOpacity: val }));
+                          updateTheme({ heroOverlayOpacity: val });
+                        }}
+                        className="w-full accent-amber-400 cursor-pointer"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-slate-300">Canvas Base Color</label>
+                        <span className="text-xs font-mono text-amber-300 font-bold">{themeForm.heroBgColor || '#020617'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={themeForm.heroBgColor || '#020617'}
+                          onChange={(e) => {
+                            const color = e.target.value;
+                            setThemeForm(prev => ({ ...prev, heroBgColor: color }));
+                            updateTheme({ heroBgColor: color });
+                          }}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-slate-950 border border-slate-700 p-0.5 shrink-0"
+                        />
+                        <span className="text-xs font-mono text-slate-400">Tint behind photo / solid canvas</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
@@ -2388,6 +2540,321 @@ export const AdminPortal = ({
                   <span>Normal Administrator: Slider media is view-only. Uploading videos/photos or modifying slides requires Super Admin privileges.</span>
                 </div>
               )}
+
+              {/* Hero Showcase Canvas & Background Backdrop Studio */}
+              <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 shadow-xl space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+                        Section Canvas & Backdrop
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                        {themeForm.heroImage ? 'Custom Photo Backdrop' : 'Solid Luxury Canvas'}
+                      </span>
+                    </div>
+                    <h4 className="text-base font-bold text-white font-serif flex items-center gap-2">
+                      <Images className="w-4 h-4 text-amber-400" />
+                      <span>Hero Section Background</span>
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Set the background photo or luxury color that sits behind the hero slider, right-side cards, and availability bar.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveHeroBackground}
+                      disabled={!isSuperAdmin}
+                      className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                      style={{ backgroundColor: 'var(--color-secondary)' }}
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Save Background</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left Column: Background Controls (8 cols) */}
+                  <div className="lg:col-span-8 space-y-5">
+                    
+                    {/* 1. Background Photo Upload & URL */}
+                    <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-white flex items-center gap-2">
+                          <span>Hero Background Photo</span>
+                          {themeForm.heroImage && (
+                            <span className="text-[10px] font-mono text-emerald-400">● Active</span>
+                          )}
+                        </label>
+                        {themeForm.heroImage && isSuperAdmin && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setThemeForm(prev => ({ ...prev, heroImage: '' }));
+                              await updateTheme({ heroImage: '' });
+                              showNotification("Background photo cleared. Now using solid background color.");
+                            }}
+                            className="text-[10px] text-rose-400 hover:text-rose-300 font-mono transition-colors flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Remove Photo (Use Color Only)</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        {/* Direct File Upload Button */}
+                        <label className={`px-4 py-2.5 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                          uploadingHeroBg
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 cursor-wait'
+                            : 'bg-slate-800 hover:bg-slate-700 text-stone-200 border-slate-700 hover:border-amber-400/40'
+                        }`}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingHeroBg || !isSuperAdmin}
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleHeroBgUpload(file);
+                            }}
+                          />
+                          <Upload className="w-4 h-4 text-amber-400" />
+                          <span>{uploadingHeroBg ? `Uploading ${heroBgUploadProgress}%...` : 'Upload Photo'}</span>
+                        </label>
+
+                        {/* Or URL input */}
+                        <div className="flex-1 relative">
+                          <input
+                            type="url"
+                            value={themeForm.heroImage}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setThemeForm(prev => ({ ...prev, heroImage: val }));
+                              updateTheme({ heroImage: val });
+                            }}
+                            placeholder="Or paste image URL (https://images.unsplash.com/...)"
+                            className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-amber-400 placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Photo Preset Recommendations */}
+                      <div className="pt-2 border-t border-slate-800/80">
+                        <span className="text-[10px] text-slate-500 font-mono block mb-1.5">Curated Luxury Backdrops:</span>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
+                          {[
+                            { name: 'Mediterranean Estate', url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=2000&q=80' },
+                            { name: 'Cliffside Infinity Pool', url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=2000&q=80' },
+                            { name: 'Sunset Ocean Terrace', url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=2000&q=80' },
+                            { name: 'Alpine Botanical Haven', url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=2000&q=80' }
+                          ].map((rec) => (
+                            <button
+                              key={rec.name}
+                              type="button"
+                              onClick={async () => {
+                                setThemeForm(prev => ({ ...prev, heroImage: rec.url }));
+                                await updateTheme({ heroImage: rec.url });
+                                showNotification(`Background set to "${rec.name}"!`);
+                              }}
+                              className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-stone-300 text-left truncate transition-all"
+                            >
+                              {rec.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Darkness Overlay Opacity & Blur Sliders */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Darkness Overlay */}
+                      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-white">Darkness Overlay</label>
+                          <span className="text-xs font-mono font-bold text-amber-400">
+                            {Math.round((themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65) * 100)}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="0.95"
+                          step="0.05"
+                          value={themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setThemeForm(prev => ({ ...prev, heroOverlayOpacity: val }));
+                            updateTheme({ heroOverlayOpacity: val });
+                          }}
+                          className="w-full accent-amber-400 cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-400">
+                          {themeForm.heroOverlayOpacity >= 0.65 ? 'Optimal contrast for white text & cards' : 'Lighter backdrop (photo more visible)'}
+                        </p>
+                      </div>
+
+                      {/* Backdrop Blur */}
+                      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-white">Backdrop Softness / Blur</label>
+                          <span className="text-xs font-mono text-slate-400">
+                            {(themeForm.heroBgBlur || 0) === 0 ? 'Sharp (0px)' : `${themeForm.heroBgBlur}px`}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5 pt-1">
+                          {[
+                            { label: 'Sharp', val: 0 },
+                            { label: 'Subtle', val: 3 },
+                            { label: 'Soft', val: 8 }
+                          ].map((opt) => (
+                            <button
+                              key={opt.val}
+                              type="button"
+                              onClick={() => {
+                                setThemeForm(prev => ({ ...prev, heroBgBlur: opt.val }));
+                                updateTheme({ heroBgBlur: opt.val });
+                              }}
+                              className={`py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                                (themeForm.heroBgBlur || 0) === opt.val
+                                  ? 'bg-amber-400 text-slate-950 font-bold border-amber-400 shadow-sm'
+                                  : 'bg-slate-950 text-slate-300 border-slate-700/80 hover:bg-slate-800'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Solid Canvas / Fallback Color */}
+                    <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-xs font-semibold text-white">Canvas Color (Base / Fallback)</label>
+                          <p className="text-[10px] text-slate-400">Color shown when no photo is set, or used as the overlay tint</p>
+                        </div>
+                        <span className="text-xs font-mono text-amber-300 font-bold">{themeForm.heroBgColor || '#020617'}</span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={themeForm.heroBgColor || '#020617'}
+                          onChange={(e) => {
+                            const color = e.target.value;
+                            setThemeForm(prev => ({ ...prev, heroBgColor: color }));
+                            updateTheme({ heroBgColor: color });
+                          }}
+                          className="w-10 h-10 rounded-xl cursor-pointer bg-slate-950 border border-slate-700 p-0.5 shrink-0"
+                        />
+                        <div className="flex-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                          {[
+                            { name: 'Slate', hex: '#020617' },
+                            { name: 'Midnight', hex: '#0b132b' },
+                            { name: 'Obsidian', hex: '#090d16' },
+                            { name: 'Forest', hex: '#081b15' },
+                            { name: 'Bordeaux', hex: '#1a0a10' },
+                            { name: 'Espresso', hex: '#19120e' }
+                          ].map((p) => (
+                            <button
+                              key={p.hex}
+                              type="button"
+                              onClick={() => {
+                                setThemeForm(prev => ({ ...prev, heroBgColor: p.hex }));
+                                updateTheme({ heroBgColor: p.hex });
+                              }}
+                              className={`p-1.5 rounded-lg border text-[10px] flex items-center gap-1.5 transition-all ${
+                                (themeForm.heroBgColor || '#020617').toLowerCase() === p.hex.toLowerCase()
+                                  ? 'border-amber-400 bg-slate-800 text-white'
+                                  : 'border-slate-800 bg-slate-950 hover:bg-slate-800 text-stone-400'
+                              }`}
+                            >
+                              <span className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0" style={{ backgroundColor: p.hex }} />
+                              <span className="truncate">{p.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Right Column: Live In-Context Mini Preview (4 cols) */}
+                  <div className="lg:col-span-4">
+                    <div className="p-4 rounded-xl bg-slate-900 border border-amber-500/20 shadow-xl space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                        <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-semibold flex items-center gap-1.5">
+                          <Sparkles className="w-3 h-3 text-amber-400" />
+                          <span>Backdrop Preview</span>
+                        </span>
+                        <span className="text-[10px] font-mono text-emerald-400">Live Reaction</span>
+                      </div>
+
+                      {/* Simulated Hero Section Window */}
+                      <div 
+                        className="h-48 rounded-xl overflow-hidden relative border border-white/10 flex flex-col justify-between p-3"
+                        style={{ backgroundColor: themeForm.heroBgColor || '#020617' }}
+                      >
+                        {/* Background Image layer in preview */}
+                        {themeForm.heroImage && (
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center transition-all duration-300"
+                            style={{ 
+                              backgroundImage: `url(${themeForm.heroImage})`,
+                              filter: themeForm.heroBgBlur ? `blur(${themeForm.heroBgBlur}px)` : undefined
+                            }}
+                          />
+                        )}
+
+                        {/* Overlay layer in preview */}
+                        <div 
+                          className="absolute inset-0 transition-opacity"
+                          style={{ 
+                            backgroundColor: themeForm.heroBgColor || '#020617',
+                            opacity: themeForm.heroImage ? (themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65) : 0
+                          }}
+                        />
+
+                        {/* Simulated Top Navbar */}
+                        <div className="relative z-10 flex items-center justify-between pb-2 border-b border-white/10">
+                          <span className="text-[9px] font-serif font-bold text-white tracking-wider">
+                            {themeForm.hotelName || 'THE GRAND AURELIA'}
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-[8px] font-bold text-slate-950 uppercase" style={{ backgroundColor: 'var(--color-secondary)' }}>
+                            Book
+                          </span>
+                        </div>
+
+                        {/* Simulated Slider & Right Card Layout */}
+                        <div className="relative z-10 grid grid-cols-12 gap-2 my-auto">
+                          <div className="col-span-8 h-16 rounded-lg bg-black/40 border border-white/20 flex items-center justify-center text-[8px] text-white/80 font-mono">
+                            <span>Main Slide Showcase</span>
+                          </div>
+                          <div className="col-span-4 h-16 rounded-lg bg-slate-900/80 border border-white/20 p-1.5 flex flex-col justify-between">
+                            <span className="text-[7px] text-amber-300 font-serif font-bold line-clamp-1">Luxury Suite</span>
+                            <span className="w-full h-3 rounded bg-amber-400 text-[6px] font-bold text-slate-950 flex items-center justify-center uppercase">Reserve</span>
+                          </div>
+                        </div>
+
+                        {/* Simulated Availability Bar */}
+                        <div className="relative z-10 h-6 rounded-lg bg-slate-950/90 border border-white/20 px-2 flex items-center justify-between text-[7px] text-stone-300">
+                          <span>Check-In / Out</span>
+                          <span className="text-amber-400 font-bold">Search</span>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+                        This preview simulates how your background photo, darkness overlay, and canvas color blend with the homepage hero.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Slider Slides List */}
               <div className="space-y-6">

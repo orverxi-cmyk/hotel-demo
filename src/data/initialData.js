@@ -96,7 +96,9 @@ export const defaultTheme = {
   checkInTime: "15:00",
   checkOutTime: "11:00",
   heroImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=2000&q=80",
-  heroOverlayOpacity: 0.45,
+  heroBgColor: "#020617",
+  heroOverlayOpacity: 0.65,
+  heroBgBlur: 0,
   announcement: "Special Season: Complimentary Sunset Champagne Cruise with bookings over 3 nights"
 };
 
