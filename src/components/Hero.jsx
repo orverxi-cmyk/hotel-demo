@@ -5,7 +5,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
 import { BookingSearchBar } from './BookingSearchBar';
 import { 
-  Star, 
   MapPin, 
   ChevronLeft, 
   ChevronRight, 
@@ -203,15 +202,6 @@ export const Hero = ({ onSelectArticleById }) => {
             
             <div className={`space-y-4 transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
               
-              {/* Star Rating */}
-              <div className="flex items-center justify-between">
-                <div className="flex text-amber-400 gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
-                  ))}
-                </div>
-              </div>
-
               {/* Title & Description */}
               <div className="space-y-2">
                 <h2 className="font-serif text-xl sm:text-2xl font-bold leading-snug tracking-tight text-white line-clamp-3">
