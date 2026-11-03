@@ -736,14 +736,17 @@ export const AdminPortal = ({
     setNavMenus(updated);
     await saveNavMenus(updated);
 
-    // If a menu is hidden or shown, automatically sync its related section too!
+    // If a menu is hidden or shown, sync related section if no other visible menus link to it
     const relatedSecKey = getRelatedSectionKey(target);
     if (relatedSecKey) {
+      const hasOtherVisible = updated.some(m => m.id !== menuId && m.visible !== false && getRelatedSectionKey(m) === relatedSecKey);
+      const shouldSectionBeVisible = nextVisibility ? true : hasOtherVisible;
+
       const updatedHeaders = {
         ...sectionHeadersData,
         [relatedSecKey]: {
           ...(sectionHeadersData?.[relatedSecKey] || {}),
-          visible: nextVisibility
+          visible: shouldSectionBeVisible
         }
       };
       setSectionHeadersData(updatedHeaders);
@@ -751,10 +754,10 @@ export const AdminPortal = ({
 
       const secConfig = SECTION_CONFIGS.find(c => c.key === relatedSecKey);
       showNotification(
-        `Menu "${target?.label || 'Item'}" and related section "${secConfig?.name || 'Section'}" are now ${nextVisibility ? 'visible' : 'hidden'} on the website.`
+        `Menu "${target?.label || 'Item'}" is now ${nextVisibility ? 'visible' : 'hidden'} on the navbar.`
       );
     } else {
-      showNotification(`Menu "${target?.label || 'Item'}" is now ${nextVisibility ? 'visible' : 'hidden'} on the website.`);
+      showNotification(`Menu "${target?.label || 'Item'}" is now ${nextVisibility ? 'visible' : 'hidden'} on the navbar.`);
     }
   };
 
@@ -771,12 +774,46 @@ export const AdminPortal = ({
   };
 
   const handleUpdateNavField = (menuId, field, value) => {
-    const updated = navMenus.map(m => m.id === menuId ? { ...m, [field]: value } : m);
+    const updated = navMenus.map(m => {
+      if (m.id !== menuId) return m;
+      const next = { ...m, [field]: value };
+      if (field === 'href') {
+        const trimmed = (value || '').trim();
+        if (trimmed.includes('#')) {
+          const extracted = trimmed.split('#')[1].split('/')[0].split('?')[0].trim();
+          if (extracted) next.targetId = extracted;
+        } else if (trimmed === '/' || trimmed === '') {
+          next.targetId = 'home';
+        } else {
+          const clean = trimmed.replace(/^\/+|\/+$/g, '').toLowerCase();
+          const known = ['rooms', 'amenities', 'dining', 'gallery', 'reviews', 'contact', 'location'];
+          if (known.includes(clean)) {
+            next.targetId = clean;
+          }
+        }
+      }
+      return next;
+    });
     setNavMenus(updated);
   };
 
   const handleSaveAllNavMenus = async () => {
-    await saveNavMenus(navMenus);
+    const sanitized = navMenus.map(m => {
+      const cleanHref = (m.href || '').trim();
+      let targetId = m.targetId;
+      if (cleanHref.includes('#')) {
+        targetId = cleanHref.split('#')[1].split('/')[0].split('?')[0].trim();
+      } else if (cleanHref === '/' || cleanHref === '') {
+        targetId = 'home';
+      }
+      return {
+        ...m,
+        href: cleanHref,
+        targetId: targetId || m.targetId || ''
+      };
+    });
+    setNavMenus(sanitized);
+    await saveNavMenus(sanitized);
     showNotification("All navigation menus saved and synced live!");
   };
 

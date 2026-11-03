@@ -11,7 +11,8 @@ import {
   initialNavMenus,
   getCachedNavMenus,
   subscribeNavMenus,
-  isSectionHiddenByMenu 
+  isSectionHiddenByMenu,
+  getRelatedSectionKey 
 } from '../services/storageService';
 
 export const AmenitiesSection = () => {
@@ -49,7 +50,13 @@ export const AmenitiesSection = () => {
     ShieldCheck: ShieldCheck
   };
 
-  if (sectionHeaders?.visible === false || isSectionHiddenByMenu('amenities', navMenus)) return null;
+  const isLinkedByVisibleMenu = navMenus?.some(
+    m => m.visible !== false && (getRelatedSectionKey(m) === 'amenities' || (m.href || '').includes('#amenities'))
+  );
+
+  if ((sectionHeaders?.visible === false && !isLinkedByVisibleMenu) || isSectionHiddenByMenu('amenities', navMenus)) {
+    return null;
+  }
 
   return (
     <section id="amenities" className="py-24 bg-stone-100/70 border-y border-stone-200">

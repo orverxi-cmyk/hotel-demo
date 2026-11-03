@@ -14,7 +14,8 @@ import {
   initialNavMenus,
   getCachedNavMenus,
   subscribeNavMenus,
-  isSectionHiddenByMenu 
+  isSectionHiddenByMenu,
+  getRelatedSectionKey 
 } from '../services/storageService';
 
 // Gastronomy & Dining Venues Section
@@ -62,7 +63,13 @@ export const DiningSection = () => {
 
   const visibleVenues = venues.filter(v => v.visible !== false);
 
-  if (sectionHeaders?.visible === false || isSectionHiddenByMenu('dining', navMenus)) return null;
+  const isLinkedByVisibleMenu = navMenus?.some(
+    m => m.visible !== false && (getRelatedSectionKey(m) === 'dining' || (m.href || '').includes('#dining'))
+  );
+
+  if ((sectionHeaders?.visible === false && !isLinkedByVisibleMenu) || isSectionHiddenByMenu('dining', navMenus)) {
+    return null;
+  }
 
   return (
     <section id="dining" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">

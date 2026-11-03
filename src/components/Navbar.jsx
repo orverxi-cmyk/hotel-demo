@@ -8,6 +8,60 @@ import { useBooking } from '../context/BookingContext';
 import { Sparkles, Calendar, Menu, X, Shield, PhoneCall, Home, ExternalLink } from 'lucide-react';
 import { getCachedNavMenus, subscribeNavMenus, initialNavMenus } from '../services/storageService';
 
+// Helper to extract target section ID and canonical href from any menu item
+export const resolveNavTarget = (item) => {
+  if (!item) return { isHome: false, isAnchor: false, targetId: null, href: '/' };
+
+  const rawHref = (item.href || '').trim();
+  const rawTarget = (item.targetId || '').trim().replace(/^#+/, '');
+
+  if (rawHref === '/' || rawTarget === 'home') {
+    return { isHome: true, isAnchor: false, targetId: 'home', href: '/' };
+  }
+
+  // Any link that contains '#' is an anchor link (e.g. "/#amenities", "#amenities", "http.../#amenities")
+  if (rawHref.includes('#')) {
+    const hashId = rawHref.split('#')[1].split('/')[0].split('?')[0].trim();
+    if (hashId) {
+      return {
+        isHome: false,
+        isAnchor: true,
+        targetId: hashId,
+        href: `/#${hashId}`
+      };
+    }
+  }
+
+  // If rawTarget is specified (e.g. "amenities", "rooms", "dining")
+  if (rawTarget && rawTarget !== 'home') {
+    return {
+      isHome: false,
+      isAnchor: true,
+      targetId: rawTarget,
+      href: `/#${rawTarget}`
+    };
+  }
+
+  // If rawHref is a known section slug like "amenities" or "/amenities"
+  const cleanPath = rawHref.replace(/^\/+|\/+$/g, '').toLowerCase();
+  const known = ['rooms', 'amenities', 'dining', 'gallery', 'reviews', 'contact', 'location'];
+  if (known.includes(cleanPath)) {
+    return {
+      isHome: false,
+      isAnchor: true,
+      targetId: cleanPath,
+      href: `/#${cleanPath}`
+    };
+  }
+
+  return {
+    isHome: false,
+    isAnchor: false,
+    targetId: null,
+    href: rawHref || '/'
+  };
+};
+
 export const Navbar = ({ onOpenCMS }) => {
   const { theme } = useTheme();
   const { openBookingModal } = useBooking();
@@ -38,6 +92,28 @@ export const Navbar = ({ onOpenCMS }) => {
     .filter(m => m.visible !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
 
+  // Scroll to hash target on initial mount or route landing
+  useEffect(() => {
+    if (typeof window !== 'undefined' && pathname === '/' && window.location.hash) {
+      const hashId = window.location.hash.replace(/^#+/, '').trim();
+      if (hashId) {
+        const timer = setTimeout(() => {
+          const targetEl = document.getElementById(hashId) || 
+                           (hashId === 'contact' ? document.getElementById('location') : null) ||
+                           (hashId === 'location' ? document.getElementById('contact') : null);
+          if (targetEl) {
+            const navHeight = 80;
+            const elementPosition = targetEl.getBoundingClientRect().top + window.pageYOffset;
+            const offsetPosition = Math.max(0, elementPosition - navHeight);
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+            setActiveSection(hashId);
+          }
+        }, 200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [pathname]);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 40);
@@ -46,13 +122,13 @@ export const Navbar = ({ onOpenCMS }) => {
         if (window.scrollY < 350) {
           setActiveSection('home');
         } else {
-          const sections = ['rooms', 'amenities', 'dining', 'gallery', 'reviews', 'contact'];
+          const sections = ['rooms', 'amenities', 'dining', 'gallery', 'reviews', 'location', 'contact'];
           for (const sec of sections) {
             const el = document.getElementById(sec);
             if (el) {
               const rect = el.getBoundingClientRect();
               if (rect.top <= 250 && rect.bottom >= 150) {
-                setActiveSection(sec);
+                setActiveSection(sec === 'location' ? 'contact' : sec);
                 break;
               }
             }
@@ -76,17 +152,55 @@ export const Navbar = ({ onOpenCMS }) => {
     setIsMobileMenuOpen(false);
   };
 
-  // Section smooth scrolling logic
-  const handleSectionClick = (e, targetId) => {
-    if (pathname === '/') {
-      e.preventDefault();
-      const el = document.getElementById(targetId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-        setActiveSection(targetId);
-      }
-    }
+  // Section smooth scrolling logic with fixed header offset
+  const handleSectionClick = (e, targetId, href) => {
     setIsMobileMenuOpen(false);
+
+    const cleanId = (targetId || '').replace(/^#+/, '').trim();
+    if (!cleanId) return;
+
+    if (pathname === '/') {
+      const targetEl = document.getElementById(cleanId) || 
+                       (cleanId === 'contact' ? document.getElementById('location') : null) ||
+                       (cleanId === 'location' ? document.getElementById('contact') : null);
+
+      if (targetEl) {
+        if (e && e.preventDefault) e.preventDefault();
+        
+        const navHeight = 80;
+        const elementPosition = targetEl.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = Math.max(0, elementPosition - navHeight);
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+
+        setActiveSection(cleanId);
+
+        try {
+          window.history.pushState(null, '', `/#${cleanId}`);
+        } catch (_) {}
+      } else {
+        // Fallback retry for dynamic or mounting sections
+        setTimeout(() => {
+          const retryEl = document.getElementById(cleanId) || 
+                          (cleanId === 'contact' ? document.getElementById('location') : null) ||
+                          (cleanId === 'location' ? document.getElementById('contact') : null);
+          if (retryEl) {
+            const navHeight = 80;
+            const elementPosition = retryEl.getBoundingClientRect().top + window.pageYOffset;
+            const offsetPosition = Math.max(0, elementPosition - navHeight);
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+            setActiveSection(cleanId);
+          }
+        }, 150);
+      }
+    } else {
+      // If we are on /admin, /discover, or another route, navigate to /#section
+      if (e && e.preventDefault) e.preventDefault();
+      window.location.href = href || `/#${cleanId}`;
+    }
   };
 
   return (
@@ -127,12 +241,12 @@ export const Navbar = ({ onOpenCMS }) => {
           {/* Desktop Navigation Links (Dynamically synced & customizable) */}
           <nav className="hidden md:flex items-center gap-2 lg:gap-3.5 xl:gap-5 2xl:gap-6 text-xs lg:text-[13px] xl:text-sm font-medium text-white/90 whitespace-nowrap flex-nowrap">
             {visibleMenus.map((item) => {
-              const isHome = item.href === '/' || item.targetId === 'home';
-              const isActive = (isHome && pathname === '/' && activeSection === 'home') ||
-                               (!isHome && pathname === '/' && activeSection === item.targetId) ||
-                               (!isHome && pathname === item.href);
+              const nav = resolveNavTarget(item);
+              const isActive = (nav.isHome && pathname === '/' && activeSection === 'home') ||
+                               (!nav.isHome && pathname === '/' && (activeSection === nav.targetId || (activeSection === 'location' && nav.targetId === 'contact') || (activeSection === 'contact' && nav.targetId === 'location'))) ||
+                               (!nav.isHome && !nav.isAnchor && pathname === nav.href);
 
-              if (item.isExternal || item.href.startsWith('http://') || item.href.startsWith('https://')) {
+              if (item.isExternal || (item.href && (item.href.startsWith('http://') || item.href.startsWith('https://')))) {
                 return (
                   <a 
                     key={item.id}
@@ -147,14 +261,13 @@ export const Navbar = ({ onOpenCMS }) => {
                 );
               }
 
-              if (item.href.startsWith('/#')) {
-                const targetId = item.targetId || item.href.replace('/#', '');
+              if (nav.isAnchor) {
                 return (
                   <a 
                     key={item.id}
-                    href={item.href}
-                    onClick={(e) => handleSectionClick(e, targetId)}
-                    className={`transition-colors whitespace-nowrap py-1 relative ${
+                    href={nav.href}
+                    onClick={(e) => handleSectionClick(e, nav.targetId, nav.href)}
+                    className={`transition-colors whitespace-nowrap py-1 relative cursor-pointer ${
                       isActive ? 'text-amber-300 font-semibold' : 'text-white/90 hover:text-amber-300'
                     }`}
                   >
@@ -172,8 +285,8 @@ export const Navbar = ({ onOpenCMS }) => {
               return (
                 <Link 
                   key={item.id}
-                  href={item.href}
-                  onClick={isHome ? handleHomeClick : () => setIsMobileMenuOpen(false)}
+                  href={nav.href}
+                  onClick={nav.isHome ? handleHomeClick : () => setIsMobileMenuOpen(false)}
                   className={`transition-colors whitespace-nowrap py-1 relative ${
                     isActive ? 'text-amber-300 font-semibold' : 'text-white/90 hover:text-amber-300'
                   }`}
@@ -225,12 +338,12 @@ export const Navbar = ({ onOpenCMS }) => {
         <div className="md:hidden bg-slate-950/98 backdrop-blur-xl border-b border-white/10 px-6 py-6 space-y-4 shadow-2xl animate-fade-in">
           <nav className="flex flex-col space-y-3 text-base font-medium text-white/90">
             {visibleMenus.map((item) => {
-              const isHome = item.href === '/' || item.targetId === 'home';
-              const isActive = (isHome && pathname === '/' && activeSection === 'home') ||
-                               (!isHome && pathname === '/' && activeSection === item.targetId) ||
-                               (!isHome && pathname === item.href);
+              const nav = resolveNavTarget(item);
+              const isActive = (nav.isHome && pathname === '/' && activeSection === 'home') ||
+                               (!nav.isHome && pathname === '/' && (activeSection === nav.targetId || (activeSection === 'location' && nav.targetId === 'contact') || (activeSection === 'contact' && nav.targetId === 'location'))) ||
+                               (!nav.isHome && !nav.isAnchor && pathname === nav.href);
 
-              if (item.isExternal || item.href.startsWith('http://') || item.href.startsWith('https://')) {
+              if (item.isExternal || (item.href && (item.href.startsWith('http://') || item.href.startsWith('https://')))) {
                 return (
                   <a 
                     key={item.id}
@@ -246,14 +359,13 @@ export const Navbar = ({ onOpenCMS }) => {
                 );
               }
 
-              if (item.href.startsWith('/#')) {
-                const targetId = item.targetId || item.href.replace('/#', '');
+              if (nav.isAnchor) {
                 return (
                   <a 
                     key={item.id}
-                    href={item.href}
-                    onClick={(e) => handleSectionClick(e, targetId)} 
-                    className={`flex items-center justify-between py-1 transition-colors ${
+                    href={nav.href}
+                    onClick={(e) => handleSectionClick(e, nav.targetId, nav.href)} 
+                    className={`flex items-center justify-between py-1 transition-colors cursor-pointer ${
                       isActive ? 'text-amber-300 font-bold' : 'hover:text-amber-300'
                     }`}
                   >
@@ -268,8 +380,8 @@ export const Navbar = ({ onOpenCMS }) => {
               return (
                 <Link 
                   key={item.id}
-                  href={item.href}
-                  onClick={isHome ? handleHomeClick : () => setIsMobileMenuOpen(false)}
+                  href={nav.href}
+                  onClick={nav.isHome ? handleHomeClick : () => setIsMobileMenuOpen(false)}
                   className={`flex items-center justify-between py-1 transition-colors ${
                     isActive ? 'text-amber-300 font-bold' : 'hover:text-amber-300'
                   }`}

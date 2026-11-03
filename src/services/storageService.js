@@ -924,26 +924,63 @@ export const resetNavMenus = async () => {
 // Maps a navigation menu item to its corresponding homepage landing section key
 export const getRelatedSectionKey = (menu) => {
   if (!menu) return null;
-  const target = (menu.targetId || '').toLowerCase().trim();
   const href = (menu.href || '').toLowerCase().trim();
+  const rawTarget = (menu.targetId || '').toLowerCase().replace(/^#+/, '').trim();
   const id = (menu.id || '').toLowerCase().trim();
   const label = (menu.label || '').toLowerCase().trim();
 
-  if (target === 'rooms' || href.includes('#rooms') || id.includes('rooms') || label.includes('room') || label.includes('suite')) return 'rooms';
-  if (target === 'amenities' || href.includes('#amenities') || id.includes('amenities') || label.includes('amenit') || label.includes('experience') || label.includes('spa')) return 'amenities';
-  if (target === 'dining' || href.includes('#dining') || id.includes('dining') || label.includes('dining') || label.includes('gastronomy') || label.includes('restaurant')) return 'dining';
-  if (target === 'discover' || href.includes('discover') || id.includes('discover') || label.includes('discover') || label.includes('article') || label.includes('chronicle')) return 'discover';
-  if (target === 'gallery' || href.includes('#gallery') || id.includes('gallery') || label.includes('gallery') || label.includes('visual')) return 'gallery';
-  if (target === 'reviews' || href.includes('#reviews') || id.includes('reviews') || label.includes('review') || label.includes('testimonial') || label.includes('acclaim')) return 'reviews';
-  if (target === 'contact' || target === 'location' || href.includes('#contact') || href.includes('#location') || id.includes('contact') || id.includes('location') || label.includes('contact') || label.includes('location') || label.includes('concierge')) return 'location';
+  // Extract hash anchor if present in href (e.g. "/#amenities", "#amenities", "/#amenities/")
+  let hashAnchor = '';
+  if (href.includes('#')) {
+    const afterHash = href.split('#')[1].split('/')[0].split('?')[0].trim();
+    if (afterHash) hashAnchor = afterHash;
+  }
+
+  // Anchor in href or explicit target takes the HIGHEST priority
+  const candidate = hashAnchor || rawTarget;
+
+  if (candidate) {
+    if (candidate === 'rooms' || candidate.includes('room') || candidate.includes('suite')) return 'rooms';
+    if (candidate === 'amenities' || candidate.includes('amenit') || candidate.includes('experience') || candidate.includes('spa')) return 'amenities';
+    if (candidate === 'dining' || candidate.includes('dining') || candidate.includes('gastronomy') || candidate.includes('restaurant')) return 'dining';
+    if (candidate === 'discover' || candidate.includes('discover') || candidate.includes('article') || candidate.includes('chronicle')) return 'discover';
+    if (candidate === 'gallery' || candidate.includes('gallery') || candidate.includes('visual')) return 'gallery';
+    if (candidate === 'reviews' || candidate.includes('review') || candidate.includes('testimonial') || candidate.includes('acclaim')) return 'reviews';
+    if (candidate === 'contact' || candidate === 'location' || candidate.includes('contact') || candidate.includes('location') || candidate.includes('concierge')) return 'location';
+  }
+
+  // Check plain path slugs, e.g. "/amenities" or "amenities"
+  const cleanPath = href.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (cleanPath === 'rooms' || cleanPath.includes('room')) return 'rooms';
+  if (cleanPath === 'amenities' || cleanPath.includes('amenit')) return 'amenities';
+  if (cleanPath === 'dining' || cleanPath.includes('dining')) return 'dining';
+  if (cleanPath === 'discover' || cleanPath.includes('discover')) return 'discover';
+  if (cleanPath === 'gallery' || cleanPath.includes('gallery')) return 'gallery';
+  if (cleanPath === 'reviews' || cleanPath.includes('review')) return 'reviews';
+  if (cleanPath === 'contact' || cleanPath === 'location') return 'location';
+
+  // Fallback to menu label or id only if href/target has no explicit destination
+  if (id.includes('rooms') || label.includes('room') || label.includes('suite')) return 'rooms';
+  if (id.includes('amenities') || label.includes('amenit') || label.includes('experience') || label.includes('spa')) return 'amenities';
+  if (id.includes('dining') || label.includes('dining') || label.includes('gastronomy') || label.includes('restaurant')) return 'dining';
+  if (id.includes('discover') || label.includes('discover') || label.includes('article') || label.includes('chronicle')) return 'discover';
+  if (id.includes('gallery') || label.includes('gallery') || label.includes('visual')) return 'gallery';
+  if (id.includes('reviews') || label.includes('review') || label.includes('testimonial') || label.includes('acclaim')) return 'reviews';
+  if (id.includes('contact') || id.includes('location') || label.includes('contact') || label.includes('location') || label.includes('concierge')) return 'location';
 
   return null;
 };
 
-// Returns true if any active navigation menu corresponding to the given section is hidden
+// Returns true if all active navigation menus corresponding to the given section are hidden
 export const isSectionHiddenByMenu = (sectionKey, navMenusList) => {
-  if (!sectionKey || !Array.isArray(navMenusList)) return false;
-  return navMenusList.some((m) => getRelatedSectionKey(m) === sectionKey && m.visible === false);
+  if (!sectionKey || !Array.isArray(navMenusList) || navMenusList.length === 0) return false;
+  const matchingMenus = navMenusList.filter((m) => getRelatedSectionKey(m) === sectionKey);
+  if (matchingMenus.length === 0) return false;
+  // If at least one matching menu is visible, the section MUST remain visible
+  const hasVisibleMatch = matchingMenus.some((m) => m.visible !== false);
+  if (hasVisibleMatch) return false;
+  // Hidden only if all menus linked to this section are explicitly hidden
+  return true;
 };
 
 // --- DINING MENUS & VENUES MANAGEMENT ---
