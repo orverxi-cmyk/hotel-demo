@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
-import { Users, Maximize2, Bed, Check, Sparkles, ChevronRight, Eye, MapPin } from 'lucide-react';
+import { Users, Maximize2, Bed, Check, ChevronRight, Eye, MapPin } from 'lucide-react';
 
 export const RoomCard = ({ room, onSelectDetail }) => {
   const { theme } = useTheme();
@@ -27,25 +27,6 @@ export const RoomCard = ({ room, onSelectDetail }) => {
         
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
-
-        {/* Category & Featured Badge */}
-        <div className="absolute top-4 left-4 flex gap-2">
-          <span 
-            className="px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase text-white shadow-md backdrop-blur-sm"
-            style={{ backgroundColor: 'var(--color-primary)' }}
-          >
-            {room.category}
-          </span>
-          {room.featured && (
-            <span 
-              className="px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase text-slate-950 flex items-center gap-1 shadow-md"
-              style={{ backgroundColor: 'var(--color-secondary)' }}
-            >
-              <Sparkles className="w-3 h-3" />
-              Signature
-            </span>
-          )}
-        </div>
 
         {/* View / Perspective Tag */}
         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white text-xs font-medium">
