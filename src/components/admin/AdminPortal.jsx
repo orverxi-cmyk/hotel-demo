@@ -2768,7 +2768,7 @@ export const AdminPortal = ({
                               >
                                 <span 
                                   className="w-10 h-10 rounded-lg border border-white/20 shrink-0 shadow-inner"
-                                  style={{ background: g.css }}
+                                  style={{ backgroundImage: g.css }}
                                 />
                                 <div className="min-w-0 flex-1">
                                   <div className="font-semibold text-xs text-white truncate flex items-center justify-between">
@@ -3117,8 +3117,9 @@ export const AdminPortal = ({
                         backgroundColor: (themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
                           ? (themeForm.backgroundColor || '#fdfbf7')
                           : (themeForm.heroBgColor || '#020617'),
-                        ...(themeForm.heroBgMode === 'gradient' ? { background: themeForm.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)' } : {}),
-                        ...((themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent') ? { background: themeForm.backgroundColor || '#fdfbf7' } : {})
+                        backgroundImage: themeForm.heroBgMode === 'gradient'
+                          ? (themeForm.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)')
+                          : 'none'
                       }}
                     >
                       {/* Photo Backdrop (Active in Photo mode) */}

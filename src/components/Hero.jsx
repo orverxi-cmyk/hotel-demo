@@ -115,8 +115,7 @@ export const Hero = ({ onSelectArticleById }) => {
 
   const sectionStyle = {
     backgroundColor: isTransparent ? 'transparent' : heroBgColor,
-    ...(heroBgMode === 'gradient' ? { background: heroGradient } : {}),
-    ...(isTransparent ? { background: 'transparent' } : {})
+    backgroundImage: (!isTransparent && heroBgMode === 'gradient') ? heroGradient : 'none'
   };
 
   return (
