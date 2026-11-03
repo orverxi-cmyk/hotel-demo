@@ -3,9 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
-  Clock, 
   ArrowRight, 
-  Images, 
   BookOpen, 
   ChevronRight,
   Compass
@@ -104,7 +102,6 @@ export const DiscoverSection = ({ onSelectArticle }) => {
         {/* Articles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {visibleArticles.map((article, idx) => {
-            const photosCount = Array.isArray(article.photos) ? article.photos.length : 1;
             const isFeatured = idx === 0;
 
             return (
@@ -115,7 +112,7 @@ export const DiscoverSection = ({ onSelectArticle }) => {
                   isFeatured ? 'md:col-span-2 lg:col-span-2' : ''
                 }`}
               >
-                {/* Cover Image & Photo Count Pill */}
+                {/* Cover Image */}
                 <div className={`relative overflow-hidden bg-slate-950 ${isFeatured ? 'h-72 sm:h-80' : 'h-60'}`}>
                   <img
                     src={article.coverImage || (article.photos && article.photos[0])}
@@ -123,38 +120,16 @@ export const DiscoverSection = ({ onSelectArticle }) => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-
-                  {/* Top Badges */}
-                  <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full text-[11px] font-mono tracking-widest uppercase bg-slate-950/70 backdrop-blur-md text-amber-300 border border-white/20">
-                      {article.category || 'Editorial'}
-                    </span>
-
-                    {photosCount > 1 && (
-                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-slate-950/70 backdrop-blur-md text-stone-200 border border-white/20">
-                        <Images className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{photosCount} Photos</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Bottom Meta on Image */}
-                  <div className="absolute bottom-4 left-4 right-4 flex items-center gap-3 text-xs text-stone-300 font-medium">
-                    {article.readTime && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{article.readTime}</span>
-                      </span>
-                    )}
-                    {article.date && (
-                      <span>• {article.date}</span>
-                    )}
-                  </div>
                 </div>
 
                 {/* Card Body */}
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
+                    {article.date && (
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-stone-400 block">
+                        {article.date}
+                      </span>
+                    )}
                     <h3 className={`font-serif font-bold text-white group-hover:text-amber-300 transition-colors leading-snug ${
                       isFeatured ? 'text-2xl sm:text-3xl' : 'text-xl'
                     }`}>
