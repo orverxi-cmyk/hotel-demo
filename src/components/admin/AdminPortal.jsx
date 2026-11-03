@@ -164,9 +164,10 @@ export const AdminPortal = ({
       if (res && res.url) {
         setThemeForm(prev => ({
           ...prev,
-          heroImage: res.url
+          heroImage: res.url,
+          heroBgMode: 'photo'
         }));
-        await updateTheme({ heroImage: res.url });
+        await updateTheme({ heroImage: res.url, heroBgMode: 'photo' });
         showNotification("Hero background photo uploaded and published!");
       }
     } catch (err) {
@@ -884,11 +885,19 @@ export const AdminPortal = ({
     checkInTime: theme.checkInTime || '15:00',
     checkOutTime: theme.checkOutTime || '11:00',
     heroImage: theme.heroImage || '',
+    heroBgMode: theme.heroBgMode || (theme.heroImage ? 'photo' : 'color'),
     heroBgColor: theme.heroBgColor || '#020617',
+    heroGradient: theme.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)',
+    heroNavbarStyle: theme.heroNavbarStyle || 'blur',
+    heroAmbientGlow: theme.heroAmbientGlow !== false,
     heroOverlayOpacity: theme.heroOverlayOpacity !== undefined ? Number(theme.heroOverlayOpacity) : 0.65,
     heroBgBlur: theme.heroBgBlur !== undefined ? Number(theme.heroBgBlur) : 0,
     announcement: theme.announcement || ''
   });
+
+  const [gradientColor1, setGradientColor1] = useState('#020617');
+  const [gradientColor2, setGradientColor2] = useState('#0f172a');
+  const [gradientAngle, setGradientAngle] = useState(135);
 
   useEffect(() => {
     if (theme) {
@@ -910,7 +919,11 @@ export const AdminPortal = ({
         checkInTime: theme.checkInTime || prev.checkInTime,
         checkOutTime: theme.checkOutTime || prev.checkOutTime,
         heroImage: theme.heroImage !== undefined ? theme.heroImage : prev.heroImage,
+        heroBgMode: theme.heroBgMode || prev.heroBgMode || 'color',
         heroBgColor: theme.heroBgColor || prev.heroBgColor || '#020617',
+        heroGradient: theme.heroGradient || prev.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)',
+        heroNavbarStyle: theme.heroNavbarStyle || prev.heroNavbarStyle || 'blur',
+        heroAmbientGlow: theme.heroAmbientGlow !== undefined ? theme.heroAmbientGlow : (prev.heroAmbientGlow !== undefined ? prev.heroAmbientGlow : true),
         heroOverlayOpacity: theme.heroOverlayOpacity !== undefined ? Number(theme.heroOverlayOpacity) : (prev.heroOverlayOpacity !== undefined ? Number(prev.heroOverlayOpacity) : 0.65),
         heroBgBlur: theme.heroBgBlur !== undefined ? Number(theme.heroBgBlur) : (prev.heroBgBlur !== undefined ? Number(prev.heroBgBlur) : 0),
         announcement: theme.announcement !== undefined ? theme.announcement : prev.announcement
@@ -1198,6 +1211,7 @@ export const AdminPortal = ({
 
   const adminTabs = [
     { id: 'theme', label: 'Branding & Colors', icon: Palette, description: 'Hotel identity, palette & typography' },
+    { id: 'canvas', label: 'Header & Slider Background', icon: Sparkles, badge: 'Canvas', description: 'Plain color, gradient or photo backdrop' },
     { id: 'headers', label: 'Section Titles & Copy', icon: LayoutTemplate, count: 7, description: 'Eyebrow tags, titles & descriptions across 7 sections' },
     { id: 'slider', label: 'Hero Slider & Media', icon: Film, count: sliderSlides.length, description: 'Homepage showcase & discovery links' },
     { id: 'menus', label: 'Navigation & Menus', icon: Compass, count: navMenus.length, description: 'Header navigation items' },
@@ -1423,6 +1437,20 @@ export const AdminPortal = ({
 
           {/* Sync status & Actions */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Direct Header & Slider Canvas Studio Shortcut */}
+            <button
+              onClick={() => setActiveTab('canvas')}
+              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                activeTab === 'canvas'
+                  ? 'bg-amber-400 text-slate-950 border-amber-400 font-bold shadow-md'
+                  : 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-amber-400/30'
+              }`}
+              title="Customize Header & Slider Background Canvas"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Header & Slider Background</span>
+            </button>
+
             {/* Cloud Sync Button (Super Admin Only) */}
             {isSuperAdmin && (
               <button
@@ -2282,6 +2310,767 @@ export const AdminPortal = ({
                 </div>
               </form>
 
+            </div>
+          )}
+
+          {/* TAB: HEADER & SLIDER SECTION BACKGROUND STUDIO */}
+          {activeTab === 'canvas' && (
+            <div className="space-y-6 animate-fade-in">
+              {/* Header card */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+                      Homepage Header & Hero Canvas Studio
+                    </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
+                      themeForm.heroBgMode === 'color' 
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                        : themeForm.heroBgMode === 'gradient'
+                          ? 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                          : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    }`}>
+                      {themeForm.heroBgMode === 'color' && '● Mode: Plain Solid Color Active'}
+                      {themeForm.heroBgMode === 'gradient' && '● Mode: Luxury Gradient Active'}
+                      {themeForm.heroBgMode === 'photo' && '● Mode: Custom Photo Backdrop Active'}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white font-serif">
+                    Header & Slider Section Background
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-xl mt-1 leading-relaxed">
+                    Customize the full backdrop canvas that sits directly behind the top navigation header, the hero slider, and the docked booking search bar. Easily switch between clean solid luxury colors, designer gradients, or custom photography.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {themeForm.heroImage && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setThemeForm(prev => ({ ...prev, heroImage: '', heroBgMode: 'color' }));
+                        await updateTheme({ heroImage: '', heroBgMode: 'color' });
+                        showNotification("Photo backdrop removed. Clean solid background is now active.");
+                      }}
+                      className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/30 flex items-center gap-1.5 transition-all shadow-sm"
+                      title="Clear photo backdrop and enforce plain background"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove Photo</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center gap-1.5 shadow-lg transition-all hover:scale-105 active:scale-95 shrink-0"
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>View On Website</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 3-Mode Selector Tabs */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {[
+                  {
+                    id: 'color',
+                    title: 'Plain Solid Color',
+                    subtitle: 'Clean luxury solid canvas without any photo',
+                    icon: Palette,
+                    badge: 'Recommended'
+                  },
+                  {
+                    id: 'gradient',
+                    title: 'Luxury Gradients',
+                    subtitle: 'Atmospheric dual-tone & designer gradients',
+                    icon: Sparkles,
+                    badge: 'Designer'
+                  },
+                  {
+                    id: 'photo',
+                    title: 'Custom Photography',
+                    subtitle: 'High-res backdrop with darkness overlay & blur',
+                    icon: Images,
+                    badge: 'Backdrop'
+                  }
+                ].map(mode => {
+                  const isCurrent = (themeForm.heroBgMode || 'color') === mode.id;
+                  const Icon = mode.icon;
+                  return (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={async () => {
+                        const updates = { heroBgMode: mode.id };
+                        if (mode.id !== 'photo') {
+                          updates.heroImage = '';
+                        }
+                        setThemeForm(prev => ({ ...prev, ...updates }));
+                        await updateTheme(updates);
+                        showNotification(`Switched background mode to "${mode.title}"!`);
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
+                        isCurrent
+                          ? 'bg-slate-900 border-amber-400/80 shadow-lg shadow-amber-500/5 ring-1 ring-amber-400/30'
+                          : 'bg-slate-950 hover:bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                          isCurrent ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-stone-300 group-hover:text-amber-300'
+                        }`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                          isCurrent
+                            ? 'bg-amber-400/20 text-amber-300 border-amber-400/30'
+                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                        }`}>
+                          {mode.badge}
+                        </span>
+                      </div>
+                      <div className="font-serif font-bold text-sm text-white mb-0.5 flex items-center gap-1.5">
+                        <span>{mode.title}</span>
+                        {isCurrent && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                      </div>
+                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                        {mode.subtitle}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Main Customization Studio Grid: Left Controls (8 cols) + Right Live Preview (4 cols) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                {/* Left Controls Column (8 cols) */}
+                <div className="lg:col-span-8 space-y-6">
+
+                  {/* MODE 1: PLAIN SOLID COLOR SETTINGS */}
+                  {(themeForm.heroBgMode === 'color' || !themeForm.heroBgMode) && (
+                    <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-5 animate-fade-in">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <div>
+                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <Palette className="w-4 h-4 text-amber-400" />
+                            <span>Plain Background Color Studio</span>
+                          </h4>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Pick any solid color or choose from classic luxury hotel palettes.
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+                          Zero Photo Overhead
+                        </span>
+                      </div>
+
+                      {/* Color Picker & Hex Input */}
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="color"
+                            value={themeForm.heroBgColor || '#020617'}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setThemeForm(prev => ({ ...prev, heroBgColor: val, heroBgMode: 'color', heroImage: '' }));
+                              updateTheme({ heroBgColor: val, heroBgMode: 'color', heroImage: '' });
+                            }}
+                            className="w-12 h-12 rounded-xl border-2 border-slate-700 bg-transparent cursor-pointer shrink-0"
+                            title="Open native color picker"
+                          />
+                          <div>
+                            <label className="text-[10px] font-mono uppercase text-slate-400 block">Hex Code</label>
+                            <input
+                              type="text"
+                              value={themeForm.heroBgColor || '#020617'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setThemeForm(prev => ({ ...prev, heroBgColor: val, heroBgMode: 'color', heroImage: '' }));
+                                updateTheme({ heroBgColor: val, heroBgMode: 'color', heroImage: '' });
+                              }}
+                              className="w-28 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-400"
+                              placeholder="#020617"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex-1 sm:border-l sm:border-slate-800 sm:pl-4">
+                          <span className="text-[10px] uppercase font-mono text-slate-400 block mb-1">Preview Swatch</span>
+                          <div className="flex items-center gap-2">
+                            <span 
+                              className="w-6 h-6 rounded-lg border border-white/20 shrink-0 shadow-inner"
+                              style={{ backgroundColor: themeForm.heroBgColor || '#020617' }}
+                            />
+                            <span className="text-xs font-mono text-stone-300 font-semibold truncate">
+                              {themeForm.heroBgColor || '#020617'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 12 Curated Luxury Solid Swatches */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300 block">
+                          Curated Luxury Solid Presets
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                          {[
+                            { name: 'Midnight Slate (Default)', hex: '#020617' },
+                            { name: 'Obsidian Noir', hex: '#000000' },
+                            { name: 'Royal Mediterranean', hex: '#0f2b48' },
+                            { name: 'Deep Emerald Retreat', hex: '#143d2b' },
+                            { name: 'Bordeaux Vintage', hex: '#481123' },
+                            { name: 'Amalfi Coast Azure', hex: '#034a74' },
+                            { name: 'Monaco Dark Boutique', hex: '#161a1d' },
+                            { name: 'Warm Charcoal Stone', hex: '#1f2937' },
+                            { name: 'Tuscan Espresso', hex: '#1c1917' },
+                            { name: 'Imperial Velvet Plum', hex: '#240e1e' },
+                            { name: 'Minimalist Ivory Sand', hex: '#fdfbf7' },
+                            { name: 'Pristine Snow Gallery', hex: '#ffffff' }
+                          ].map(preset => {
+                            const isSelected = (themeForm.heroBgColor || '#020617').toLowerCase() === preset.hex.toLowerCase();
+                            return (
+                              <button
+                                key={preset.hex}
+                                type="button"
+                                onClick={async () => {
+                                  setThemeForm(prev => ({ ...prev, heroBgColor: preset.hex, heroBgMode: 'color', heroImage: '' }));
+                                  await updateTheme({ heroBgColor: preset.hex, heroBgMode: 'color', heroImage: '' });
+                                  showNotification(`Applied ${preset.name}!`);
+                                }}
+                                className={`p-2 rounded-xl border text-left text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-slate-800 border-amber-400 text-white font-semibold shadow-md'
+                                    : 'bg-slate-900 hover:bg-slate-800/80 border-slate-800 text-stone-300 hover:text-white'
+                                }`}
+                              >
+                                <span 
+                                  className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0 shadow-sm"
+                                  style={{ backgroundColor: preset.hex }}
+                                />
+                                <span className="truncate text-[11px]">{preset.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* MODE 2: LUXURY GRADIENTS SETTINGS */}
+                  {themeForm.heroBgMode === 'gradient' && (
+                    <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-5 animate-fade-in">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <div>
+                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-amber-400" />
+                            <span>Luxury Designer Gradients</span>
+                          </h4>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Atmospheric multi-tone gradients tailored for high-end hospitality.
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-sky-950 text-sky-300 border border-sky-500/30">
+                          CSS Pure Gradient
+                        </span>
+                      </div>
+
+                      {/* Preset Gradients */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300 block">
+                          Signature Atmosphere Gradients
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {[
+                            {
+                              name: 'Midnight & Deep Slate',
+                              css: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)',
+                              desc: 'Sleek dark minimalist depth'
+                            },
+                            {
+                              name: 'Royal Gold & Noir Shimmer',
+                              css: 'linear-gradient(135deg, #020617 0%, #1c1712 50%, #2a2216 100%)',
+                              desc: 'Warm gold-dusted aristocratic glow'
+                            },
+                            {
+                              name: 'Ocean Twilight & Marine Blue',
+                              css: 'linear-gradient(135deg, #020d1a 0%, #0a2540 50%, #020617 100%)',
+                              desc: 'Coastal Mediterranean maritime atmosphere'
+                            },
+                            {
+                              name: 'Alpine Botanical & Emerald Velvet',
+                              css: 'linear-gradient(135deg, #030d09 0%, #0d3324 50%, #04120c 100%)',
+                              desc: 'Lush botanical sanctuary & spa serenity'
+                            },
+                            {
+                              name: 'Imperial Bordeaux & Aged Mahogany',
+                              css: 'linear-gradient(135deg, #120409 0%, #300a16 50%, #0d0206 100%)',
+                              desc: 'Vintage winery manor & heritage estates'
+                            },
+                            {
+                              name: 'Santorini Sunset Dusk',
+                              css: 'linear-gradient(135deg, #140810 0%, #2b1122 50%, #100612 100%)',
+                              desc: 'Romantic island sunset afterglow'
+                            }
+                          ].map(g => {
+                            const isSelected = themeForm.heroGradient === g.css;
+                            return (
+                              <button
+                                key={g.name}
+                                type="button"
+                                onClick={async () => {
+                                  setThemeForm(prev => ({ ...prev, heroGradient: g.css, heroBgMode: 'gradient', heroImage: '' }));
+                                  await updateTheme({ heroGradient: g.css, heroBgMode: 'gradient', heroImage: '' });
+                                  showNotification(`Gradient "${g.name}" applied live!`);
+                                }}
+                                className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-slate-800 border-amber-400 text-white font-semibold ring-1 ring-amber-400/30'
+                                    : 'bg-slate-900 hover:bg-slate-800/80 border-slate-800 text-stone-300'
+                                }`}
+                              >
+                                <span 
+                                  className="w-10 h-10 rounded-lg border border-white/20 shrink-0 shadow-inner"
+                                  style={{ background: g.css }}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-xs text-white truncate flex items-center justify-between">
+                                    <span>{g.name}</span>
+                                    {isSelected && <Check className="w-3 h-3 text-amber-400 shrink-0" />}
+                                  </div>
+                                  <p className="text-[10px] text-slate-400 truncate mt-0.5">{g.desc}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Custom Gradient Builder */}
+                      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <span className="text-xs font-semibold text-white block">Custom Two-Color Gradient Builder</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-1">Color 1 (Start)</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={gradientColor1}
+                                onChange={(e) => {
+                                  const c1 = e.target.value;
+                                  setGradientColor1(c1);
+                                  const newGrad = `linear-gradient(${gradientAngle}deg, ${c1} 0%, ${gradientColor2} 100%)`;
+                                  setThemeForm(prev => ({ ...prev, heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' }));
+                                  updateTheme({ heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' });
+                                }}
+                                className="w-8 h-8 rounded-lg border border-slate-700 bg-transparent cursor-pointer shrink-0"
+                              />
+                              <input
+                                type="text"
+                                value={gradientColor1}
+                                onChange={(e) => {
+                                  const c1 = e.target.value;
+                                  setGradientColor1(c1);
+                                  const newGrad = `linear-gradient(${gradientAngle}deg, ${c1} 0%, ${gradientColor2} 100%)`;
+                                  setThemeForm(prev => ({ ...prev, heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' }));
+                                  updateTheme({ heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' });
+                                }}
+                                className="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-[11px] font-mono text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-mono text-slate-400 block mb-1">Color 2 (End)</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={gradientColor2}
+                                onChange={(e) => {
+                                  const c2 = e.target.value;
+                                  setGradientColor2(c2);
+                                  const newGrad = `linear-gradient(${gradientAngle}deg, ${gradientColor1} 0%, ${c2} 100%)`;
+                                  setThemeForm(prev => ({ ...prev, heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' }));
+                                  updateTheme({ heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' });
+                                }}
+                                className="w-8 h-8 rounded-lg border border-slate-700 bg-transparent cursor-pointer shrink-0"
+                              />
+                              <input
+                                type="text"
+                                value={gradientColor2}
+                                onChange={(e) => {
+                                  const c2 = e.target.value;
+                                  setGradientColor2(c2);
+                                  const newGrad = `linear-gradient(${gradientAngle}deg, ${gradientColor1} 0%, ${c2} 100%)`;
+                                  setThemeForm(prev => ({ ...prev, heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' }));
+                                  updateTheme({ heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' });
+                                }}
+                                className="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-[11px] font-mono text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="text-[10px] font-mono text-slate-400">Angle</label>
+                              <span className="text-[10px] font-mono text-amber-400">{gradientAngle}°</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="360"
+                              step="5"
+                              value={gradientAngle}
+                              onChange={(e) => {
+                                const ang = Number(e.target.value);
+                                setGradientAngle(ang);
+                                const newGrad = `linear-gradient(${ang}deg, ${gradientColor1} 0%, ${gradientColor2} 100%)`;
+                                setThemeForm(prev => ({ ...prev, heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' }));
+                                updateTheme({ heroGradient: newGrad, heroBgMode: 'gradient', heroImage: '' });
+                              }}
+                              className="w-full accent-amber-400 cursor-pointer"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* MODE 3: CUSTOM PHOTOGRAPHY SETTINGS */}
+                  {themeForm.heroBgMode === 'photo' && (
+                    <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-5 animate-fade-in">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <div>
+                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <Images className="w-4 h-4 text-amber-400" />
+                            <span>Photo Backdrop Studio</span>
+                          </h4>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Upload a custom high-resolution photo or select curated architectural imagery.
+                          </p>
+                        </div>
+                        {themeForm.heroImage && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setThemeForm(prev => ({ ...prev, heroImage: '', heroBgMode: 'color' }));
+                              await updateTheme({ heroImage: '', heroBgMode: 'color' });
+                              showNotification("Photo backdrop removed. Plain background active.");
+                            }}
+                            className="text-xs text-rose-400 hover:text-rose-300 font-mono transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Remove Photo</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Upload / URL Input */}
+                      <div className="space-y-3">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                          <label className={`px-4 py-2.5 rounded-xl text-xs font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                            uploadingHeroBg
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 cursor-wait'
+                              : 'bg-slate-800 hover:bg-slate-700 text-stone-200 border-slate-700 hover:border-amber-400/40'
+                          }`}>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingHeroBg || !isSuperAdmin}
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleHeroBgUpload(file);
+                              }}
+                            />
+                            <Upload className="w-4 h-4 text-amber-400" />
+                            <span>{uploadingHeroBg ? `Uploading ${heroBgUploadProgress}%...` : 'Upload File'}</span>
+                          </label>
+
+                          <div className="flex-1 relative">
+                            <input
+                              type="url"
+                              value={themeForm.heroImage}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setThemeForm(prev => ({ ...prev, heroImage: val, heroBgMode: 'photo' }));
+                                updateTheme({ heroImage: val, heroBgMode: 'photo' });
+                              }}
+                              placeholder="Or paste photo URL (https://images.unsplash.com/...)"
+                              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-amber-400 placeholder:text-slate-600"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Curated Presets */}
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] font-mono text-slate-400 uppercase">Or Choose a Curated Luxury Hotel Backdrop</span>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {[
+                              { label: 'Night Villa Pool', url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80' },
+                              { label: 'Oceanfront Balcony', url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1600&q=80' },
+                              { label: 'Starlight Lounge', url: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1600&q=80' },
+                              { label: 'Alpine Estate', url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1600&q=80' }
+                            ].map(p => (
+                              <button
+                                key={p.label}
+                                type="button"
+                                onClick={async () => {
+                                  setThemeForm(prev => ({ ...prev, heroImage: p.url, heroBgMode: 'photo' }));
+                                  await updateTheme({ heroImage: p.url, heroBgMode: 'photo' });
+                                  showNotification(`Applied "${p.label}" backdrop!`);
+                                }}
+                                className={`p-2 rounded-lg border text-left text-[11px] truncate transition-all cursor-pointer ${
+                                  themeForm.heroImage === p.url
+                                    ? 'bg-amber-400/20 text-amber-300 border-amber-400 font-semibold'
+                                    : 'bg-slate-900 hover:bg-slate-800 text-stone-300 border-slate-800'
+                                }`}
+                              >
+                                {p.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Darkness Overlay & Blur Sliders */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-800">
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-semibold text-white">Darkness Contrast Overlay</label>
+                              <span className="text-xs font-mono font-bold text-amber-400">
+                                {Math.round((themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65) * 100)}%
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="0.95"
+                              step="0.05"
+                              value={themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                setThemeForm(prev => ({ ...prev, heroOverlayOpacity: val }));
+                                updateTheme({ heroOverlayOpacity: val });
+                              }}
+                              className="w-full accent-amber-400 cursor-pointer"
+                            />
+                            <span className="text-[10px] text-slate-500 mt-1 block">Higher opacity ensures high contrast for white text</span>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-semibold text-white">Backdrop Blur</label>
+                              <span className="text-xs font-mono text-slate-400">
+                                {(themeForm.heroBgBlur || 0) === 0 ? 'Sharp (0px)' : `${themeForm.heroBgBlur}px`}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-1.5">
+                              {[
+                                { label: 'Sharp', val: 0 },
+                                { label: 'Subtle', val: 3 },
+                                { label: 'Soft', val: 8 },
+                                { label: 'Dreamy', val: 16 }
+                              ].map(opt => (
+                                <button
+                                  key={opt.val}
+                                  type="button"
+                                  onClick={() => {
+                                    setThemeForm(prev => ({ ...prev, heroBgBlur: opt.val }));
+                                    updateTheme({ heroBgBlur: opt.val });
+                                  }}
+                                  className={`py-1.5 rounded-lg text-[10px] font-mono transition-all border cursor-pointer ${
+                                    (themeForm.heroBgBlur || 0) === opt.val
+                                      ? 'bg-amber-400 text-slate-950 font-bold border-amber-400'
+                                      : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800'
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ADDITIONAL CANVAS OPTIONS: NAVBAR INTEGRATION & AMBIENT LIGHTING */}
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono">
+                      Header (Navbar) Integration & Atmosphere
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Navbar Style */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-white block">Top Navigation Bar Style</label>
+                        <div className="grid grid-cols-3 gap-1.5 text-xs">
+                          {[
+                            { id: 'blur', label: 'Frosted Glass' },
+                            { id: 'solid', label: 'Match Canvas' },
+                            { id: 'transparent', label: 'Transparent' }
+                          ].map(style => (
+                            <button
+                              key={style.id}
+                              type="button"
+                              onClick={() => {
+                                setThemeForm(prev => ({ ...prev, heroNavbarStyle: style.id }));
+                                updateTheme({ heroNavbarStyle: style.id });
+                              }}
+                              className={`py-2 rounded-xl border text-[11px] font-medium transition-all cursor-pointer ${
+                                (themeForm.heroNavbarStyle || 'blur') === style.id
+                                  ? 'bg-amber-400 text-slate-950 font-bold border-amber-400 shadow-sm'
+                                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-850'
+                              }`}
+                            >
+                              {style.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Ambient Glow Orbs */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-white block">Canvas Ambient Radial Glow</label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = themeForm.heroAmbientGlow === false;
+                            setThemeForm(prev => ({ ...prev, heroAmbientGlow: next }));
+                            updateTheme({ heroAmbientGlow: next });
+                          }}
+                          className={`w-full py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                            themeForm.heroAmbientGlow !== false
+                              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
+                              : 'bg-slate-900 text-slate-400 border-slate-800'
+                          }`}
+                        >
+                          <span>Atmospheric Ambient Orbs</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono ${
+                            themeForm.heroAmbientGlow !== false ? 'bg-emerald-400 text-slate-950 font-bold' : 'bg-slate-800 text-slate-400'
+                          }`}>
+                            {themeForm.heroAmbientGlow !== false ? 'ENABLED' : 'DISABLED'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Right Column: In-Studio Live Interactive Mock Preview (4 cols) */}
+                <div className="lg:col-span-4 sticky top-6 space-y-4">
+                  <div className="p-4 rounded-2xl bg-slate-950 border border-amber-500/20 shadow-2xl space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                      <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-semibold flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        <span>Live Scaled Preview</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Real-Time Sync</span>
+                      </span>
+                    </div>
+
+                    {/* Scaled Canvas Container */}
+                    <div 
+                      className="h-64 rounded-xl overflow-hidden relative border border-white/10 flex flex-col justify-between p-3.5 transition-all duration-300"
+                      style={{ 
+                        backgroundColor: themeForm.heroBgColor || '#020617',
+                        ...(themeForm.heroBgMode === 'gradient' ? { background: themeForm.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)' } : {})
+                      }}
+                    >
+                      {/* Photo Backdrop (Active in Photo mode) */}
+                      {themeForm.heroBgMode === 'photo' && themeForm.heroImage ? (
+                        <div 
+                          className="absolute inset-0 bg-cover bg-center transition-all duration-300"
+                          style={{ 
+                            backgroundImage: `url(${themeForm.heroImage})`,
+                            filter: themeForm.heroBgBlur ? `blur(${themeForm.heroBgBlur}px)` : undefined
+                          }}
+                        />
+                      ) : null}
+
+                      {/* Photo Darkness Overlay */}
+                      {themeForm.heroBgMode === 'photo' && themeForm.heroImage ? (
+                        <div 
+                          className="absolute inset-0 transition-opacity"
+                          style={{ 
+                            backgroundColor: themeForm.heroBgColor || '#020617',
+                            opacity: themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65
+                          }}
+                        />
+                      ) : null}
+
+                      {/* Ambient Glow Orbs in Preview */}
+                      {themeForm.heroAmbientGlow !== false && (
+                        <>
+                          <div 
+                            className="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl opacity-30 pointer-events-none"
+                            style={{ backgroundColor: 'var(--color-secondary)' }}
+                          />
+                          <div 
+                            className="absolute bottom-0 left-0 w-28 h-28 rounded-full blur-2xl opacity-20 pointer-events-none"
+                            style={{ backgroundColor: 'var(--color-primary)' }}
+                          />
+                        </>
+                      )}
+
+                      {/* Mock Header (Navbar) */}
+                      <div className="relative z-10 flex items-center justify-between pb-2 border-b border-white/10">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-amber-400/20 border border-amber-400/40 text-[9px] font-bold text-amber-300 flex items-center justify-center font-serif">
+                            {themeForm.hotelName?.charAt(0) || 'H'}
+                          </span>
+                          <span className="text-[10px] font-serif font-bold text-white tracking-wider truncate max-w-[120px]">
+                            {themeForm.hotelName || 'THE GRAND AURELIA'}
+                          </span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[8px] font-bold text-slate-950 uppercase" style={{ backgroundColor: 'var(--color-secondary)' }}>
+                          Book Stay
+                        </span>
+                      </div>
+
+                      {/* Mock Slider Showcase */}
+                      <div className="relative z-10 grid grid-cols-12 gap-2 my-auto">
+                        <div className="col-span-8 h-24 rounded-xl bg-black/40 border border-white/20 overflow-hidden relative flex items-center justify-center text-[9px] text-white/90 font-serif">
+                          <span>Slider Media Canvas</span>
+                        </div>
+                        <div className="col-span-4 h-24 rounded-xl bg-slate-900/80 border border-white/20 p-2 flex flex-col justify-between">
+                          <span className="text-[8px] text-amber-300 font-serif font-bold line-clamp-2">Palatial Villa</span>
+                          <span className="w-full py-1 rounded bg-amber-400 text-[7px] font-bold text-slate-950 flex items-center justify-center uppercase">
+                            Reserve
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Mock Docked Booking Search Bar */}
+                      <div className="relative z-10 h-7 rounded-lg bg-slate-950/90 border border-white/20 px-2.5 flex items-center justify-between text-[8px] text-stone-300">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          <span>Check In — Out</span>
+                        </div>
+                        <span className="text-amber-400 font-bold uppercase text-[7px]">Check Availability</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                      <div className="flex items-center justify-between text-white font-semibold">
+                        <span>Current Active Mode:</span>
+                        <span className="capitalize text-amber-300">{themeForm.heroBgMode || 'color'}</span>
+                      </div>
+                      <p className="text-[10px] leading-relaxed">
+                        Changes update live across all browser windows instantly via realtime sync.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
             </div>
           )}
 
@@ -3291,6 +4080,36 @@ export const AdminPortal = ({
                   <span>Normal Administrator: Slider media is view-only. Uploading videos/photos or modifying slides requires Super Admin privileges.</span>
                 </div>
               )}
+
+              {/* Quick Jump Banner to Header & Slider Background Studio */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-950 border border-amber-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                      <span>Header & Slider Background Canvas</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400/20 text-amber-300">
+                        Active: {themeForm.heroBgMode === 'color' ? 'Plain Solid Color' : themeForm.heroBgMode === 'gradient' ? 'Designer Gradient' : 'Photo Backdrop'}
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Need to customize or change the background behind this slider and top header? Switch between plain solid colors, designer gradients, or photo backdrop.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('canvas')}
+                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95 shrink-0 shadow-md cursor-pointer"
+                  style={{ backgroundColor: 'var(--color-secondary)' }}
+                >
+                  <Palette className="w-3.5 h-3.5" />
+                  <span>Customize Background</span>
+                </button>
+              </div>
 
               {/* Hero Showcase Canvas & Background Backdrop Studio */}
               <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 shadow-xl space-y-6">

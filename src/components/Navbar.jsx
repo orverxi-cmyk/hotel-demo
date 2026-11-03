@@ -204,11 +204,18 @@ export const Navbar = ({ onOpenCMS }) => {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-      isScrolled 
-        ? 'bg-slate-950/95 backdrop-blur-md shadow-lg border-b border-white/10 py-2.5 sm:py-3' 
-        : 'bg-gradient-to-b from-black/85 via-black/45 to-transparent py-3 sm:py-4 lg:py-5'
-    }`}>
+    <header 
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-slate-950/95 backdrop-blur-md shadow-lg border-b border-white/10 py-2.5 sm:py-3' 
+          : theme?.heroNavbarStyle === 'transparent'
+            ? 'bg-transparent py-3 sm:py-4 lg:py-5'
+            : theme?.heroNavbarStyle === 'solid'
+              ? 'py-3 sm:py-4 lg:py-5 border-b border-white/10 shadow-md'
+              : 'bg-gradient-to-b from-black/85 via-black/45 to-transparent py-3 sm:py-4 lg:py-5'
+      }`}
+      style={(!isScrolled && theme?.heroNavbarStyle === 'solid') ? { backgroundColor: theme?.heroBgColor || '#020617' } : undefined}
+    >
       <div className="w-full px-3 sm:px-6 lg:px-8 xl:px-12">
         <div className="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 flex-nowrap w-full">
           

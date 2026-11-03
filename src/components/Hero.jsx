@@ -90,12 +90,16 @@ export const Hero = ({ onSelectArticleById }) => {
 
   const active = slides[currentSlide] || slides[0] || initialSliderSlides[0];
 
+  const heroBgMode = theme?.heroBgMode || (theme?.heroImage ? 'photo' : 'color');
   const heroBgColor = theme?.heroBgColor || '#020617';
-  const heroImage = theme?.heroImage;
+  const heroGradient = theme?.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)';
+  const heroImage = heroBgMode === 'photo' ? (theme?.heroImage || '') : '';
   const heroOverlayOpacity = theme?.heroOverlayOpacity !== undefined ? Number(theme.heroOverlayOpacity) : 0.65;
   const heroBgBlur = theme?.heroBgBlur ? Number(theme.heroBgBlur) : 0;
+  const heroAmbientGlow = theme?.heroAmbientGlow !== false;
 
   const isLightBg = (() => {
+    if (heroBgMode === 'gradient') return false;
     if (!heroBgColor || typeof heroBgColor !== 'string') return false;
     const c = heroBgColor.replace('#', '');
     if (c.length !== 6) return false;
@@ -106,15 +110,21 @@ export const Hero = ({ onSelectArticleById }) => {
     return yiq >= 160;
   })();
 
+  const sectionStyle = {
+    backgroundColor: heroBgColor,
+    ...(heroBgMode === 'gradient' ? { background: heroGradient } : {})
+  };
+
   return (
     <section 
+      id="hero-section"
       className={`relative pt-28 pb-16 overflow-hidden transition-colors duration-500 ${isLightBg ? 'text-slate-900' : 'text-white'}`}
-      style={{ backgroundColor: heroBgColor }}
+      style={sectionStyle}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Optional Custom Background Backdrop Image */}
-      {heroImage ? (
+      {/* Optional Custom Background Backdrop Image (Active only in Photo mode) */}
+      {heroBgMode === 'photo' && heroImage ? (
         <div 
           className="absolute inset-0 bg-cover bg-center transition-all duration-700 pointer-events-none"
           style={{ 
@@ -126,7 +136,7 @@ export const Hero = ({ onSelectArticleById }) => {
       ) : null}
 
       {/* Customizable Darkness Overlay for Contrast & Readability when photo is active */}
-      {heroImage ? (
+      {heroBgMode === 'photo' && heroImage ? (
         <div 
           className="absolute inset-0 transition-opacity duration-500 pointer-events-none"
           style={{ 
@@ -137,7 +147,7 @@ export const Hero = ({ onSelectArticleById }) => {
       ) : null}
 
       {/* Ambient background glow */}
-      {!isLightBg && (
+      {heroAmbientGlow && !isLightBg && (
         <>
           <div 
             className="absolute top-0 right-1/4 w-[600px] h-[600px] rounded-full blur-[180px] opacity-20 pointer-events-none"

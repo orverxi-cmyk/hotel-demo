@@ -96,7 +96,11 @@ export const defaultTheme = {
   checkInTime: "15:00",
   checkOutTime: "11:00",
   heroImage: "",
+  heroBgMode: "color",
   heroBgColor: "#020617",
+  heroGradient: "linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)",
+  heroNavbarStyle: "blur",
+  heroAmbientGlow: true,
   heroOverlayOpacity: 0.65,
   heroBgBlur: 0,
   announcement: "Special Season: Complimentary Sunset Champagne Cruise with bookings over 3 nights"

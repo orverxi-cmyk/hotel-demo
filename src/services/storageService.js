@@ -53,8 +53,8 @@ export const getCachedTheme = () => {
     if (cached) {
       const parsed = JSON.parse(cached);
       if (parsed && typeof parsed === 'object') {
-        // If old unsplash demo photo is stored, clear to plain background
-        if (parsed.heroImage && parsed.heroImage.includes('photo-1542314831-068cd1dbfeeb')) {
+        // Clear legacy unsplash demo photo unless user explicitly configured 'photo' mode
+        if (parsed.heroBgMode !== 'photo' && parsed.heroImage && (parsed.heroImage.includes('unsplash.com') || parsed.heroImage.includes('photo-'))) {
           parsed.heroImage = '';
           try { localStorage.setItem(LS_THEME_KEY, JSON.stringify(parsed)); } catch (_) {}
         }
@@ -76,6 +76,9 @@ export const subscribeThemeSettings = (callback) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
         const currentTheme = { ...defaultTheme, ...data };
+        if (currentTheme.heroBgMode !== 'photo' && currentTheme.heroImage && (currentTheme.heroImage.includes('unsplash.com') || currentTheme.heroImage.includes('photo-'))) {
+          currentTheme.heroImage = '';
+        }
         if (isClient) {
           localStorage.setItem(LS_THEME_KEY, JSON.stringify(currentTheme));
         }
