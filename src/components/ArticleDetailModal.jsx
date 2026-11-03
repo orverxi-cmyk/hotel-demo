@@ -6,10 +6,8 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Calendar, 
-  Clock, 
   User, 
   Sparkles, 
-  Images, 
   ArrowRight,
   Share2,
   Check
@@ -88,13 +86,9 @@ export const ArticleDetailModal = ({ article, isOpen, onClose }) => {
         {/* Sticky Header with Close Button */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-slate-900/90 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 rounded-full text-[11px] font-mono tracking-widest uppercase bg-amber-400/15 text-amber-300 border border-amber-400/30">
-              {article.category || 'Curated Story'}
-            </span>
-            {photos.length > 1 && (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-white/10 text-stone-300 border border-white/10 font-mono">
-                <Images className="w-3.5 h-3.5 text-amber-400" />
-                <span>{photos.length} Photos</span>
+            {article.author && (
+              <span className="text-xs text-stone-300 font-medium">
+                By {article.author}
               </span>
             )}
           </div>
@@ -144,12 +138,6 @@ export const ArticleDetailModal = ({ article, isOpen, onClose }) => {
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-amber-400" />
                   <span>{article.date}</span>
-                </div>
-              )}
-              {article.readTime && (
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-amber-400" />
-                  <span>{article.readTime}</span>
                 </div>
               )}
             </div>

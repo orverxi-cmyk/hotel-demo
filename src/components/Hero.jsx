@@ -90,18 +90,21 @@ export const Hero = ({ onSelectArticleById }) => {
 
   const active = slides[currentSlide] || slides[0] || initialSliderSlides[0];
 
-  const heroBgMode = theme?.heroBgMode || (theme?.heroImage ? 'photo' : 'color');
-  const heroBgColor = theme?.heroBgColor || '#020617';
+  const heroBgMode = theme?.heroBgMode || (theme?.heroBgColor === 'transparent' ? 'transparent' : 'color');
+  const isTransparent = heroBgMode === 'transparent' || theme?.heroBgColor === 'transparent';
+  const heroBgColor = isTransparent ? 'transparent' : (theme?.heroBgColor || '#020617');
   const heroGradient = theme?.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)';
-  const heroImage = heroBgMode === 'photo' ? (theme?.heroImage || '') : '';
+  const heroImage = (!isTransparent && heroBgMode === 'photo') ? (theme?.heroImage || '') : '';
   const heroOverlayOpacity = theme?.heroOverlayOpacity !== undefined ? Number(theme.heroOverlayOpacity) : 0.65;
   const heroBgBlur = theme?.heroBgBlur ? Number(theme.heroBgBlur) : 0;
-  const heroAmbientGlow = theme?.heroAmbientGlow !== false;
+  const heroAmbientGlow = isTransparent ? false : (theme?.heroAmbientGlow !== false);
 
   const isLightBg = (() => {
     if (heroBgMode === 'gradient') return false;
-    if (!heroBgColor || typeof heroBgColor !== 'string') return false;
-    const c = heroBgColor.replace('#', '');
+    if (heroBgMode === 'photo') return false;
+    const bgToCheck = isTransparent ? (theme?.backgroundColor || '#fdfbf7') : heroBgColor;
+    if (!bgToCheck || typeof bgToCheck !== 'string' || bgToCheck === 'transparent') return isTransparent ? true : false;
+    const c = bgToCheck.replace('#', '');
     if (c.length !== 6) return false;
     const r = parseInt(c.substr(0, 2), 16);
     const g = parseInt(c.substr(2, 2), 16);
@@ -111,8 +114,9 @@ export const Hero = ({ onSelectArticleById }) => {
   })();
 
   const sectionStyle = {
-    backgroundColor: heroBgColor,
-    ...(heroBgMode === 'gradient' ? { background: heroGradient } : {})
+    backgroundColor: isTransparent ? 'transparent' : heroBgColor,
+    ...(heroBgMode === 'gradient' ? { background: heroGradient } : {}),
+    ...(isTransparent ? { background: 'transparent' } : {})
   };
 
   return (

@@ -19,6 +19,7 @@ import {
   Trash2, 
   Edit3, 
   Sparkles, 
+  Ban,
   ShieldCheck, 
   DollarSign, 
   Eye, 
@@ -885,7 +886,7 @@ export const AdminPortal = ({
     checkInTime: theme.checkInTime || '15:00',
     checkOutTime: theme.checkOutTime || '11:00',
     heroImage: theme.heroImage || '',
-    heroBgMode: theme.heroBgMode || (theme.heroImage ? 'photo' : 'color'),
+    heroBgMode: theme.heroBgMode || (theme.heroBgColor === 'transparent' ? 'transparent' : 'color'),
     heroBgColor: theme.heroBgColor || '#020617',
     heroGradient: theme.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)',
     heroNavbarStyle: theme.heroNavbarStyle || 'blur',
@@ -2324,13 +2325,16 @@ export const AdminPortal = ({
                       Homepage Header & Hero Canvas Studio
                     </span>
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
-                      themeForm.heroBgMode === 'color' 
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        : themeForm.heroBgMode === 'gradient'
-                          ? 'bg-sky-500/20 text-sky-300 border-sky-500/30'
-                          : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                      (themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                        : themeForm.heroBgMode === 'color' 
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                          : themeForm.heroBgMode === 'gradient'
+                            ? 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                     }`}>
-                      {themeForm.heroBgMode === 'color' && '● Mode: Plain Solid Color Active'}
+                      {(themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent') && '● Mode: No Color (Transparent) Active'}
+                      {themeForm.heroBgMode === 'color' && themeForm.heroBgColor !== 'transparent' && '● Mode: Plain Solid Color Active'}
                       {themeForm.heroBgMode === 'gradient' && '● Mode: Luxury Gradient Active'}
                       {themeForm.heroBgMode === 'photo' && '● Mode: Custom Photo Backdrop Active'}
                     </span>
@@ -2339,11 +2343,30 @@ export const AdminPortal = ({
                     Header & Slider Section Background
                   </h3>
                   <p className="text-xs text-slate-400 max-w-xl mt-1 leading-relaxed">
-                    Customize the full backdrop canvas that sits directly behind the top navigation header, the hero slider, and the docked booking search bar. Easily switch between clean solid luxury colors, designer gradients, or custom photography.
+                    Customize the full backdrop canvas that sits directly behind the top navigation header, the hero slider, and the docked booking search bar. Easily switch between no color (transparent), clean solid luxury colors, designer gradients, or custom photography.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
+                  {/* Direct No Color Action Button */}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setThemeForm(prev => ({ ...prev, heroBgMode: 'transparent', heroBgColor: 'transparent', heroImage: '' }));
+                      await updateTheme({ heroBgMode: 'transparent', heroBgColor: 'transparent', heroImage: '' });
+                      showNotification("Slider background set to No Color (Transparent)!");
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                      (themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                        ? 'bg-purple-950 text-purple-200 border border-purple-500/50 ring-1 ring-purple-400/50'
+                        : 'bg-slate-800 hover:bg-slate-700 text-stone-300 border border-slate-700'
+                    }`}
+                    title="Remove all background color and photo, blending seamlessly into the page background"
+                  >
+                    <Ban className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Set to No Color</span>
+                  </button>
+
                   {themeForm.heroImage && (
                     <button
                       type="button"
@@ -2352,7 +2375,7 @@ export const AdminPortal = ({
                         await updateTheme({ heroImage: '', heroBgMode: 'color' });
                         showNotification("Photo backdrop removed. Clean solid background is now active.");
                       }}
-                      className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/30 flex items-center gap-1.5 transition-all shadow-sm"
+                      className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/30 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                       title="Clear photo backdrop and enforce plain background"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -2362,7 +2385,7 @@ export const AdminPortal = ({
 
                   <button
                     onClick={onClose}
-                    className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center gap-1.5 shadow-lg transition-all hover:scale-105 active:scale-95 shrink-0"
+                    className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center gap-1.5 shadow-lg transition-all hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
                     style={{ backgroundColor: 'var(--color-secondary)' }}
                   >
                     <Eye className="w-4 h-4" />
@@ -2371,9 +2394,16 @@ export const AdminPortal = ({
                 </div>
               </div>
 
-              {/* 3-Mode Selector Tabs */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* 4-Mode Selector Tabs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
+                  {
+                    id: 'transparent',
+                    title: 'No Color',
+                    subtitle: '100% transparent — blends naturally into page background',
+                    icon: Ban,
+                    badge: 'Seamless'
+                  },
                   {
                     id: 'color',
                     title: 'Plain Solid Color',
@@ -2396,7 +2426,9 @@ export const AdminPortal = ({
                     badge: 'Backdrop'
                   }
                 ].map(mode => {
-                  const isCurrent = (themeForm.heroBgMode || 'color') === mode.id;
+                  const isCurrent = mode.id === 'transparent'
+                    ? (themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                    : (themeForm.heroBgMode === mode.id && themeForm.heroBgColor !== 'transparent');
                   const Icon = mode.icon;
                   return (
                     <button
@@ -2404,7 +2436,13 @@ export const AdminPortal = ({
                       type="button"
                       onClick={async () => {
                         const updates = { heroBgMode: mode.id };
-                        if (mode.id !== 'photo') {
+                        if (mode.id === 'transparent') {
+                          updates.heroBgColor = 'transparent';
+                          updates.heroImage = '';
+                        } else if (mode.id === 'color') {
+                          if (themeForm.heroBgColor === 'transparent') updates.heroBgColor = '#020617';
+                          updates.heroImage = '';
+                        } else if (mode.id === 'gradient') {
                           updates.heroImage = '';
                         }
                         setThemeForm(prev => ({ ...prev, ...updates }));
@@ -2449,8 +2487,80 @@ export const AdminPortal = ({
                 {/* Left Controls Column (8 cols) */}
                 <div className="lg:col-span-8 space-y-6">
 
+                  {/* MODE 0: NO COLOR (TRANSPARENT) SETTINGS */}
+                  {(themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent') && (
+                    <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-5 animate-fade-in">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <div>
+                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <Ban className="w-4 h-4 text-purple-400" />
+                            <span>No Color (Transparent Background) Active</span>
+                          </h4>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            The slider has zero background color and zero photo. It sits completely transparent on top of the website body.
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-purple-950 text-purple-300 border border-purple-500/30">
+                          100% Transparent
+                        </span>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <span className="text-xs font-semibold text-white flex items-center gap-2">
+                            <span>Natural Page Background Showing Through:</span>
+                            <span 
+                              className="w-4 h-4 rounded-full border border-stone-300 shrink-0 shadow-sm"
+                              style={{ backgroundColor: themeForm.backgroundColor || '#fdfbf7' }}
+                            />
+                            <code className="text-[11px] font-mono text-amber-300">{themeForm.backgroundColor || '#fdfbf7'}</code>
+                          </span>
+                          <p className="text-[11px] text-slate-400">
+                            Because no color is applied to the slider, it inherits your global hotel page background. You can adjust the global page background in Branding & Colors.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('theme')}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-stone-200 text-xs font-semibold border border-slate-700 transition-all shrink-0 cursor-pointer"
+                        >
+                          Edit Page Background
+                        </button>
+                      </div>
+
+                      {/* Quick Switch to Popular Solid Colors if user changes their mind */}
+                      <div className="space-y-2 pt-2 border-t border-slate-800">
+                        <span className="text-[11px] text-slate-400 block font-semibold">Want to apply a solid color instead? Pick a luxury swatch:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { name: 'Midnight Slate (#020617)', hex: '#020617' },
+                            { name: 'Obsidian Black (#000000)', hex: '#000000' },
+                            { name: 'Royal Navy (#0f2b48)', hex: '#0f2b48' },
+                            { name: 'Emerald Retreat (#143d2b)', hex: '#143d2b' },
+                            { name: 'Bordeaux (#481123)', hex: '#481123' }
+                          ].map(swatch => (
+                            <button
+                              key={swatch.hex}
+                              type="button"
+                              onClick={async () => {
+                                setThemeForm(prev => ({ ...prev, heroBgColor: swatch.hex, heroBgMode: 'color', heroImage: '' }));
+                                await updateTheme({ heroBgColor: swatch.hex, heroBgMode: 'color', heroImage: '' });
+                                showNotification(`Switched to solid color "${swatch.name}"!`);
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-stone-300 hover:text-white border border-slate-800 text-xs flex items-center gap-2 transition-all cursor-pointer"
+                            >
+                              <span className="w-3 h-3 rounded-full border border-white/20 shrink-0" style={{ backgroundColor: swatch.hex }} />
+                              <span>{swatch.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* MODE 1: PLAIN SOLID COLOR SETTINGS */}
-                  {(themeForm.heroBgMode === 'color' || !themeForm.heroBgMode) && (
+                  {themeForm.heroBgMode === 'color' && themeForm.heroBgColor !== 'transparent' && (
                     <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-5 animate-fade-in">
                       <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                         <div>
@@ -2462,9 +2572,18 @@ export const AdminPortal = ({
                             Pick any solid color or choose from classic luxury hotel palettes.
                           </p>
                         </div>
-                        <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/30">
-                          Zero Photo Overhead
-                        </span>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setThemeForm(prev => ({ ...prev, heroBgColor: 'transparent', heroBgMode: 'transparent', heroImage: '' }));
+                            await updateTheme({ heroBgColor: 'transparent', heroBgMode: 'transparent', heroImage: '' });
+                            showNotification("Switched to No Color (Transparent)!");
+                          }}
+                          className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-purple-950 text-purple-300 border border-purple-500/30 hover:bg-purple-900 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Ban className="w-3 h-3" />
+                          <span>Switch to No Color</span>
+                        </button>
                       </div>
 
                       {/* Color Picker & Hex Input */}
@@ -2472,7 +2591,7 @@ export const AdminPortal = ({
                         <div className="flex items-center gap-3">
                           <input
                             type="color"
-                            value={themeForm.heroBgColor || '#020617'}
+                            value={themeForm.heroBgColor && themeForm.heroBgColor !== 'transparent' ? themeForm.heroBgColor : '#020617'}
                             onChange={(e) => {
                               const val = e.target.value;
                               setThemeForm(prev => ({ ...prev, heroBgColor: val, heroBgMode: 'color', heroImage: '' }));
@@ -2485,7 +2604,7 @@ export const AdminPortal = ({
                             <label className="text-[10px] font-mono uppercase text-slate-400 block">Hex Code</label>
                             <input
                               type="text"
-                              value={themeForm.heroBgColor || '#020617'}
+                              value={themeForm.heroBgColor && themeForm.heroBgColor !== 'transparent' ? themeForm.heroBgColor : '#020617'}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 setThemeForm(prev => ({ ...prev, heroBgColor: val, heroBgMode: 'color', heroImage: '' }));
@@ -2511,13 +2630,14 @@ export const AdminPortal = ({
                         </div>
                       </div>
 
-                      {/* 12 Curated Luxury Solid Swatches */}
+                      {/* 13 Curated Luxury Solid Swatches (Including No Color) */}
                       <div className="space-y-2">
                         <label className="text-xs font-semibold text-slate-300 block">
                           Curated Luxury Solid Presets
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                           {[
+                            { name: 'No Color (Transparent)', hex: 'transparent', isNone: true },
                             { name: 'Midnight Slate (Default)', hex: '#020617' },
                             { name: 'Obsidian Noir', hex: '#000000' },
                             { name: 'Royal Mediterranean', hex: '#0f2b48' },
@@ -2531,15 +2651,23 @@ export const AdminPortal = ({
                             { name: 'Minimalist Ivory Sand', hex: '#fdfbf7' },
                             { name: 'Pristine Snow Gallery', hex: '#ffffff' }
                           ].map(preset => {
-                            const isSelected = (themeForm.heroBgColor || '#020617').toLowerCase() === preset.hex.toLowerCase();
+                            const isSelected = preset.hex === 'transparent'
+                              ? (themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                              : (themeForm.heroBgColor || '#020617').toLowerCase() === preset.hex.toLowerCase();
                             return (
                               <button
                                 key={preset.hex}
                                 type="button"
                                 onClick={async () => {
-                                  setThemeForm(prev => ({ ...prev, heroBgColor: preset.hex, heroBgMode: 'color', heroImage: '' }));
-                                  await updateTheme({ heroBgColor: preset.hex, heroBgMode: 'color', heroImage: '' });
-                                  showNotification(`Applied ${preset.name}!`);
+                                  if (preset.hex === 'transparent') {
+                                    setThemeForm(prev => ({ ...prev, heroBgColor: 'transparent', heroBgMode: 'transparent', heroImage: '' }));
+                                    await updateTheme({ heroBgColor: 'transparent', heroBgMode: 'transparent', heroImage: '' });
+                                    showNotification("Applied No Color (Transparent)!");
+                                  } else {
+                                    setThemeForm(prev => ({ ...prev, heroBgColor: preset.hex, heroBgMode: 'color', heroImage: '' }));
+                                    await updateTheme({ heroBgColor: preset.hex, heroBgMode: 'color', heroImage: '' });
+                                    showNotification(`Applied ${preset.name}!`);
+                                  }
                                 }}
                                 className={`p-2 rounded-xl border text-left text-xs transition-all flex items-center gap-2 cursor-pointer ${
                                   isSelected
@@ -2547,10 +2675,16 @@ export const AdminPortal = ({
                                     : 'bg-slate-900 hover:bg-slate-800/80 border-slate-800 text-stone-300 hover:text-white'
                                 }`}
                               >
-                                <span 
-                                  className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0 shadow-sm"
-                                  style={{ backgroundColor: preset.hex }}
-                                />
+                                {preset.hex === 'transparent' ? (
+                                  <div className="w-3.5 h-3.5 rounded-full border border-purple-400 bg-purple-950 flex items-center justify-center shrink-0">
+                                    <Ban className="w-2.5 h-2.5 text-purple-300" />
+                                  </div>
+                                ) : (
+                                  <span 
+                                    className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0 shadow-sm"
+                                    style={{ backgroundColor: preset.hex }}
+                                  />
+                                )}
                                 <span className="truncate text-[11px]">{preset.name}</span>
                               </button>
                             );
@@ -2980,8 +3114,11 @@ export const AdminPortal = ({
                     <div 
                       className="h-64 rounded-xl overflow-hidden relative border border-white/10 flex flex-col justify-between p-3.5 transition-all duration-300"
                       style={{ 
-                        backgroundColor: themeForm.heroBgColor || '#020617',
-                        ...(themeForm.heroBgMode === 'gradient' ? { background: themeForm.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)' } : {})
+                        backgroundColor: (themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                          ? (themeForm.backgroundColor || '#fdfbf7')
+                          : (themeForm.heroBgColor || '#020617'),
+                        ...(themeForm.heroBgMode === 'gradient' ? { background: themeForm.heroGradient || 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)' } : {}),
+                        ...((themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent') ? { background: themeForm.backgroundColor || '#fdfbf7' } : {})
                       }}
                     >
                       {/* Photo Backdrop (Active in Photo mode) */}
@@ -3061,10 +3198,14 @@ export const AdminPortal = ({
                     <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400 space-y-1">
                       <div className="flex items-center justify-between text-white font-semibold">
                         <span>Current Active Mode:</span>
-                        <span className="capitalize text-amber-300">{themeForm.heroBgMode || 'color'}</span>
+                        <span className="capitalize text-amber-300">
+                          {(themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent') ? 'No Color (Transparent)' : (themeForm.heroBgMode || 'color')}
+                        </span>
                       </div>
                       <p className="text-[10px] leading-relaxed">
-                        Changes update live across all browser windows instantly via realtime sync.
+                        {(themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                          ? 'Hero section inherits your global page background with zero tint or overlay.'
+                          : 'Changes update live across all browser windows instantly via realtime sync.'}
                       </p>
                     </div>
                   </div>
@@ -4091,24 +4232,44 @@ export const AdminPortal = ({
                     <h4 className="text-xs font-bold text-white flex items-center gap-2">
                       <span>Header & Slider Background Canvas</span>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400/20 text-amber-300">
-                        Active: {themeForm.heroBgMode === 'color' ? 'Plain Solid Color' : themeForm.heroBgMode === 'gradient' ? 'Designer Gradient' : 'Photo Backdrop'}
+                        Active: {(themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent') ? 'No Color (Transparent)' : themeForm.heroBgMode === 'color' ? 'Plain Solid Color' : themeForm.heroBgMode === 'gradient' ? 'Designer Gradient' : 'Photo Backdrop'}
                       </span>
                     </h4>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Need to customize or change the background behind this slider and top header? Switch between plain solid colors, designer gradients, or photo backdrop.
+                      Need to customize or change the background behind this slider and top header? Switch to no color (transparent), plain solid colors, designer gradients, or photo backdrop.
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('canvas')}
-                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95 shrink-0 shadow-md cursor-pointer"
-                  style={{ backgroundColor: 'var(--color-secondary)' }}
-                >
-                  <Palette className="w-3.5 h-3.5" />
-                  <span>Customize Background</span>
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setThemeForm(prev => ({ ...prev, heroBgMode: 'transparent', heroBgColor: 'transparent', heroImage: '' }));
+                      await updateTheme({ heroBgMode: 'transparent', heroBgColor: 'transparent', heroImage: '' });
+                      showNotification("Slider background set to No Color (Transparent)!");
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border cursor-pointer ${
+                      (themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                        ? 'bg-purple-950 text-purple-200 border-purple-500/50 ring-1 ring-purple-400'
+                        : 'bg-slate-900 hover:bg-slate-800 text-stone-300 border-slate-700'
+                    }`}
+                    title="Remove all background color and photo"
+                  >
+                    <Ban className="w-3.5 h-3.5 text-purple-400" />
+                    <span>No Color</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('canvas')}
+                    className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-950 flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95 shrink-0 shadow-md cursor-pointer"
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                  >
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>Customize Background</span>
+                  </button>
+                </div>
               </div>
 
               {/* Hero Showcase Canvas & Background Backdrop Studio */}
@@ -4120,11 +4281,17 @@ export const AdminPortal = ({
                         Section Canvas & Backdrop
                       </span>
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
-                        !themeForm.heroImage 
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                          : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                        (themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                          : !themeForm.heroImage 
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                            : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
                       }`}>
-                        {!themeForm.heroImage ? '● Plain Color Background Active' : 'Custom Photo Backdrop Active'}
+                        {(themeForm.heroBgMode === 'transparent' || themeForm.heroBgColor === 'transparent')
+                          ? '● No Color (Transparent) Active'
+                          : !themeForm.heroImage 
+                            ? '● Plain Color Background Active' 
+                            : '● Custom Photo Backdrop Active'}
                       </span>
                     </div>
                     <h4 className="text-base font-bold text-white font-serif flex items-center gap-2">
@@ -4211,8 +4378,9 @@ export const AdminPortal = ({
                         </div>
 
                         {/* Luxury Palette Presets */}
-                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
                           {[
+                            { name: 'No Color', hex: 'transparent' },
                             { name: 'Obsidian Slate', hex: '#020617' },
                             { name: 'Midnight Navy', hex: '#0b132b' },
                             { name: 'Charcoal Dark', hex: '#0f172a' },
@@ -4221,24 +4389,44 @@ export const AdminPortal = ({
                             { name: 'Warm Espresso', hex: '#19120e' },
                             { name: 'Sand & Cream', hex: '#f5f0e8' },
                             { name: 'Pure White', hex: '#ffffff' }
-                          ].map((p) => (
-                            <button
-                              key={p.hex}
-                              type="button"
-                              onClick={() => {
-                                setThemeForm(prev => ({ ...prev, heroBgColor: p.hex }));
-                                updateTheme({ heroBgColor: p.hex });
-                              }}
-                              className={`p-1.5 rounded-lg border text-[10px] flex items-center gap-1.5 transition-all ${
-                                (themeForm.heroBgColor || '#020617').toLowerCase() === p.hex.toLowerCase()
-                                  ? 'border-amber-400 bg-slate-800 text-white font-semibold'
-                                  : 'border-slate-800 bg-slate-950 hover:bg-slate-800 text-stone-400'
-                              }`}
-                            >
-                              <span className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0" style={{ backgroundColor: p.hex }} />
-                              <span className="truncate">{p.name}</span>
-                            </button>
-                          ))}
+                          ].map((p) => {
+                            const isSelected = (themeForm.heroBgColor || '#020617').toLowerCase() === p.hex.toLowerCase();
+                            return (
+                              <button
+                                key={p.hex}
+                                type="button"
+                                onClick={async () => {
+                                  const isTrans = p.hex === 'transparent';
+                                  setThemeForm(prev => ({ 
+                                    ...prev, 
+                                    heroBgColor: p.hex, 
+                                    heroBgMode: isTrans ? 'transparent' : 'color',
+                                    ...(isTrans ? { heroImage: '' } : {})
+                                  }));
+                                  await updateTheme({ 
+                                    heroBgColor: p.hex, 
+                                    heroBgMode: isTrans ? 'transparent' : 'color',
+                                    ...(isTrans ? { heroImage: '' } : {}) 
+                                  });
+                                  if (isTrans) {
+                                    showNotification("Slider background set to No Color (Transparent)!");
+                                  }
+                                }}
+                                className={`p-1.5 rounded-lg border text-[10px] flex items-center gap-1.5 transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'border-amber-400 bg-slate-800 text-white font-semibold ring-1 ring-amber-400/40'
+                                    : 'border-slate-800 bg-slate-950 hover:bg-slate-800 text-stone-400'
+                                }`}
+                              >
+                                {p.hex === 'transparent' ? (
+                                  <span className="w-2.5 h-2.5 rounded-full border border-dashed border-purple-400 flex items-center justify-center shrink-0 bg-transparent text-[7px] text-purple-400 font-bold">∅</span>
+                                ) : (
+                                  <span className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0" style={{ backgroundColor: p.hex }} />
+                                )}
+                                <span className="truncate">{p.name}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
