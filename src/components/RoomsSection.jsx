@@ -59,6 +59,8 @@ export const RoomsSection = () => {
 
   const categories = ['All', 'Villa', 'Suite', 'Deluxe'];
 
+  if (sectionHeaders?.visible === false) return null;
+
   return (
     <section id="rooms" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       

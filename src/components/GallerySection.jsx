@@ -59,6 +59,8 @@ export const GallerySection = () => {
 
   const filters = ['All', 'Suites', 'Grounds', 'Gastronomy', 'Wellness'];
 
+  if (sectionHeaders?.visible === false) return null;
+
   return (
     <section id="gallery" className="py-24 bg-stone-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

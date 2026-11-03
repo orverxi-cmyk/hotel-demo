@@ -30,6 +30,8 @@ export const AmenitiesSection = () => {
     ShieldCheck: ShieldCheck
   };
 
+  if (sectionHeaders?.visible === false) return null;
+
   return (
     <section id="amenities" className="py-24 bg-stone-100/70 border-y border-stone-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

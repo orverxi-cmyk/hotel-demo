@@ -31,6 +31,8 @@ export const LocationSection = () => {
     }, 4000);
   };
 
+  if (sectionHeaders?.visible === false) return null;
+
   return (
     <section id="contact" className="py-24 bg-stone-100/70 border-t border-stone-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

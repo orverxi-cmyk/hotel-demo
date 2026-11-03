@@ -114,6 +114,8 @@ export const AdminPortal = ({
 
   const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [navMenuFilter, setNavMenuFilter] = useState('all'); // 'all', 'visible', 'hidden'
 
   // Folio email logs & preview state
   const [folioEmailLogs, setFolioEmailLogs] = useState([]);
@@ -711,11 +713,17 @@ export const AdminPortal = ({
   };
 
   const handleToggleNavVisibility = async (menuId) => {
-    const updated = navMenus.map(m => m.id === menuId ? { ...m, visible: !m.visible } : m);
+    const updated = navMenus.map(m => {
+      if (m.id === menuId) {
+        const isCurrentlyVisible = m.visible !== false;
+        return { ...m, visible: !isCurrentlyVisible };
+      }
+      return m;
+    });
     setNavMenus(updated);
     await saveNavMenus(updated);
     const target = updated.find(m => m.id === menuId);
-    showNotification(`Menu "${target.label}" is now ${target.visible ? 'visible' : 'hidden'}.`);
+    showNotification(`Menu "${target?.label || 'Item'}" is now ${target?.visible ? 'visible' : 'hidden'} on the website.`);
   };
 
   const handleMoveNavMenu = async (index, direction) => {
@@ -1146,21 +1154,24 @@ export const AdminPortal = ({
 
       {/* Left Sidebar */}
       <aside 
-        className={`fixed md:static inset-y-0 left-0 z-50 w-72 lg:w-76 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0 shadow-2xl md:shadow-none transition-transform duration-300 ease-in-out ${
+        className={`fixed md:static inset-y-0 left-0 z-50 ${
+          isSidebarCollapsed ? 'md:w-20' : 'md:w-72 lg:w-76'
+        } bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0 shadow-2xl md:shadow-none transition-all duration-300 ease-in-out ${
           isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Top Header & Identity */}
-        <div className="p-4 sm:p-5 border-b border-slate-800/80">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <div className={`p-4 sm:p-5 border-b border-slate-800/80 ${isSidebarCollapsed ? 'md:p-3 md:flex md:flex-col md:items-center' : ''}`}>
+          <div className={`flex items-center justify-between ${isSidebarCollapsed ? 'md:justify-center w-full' : ''}`}>
+            <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:justify-center' : ''}`}>
               <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center font-serif text-base font-bold text-slate-950 shadow-md ring-1 ring-white/10"
+                className="w-10 h-10 rounded-xl flex items-center justify-center font-serif text-base font-bold text-slate-950 shadow-md ring-1 ring-white/10 shrink-0"
                 style={{ backgroundColor: 'var(--color-secondary)' }}
+                title={theme.hotelName || 'Luxury Hotel'}
               >
                 {theme.hotelName ? theme.hotelName.substring(0, 2).toUpperCase() : 'CMS'}
               </div>
-              <div className="min-w-0">
+              <div className={`min-w-0 ${isSidebarCollapsed ? 'md:hidden' : 'block'}`}>
                 <h1 className="font-bold text-sm text-white tracking-wide truncate">
                   {theme.hotelName || 'Luxury Hotel'}
                 </h1>
@@ -1182,7 +1193,7 @@ export const AdminPortal = ({
           </div>
 
           {/* Admin Role Status Badge */}
-          <div className="mt-4 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+          <div className={`mt-4 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 ${isSidebarCollapsed ? 'md:hidden' : 'block'}`}>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 {isSuperAdmin ? (
@@ -1214,7 +1225,7 @@ export const AdminPortal = ({
 
         {/* Vertical Nav Tab List */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          <div className="px-3 pb-2 text-[10px] font-mono tracking-widest uppercase text-slate-500 font-semibold">
+          <div className={`px-3 pb-2 text-[10px] font-mono tracking-widest uppercase text-slate-500 font-semibold ${isSidebarCollapsed ? 'md:hidden' : 'block'}`}>
             Management & Studio
           </div>
 
@@ -1228,7 +1239,10 @@ export const AdminPortal = ({
                   setActiveTab(tab.id);
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all group ${
+                title={isSidebarCollapsed ? tab.label : undefined}
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? 'md:justify-center px-2 py-3' : 'justify-between px-3.5 py-2.5'
+                } rounded-xl text-xs transition-all group relative ${
                   isActive
                     ? 'bg-amber-400/15 text-amber-300 font-semibold shadow-sm border border-amber-400/30'
                     : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
@@ -1238,10 +1252,10 @@ export const AdminPortal = ({
                   <Icon className={`w-4 h-4 shrink-0 transition-colors ${
                     isActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-300'
                   }`} />
-                  <span className="truncate">{tab.label}</span>
+                  <span className={`truncate ${isSidebarCollapsed ? 'md:hidden' : 'inline'}`}>{tab.label}</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <div className={`items-center gap-1.5 shrink-0 ml-2 ${isSidebarCollapsed ? 'md:hidden flex' : 'flex'}`}>
                   {tab.count !== undefined && (
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold ${
                       isActive
@@ -1257,33 +1271,42 @@ export const AdminPortal = ({
                     </span>
                   )}
                 </div>
+
+                {/* Collapsed dot indicator when active */}
+                {isSidebarCollapsed && isActive && (
+                  <span className="hidden md:block absolute right-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-amber-400" />
+                )}
               </button>
             );
           })}
         </div>
 
         {/* Sidebar Footer Actions */}
-        <div className="p-3 sm:p-4 border-t border-slate-800/80 space-y-2 bg-slate-950/80">
+        <div className={`p-3 sm:p-4 border-t border-slate-800/80 space-y-2 bg-slate-950/80 ${isSidebarCollapsed ? 'md:p-2 md:space-y-2' : ''}`}>
           <button
             onClick={onClose}
-            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-stone-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-all group shadow-sm"
+            className={`w-full flex items-center ${
+              isSidebarCollapsed ? 'md:justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
+            } rounded-xl text-xs font-semibold text-stone-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-all group shadow-sm`}
             title="Return to the live hotel website"
           >
             <div className="flex items-center gap-2.5">
               <ArrowLeft className="w-4 h-4 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
-              <span>View Website</span>
+              <span className={isSidebarCollapsed ? 'md:hidden' : 'inline'}>View Website</span>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300" />
+            <ExternalLink className={`w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 ${isSidebarCollapsed ? 'md:hidden' : 'inline'}`} />
           </button>
 
           {onLogout && (
             <button
               onClick={onLogout}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:text-rose-100 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/20 transition-all group"
+              className={`w-full flex items-center ${
+                isSidebarCollapsed ? 'md:justify-center p-2' : 'gap-2.5 px-3.5 py-2'
+              } rounded-xl text-xs font-semibold text-rose-300 hover:text-rose-100 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/20 transition-all group`}
               title="Sign out of Admin session"
             >
               <LogOut className="w-4 h-4 text-rose-400 group-hover:text-rose-300" />
-              <span>Sign Out</span>
+              <span className={isSidebarCollapsed ? 'md:hidden' : 'inline'}>Sign Out</span>
             </button>
           )}
         </div>
@@ -1302,6 +1325,16 @@ export const AdminPortal = ({
               aria-label="Open navigation menu"
             >
               <Menu className="w-5 h-5" />
+            </button>
+
+            {/* Desktop Show / Hide Admin Menu Button */}
+            <button
+              onClick={() => setIsSidebarCollapsed(prev => !prev)}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-stone-300 hover:text-white text-xs font-medium border border-slate-700/80 transition-all shadow-sm group shrink-0"
+              title={isSidebarCollapsed ? "Show Admin Menu Sidebar" : "Hide Admin Menu Sidebar"}
+            >
+              <Menu className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span>{isSidebarCollapsed ? "Show Admin Menu" : "Hide Admin Menu"}</span>
             </button>
 
             {/* Breadcrumb Display */}
@@ -2299,13 +2332,19 @@ export const AdminPortal = ({
                             <IconComp className="w-5 h-5" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="text-base font-bold text-white font-serif">
                                 {cfg.fullTitle}
                               </h4>
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-800 text-amber-300 border border-slate-700">
                                 {cfg.badge}
                               </span>
+                              {secData.visible === false && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-rose-950 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                                  <EyeOff className="w-3 h-3 text-rose-400" />
+                                  Hidden from Site
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-slate-400 font-mono mt-0.5">
                               Anchor: <span className="text-amber-400">{cfg.anchor}</span>
@@ -2313,7 +2352,45 @@ export const AdminPortal = ({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 self-end sm:self-center">
+                        <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+                          {/* Show / Hide Section Toggle Button */}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isVis = secData.visible !== false;
+                              const updatedVisible = !isVis;
+                              handleHeaderFieldChange(cfg.key, 'visible', updatedVisible);
+                              const updated = {
+                                ...sectionHeadersData,
+                                [cfg.key]: {
+                                  ...(sectionHeadersData?.[cfg.key] || {}),
+                                  visible: updatedVisible
+                                }
+                              };
+                              setSectionHeadersData(updated);
+                              await saveSectionHeaders(updated);
+                              showNotification(`Section "${cfg.name}" is now ${updatedVisible ? 'visible' : 'hidden'} on the website.`);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1.5 transition-all shadow-sm ${
+                              secData.visible !== false
+                                ? 'bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border-emerald-500/40'
+                                : 'bg-rose-950/80 hover:bg-rose-900 text-rose-300 border-rose-500/40'
+                            }`}
+                            title={secData.visible !== false ? "Click to hide this entire section on the live website" : "Click to display this section on the live website"}
+                          >
+                            {secData.visible !== false ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Visible on Site</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5 text-rose-400" />
+                                <span>Hidden on Site</span>
+                              </>
+                            )}
+                          </button>
+
                           {isSuperAdmin && (
                             <button
                               type="button"
@@ -3456,127 +3533,184 @@ export const AdminPortal = ({
 
                   {/* Navigation Items List */}
                   <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
-                    <div className="p-4 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between">
+                    <div className="p-4 bg-slate-900/80 border-b border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <Compass className="w-4 h-4 text-amber-400" />
                         <span className="text-xs font-bold text-white uppercase tracking-wider">
                           Active Navigation Menu Roster ({navMenus.length} Items)
                         </span>
                       </div>
-                      <span className="text-[11px] text-stone-400">
-                        Items appear in the exact order shown below
-                      </span>
+                      
+                      {/* Filter Pills: All, Visible, Hidden */}
+                      <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => setNavMenuFilter('all')}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                            navMenuFilter === 'all'
+                              ? 'bg-amber-400 text-slate-950 font-bold shadow-sm'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          All ({navMenus.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNavMenuFilter('visible')}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                            navMenuFilter === 'visible'
+                              ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm'
+                              : 'text-slate-400 hover:text-emerald-400'
+                          }`}
+                        >
+                          Visible ({navMenus.filter(m => m.visible !== false).length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNavMenuFilter('hidden')}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                            navMenuFilter === 'hidden'
+                              ? 'bg-rose-500 text-white font-bold shadow-sm'
+                              : 'text-slate-400 hover:text-rose-400'
+                          }`}
+                        >
+                          Hidden ({navMenus.filter(m => m.visible === false).length})
+                        </button>
+                      </div>
                     </div>
 
                     <div className="divide-y divide-slate-800/80">
-                      {navMenus.map((menu, idx) => (
-                        <div 
-                          key={menu.id}
-                          className={`p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 transition-all ${
-                            menu.visible ? 'bg-slate-950/40 hover:bg-slate-900/30' : 'bg-slate-950/90 opacity-60'
-                          }`}
-                        >
-                          {/* Left: Reorder & Number */}
-                          <div className="flex items-center gap-3">
-                            <div className="flex flex-col gap-1">
-                              <button
-                                type="button"
-                                disabled={idx === 0}
-                                onClick={() => handleMoveNavMenu(idx, 'up')}
-                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-20 flex items-center justify-center text-stone-300 transition-all"
-                                title="Move up"
-                              >
-                                <ArrowUp className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                disabled={idx === navMenus.length - 1}
-                                onClick={() => handleMoveNavMenu(idx, 'down')}
-                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-20 flex items-center justify-center text-stone-300 transition-all"
-                                title="Move down"
-                              >
-                                <ArrowDown className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-
-                            <span className="w-8 h-8 rounded-xl bg-slate-900 text-stone-300 border border-slate-800 flex items-center justify-center font-mono font-bold text-xs shrink-0">
-                              {String(idx + 1).padStart(2, '0')}
-                            </span>
-                          </div>
-
-                          {/* Middle: In-line editable details */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 flex-1 w-full text-xs">
-                            <div className="lg:col-span-4">
-                              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">
-                                Menu Title / Label
-                              </label>
-                              <input
-                                type="text"
-                                value={menu.label}
-                                onChange={(e) => handleUpdateNavField(menu.id, 'label', e.target.value)}
-                                onBlur={handleSaveAllNavMenus}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white font-medium focus:outline-none focus:border-amber-400"
-                              />
-                            </div>
-
-                            <div className="lg:col-span-5">
-                              <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">
-                                Destination Link (href)
-                              </label>
-                              <input
-                                type="text"
-                                value={menu.href}
-                                onChange={(e) => handleUpdateNavField(menu.id, 'href', e.target.value)}
-                                onBlur={handleSaveAllNavMenus}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-amber-200 font-mono text-[11px] focus:outline-none focus:border-amber-400"
-                              />
-                            </div>
-
-                            <div className="lg:col-span-3 flex items-center gap-2 pt-4 lg:pt-0">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold ${
-                                menu.visible 
-                                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30' 
-                                  : 'bg-rose-950 text-rose-300 border border-rose-500/30'
-                              }`}>
-                                {menu.visible ? 'Visible' : 'Hidden'}
-                              </span>
-
-                              {menu.isExternal && (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-500/30">
-                                  External
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Right: Actions (Toggle & Remove) */}
-                          <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleNavVisibility(menu.id)}
-                              className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
-                                menu.visible
-                                  ? 'bg-slate-800 text-stone-200 hover:bg-slate-700 border-slate-700'
-                                  : 'bg-emerald-950 text-emerald-300 hover:bg-emerald-900 border-emerald-600/40'
+                      {navMenus
+                        .map((menu, originalIdx) => ({ menu, originalIdx }))
+                        .filter(({ menu }) => {
+                          if (navMenuFilter === 'visible') return menu.visible !== false;
+                          if (navMenuFilter === 'hidden') return menu.visible === false;
+                          return true;
+                        })
+                        .map(({ menu, originalIdx: idx }) => {
+                          const isVisible = menu.visible !== false;
+                          return (
+                            <div 
+                              key={menu.id}
+                              className={`p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 transition-all ${
+                                isVisible 
+                                  ? 'bg-slate-950/40 hover:bg-slate-900/30' 
+                                  : 'bg-slate-950/90 border-l-4 border-l-rose-500/80 opacity-75 hover:opacity-100'
                               }`}
-                              title={menu.visible ? 'Hide from navbar' : 'Show in navbar'}
                             >
-                              {menu.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                              <span>{menu.visible ? 'Hide' : 'Show'}</span>
-                            </button>
+                              {/* Left: Reorder & Number */}
+                              <div className="flex items-center gap-3">
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    type="button"
+                                    disabled={idx === 0}
+                                    onClick={() => handleMoveNavMenu(idx, 'up')}
+                                    className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-20 flex items-center justify-center text-stone-300 transition-all"
+                                    title="Move up"
+                                  >
+                                    <ArrowUp className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={idx === navMenus.length - 1}
+                                    onClick={() => handleMoveNavMenu(idx, 'down')}
+                                    className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-20 flex items-center justify-center text-stone-300 transition-all"
+                                    title="Move down"
+                                  >
+                                    <ArrowDown className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveNavMenu(menu.id)}
-                              className="p-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/30 transition-all flex items-center gap-1.5 text-xs font-semibold"
-                              title="Delete menu item"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Remove</span>
-                            </button>
-                          </div>
+                                <span className="w-8 h-8 rounded-xl bg-slate-900 text-stone-300 border border-slate-800 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                                  {String(idx + 1).padStart(2, '0')}
+                                </span>
+                              </div>
+
+                              {/* Middle: In-line editable details */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 flex-1 w-full text-xs">
+                                <div className="lg:col-span-4">
+                                  <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">
+                                    Menu Title / Label
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={menu.label}
+                                    onChange={(e) => handleUpdateNavField(menu.id, 'label', e.target.value)}
+                                    onBlur={handleSaveAllNavMenus}
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-white font-medium focus:outline-none focus:border-amber-400"
+                                  />
+                                </div>
+
+                                <div className="lg:col-span-5">
+                                  <label className="text-[10px] text-slate-400 uppercase font-mono block mb-1">
+                                    Destination Link (href)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={menu.href}
+                                    onChange={(e) => handleUpdateNavField(menu.id, 'href', e.target.value)}
+                                    onBlur={handleSaveAllNavMenus}
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-amber-200 font-mono text-[11px] focus:outline-none focus:border-amber-400"
+                                  />
+                                </div>
+
+                                <div className="lg:col-span-3 flex items-center gap-2 pt-4 lg:pt-0">
+                                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold flex items-center gap-1.5 ${
+                                    isVisible 
+                                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30' 
+                                      : 'bg-rose-950 text-rose-300 border border-rose-500/30'
+                                  }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${isVisible ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                                    {isVisible ? 'Visible in Navbar' : 'Hidden from Navbar'}
+                                  </span>
+
+                                  {menu.isExternal && (
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-500/30">
+                                      External
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Right: Actions (Toggle & Remove) */}
+                              <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleNavVisibility(menu.id)}
+                                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 shadow-sm ${
+                                    isVisible
+                                      ? 'bg-slate-800 text-stone-200 hover:bg-slate-700 hover:text-white border-slate-700'
+                                      : 'bg-emerald-950 text-emerald-300 hover:bg-emerald-900 hover:text-emerald-100 border-emerald-500/40'
+                                  }`}
+                                  title={isVisible ? 'Click to hide this menu from the website navbar' : 'Click to show this menu on the website navbar'}
+                                >
+                                  {isVisible ? <EyeOff className="w-3.5 h-3.5 text-slate-400" /> : <Eye className="w-3.5 h-3.5 text-emerald-400" />}
+                                  <span>{isVisible ? 'Hide Menu' : 'Show Menu'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveNavMenu(menu.id)}
+                                  className="p-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/30 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                                  title="Delete menu item"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Remove</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                      {navMenus.filter(m => {
+                        if (navMenuFilter === 'visible') return m.visible !== false;
+                        if (navMenuFilter === 'hidden') return m.visible === false;
+                        return true;
+                      }).length === 0 && (
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                          No navigation items match the <span className="font-semibold text-white">"{navMenuFilter}"</span> filter.
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
 
@@ -3590,7 +3724,7 @@ export const AdminPortal = ({
                         {theme?.hotelName || 'The Grand Aurelia'}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-white/80 whitespace-nowrap overflow-x-auto">
-                        {navMenus.filter(m => m.visible).map(m => (
+                        {navMenus.filter(m => m.visible !== false).map(m => (
                           <span key={m.id} className="px-2 py-0.5 rounded hover:text-amber-300 font-medium">
                             {m.label}
                           </span>

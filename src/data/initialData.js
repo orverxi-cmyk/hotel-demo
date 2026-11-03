@@ -740,35 +740,40 @@ export const initialSectionHeaders = {
     sectionName: "Accommodations (Suites & Villas)",
     eyebrow: "Bespoke Accommodations",
     title: "Sanctuaries of Refined Elegance",
-    subtitle: "Each residence is individually curated with natural materials, handcrafted Italian furnishings, and unobstructed Mediterranean vistas."
+    subtitle: "Each residence is individually curated with natural materials, handcrafted Italian furnishings, and unobstructed Mediterranean vistas.",
+    visible: true
   },
   amenities: {
     id: "amenities",
     sectionName: "Curated Hotel Experiences (Amenities)",
     eyebrow: "Curated Hotel Experiences",
     title: "Unrivaled World-Class Amenities",
-    subtitle: "Every moment at our resort is tailored to exceed imagination — from thermal spa rituals to private yacht expeditions across the turquoise Mediterranean."
+    subtitle: "Every moment at our resort is tailored to exceed imagination — from thermal spa rituals to private yacht expeditions across the turquoise Mediterranean.",
+    visible: true
   },
   dining: {
     id: "dining",
     sectionName: "Gastronomy & Libations (Dining)",
     eyebrow: "Gastronomy & Libations",
     title: "A Symphony of Epicurean Artistry",
-    subtitle: "Embark on an unforgettable gastronomic journey guided by award-winning culinary masters and international sommeliers."
+    subtitle: "Embark on an unforgettable gastronomic journey guided by award-winning culinary masters and international sommeliers.",
+    visible: true
   },
   discover: {
     id: "discover",
     sectionName: "Discover & Editorial Stories",
     eyebrow: "Discover & Editorial Stories",
     title: "Curated Chronicles of Mediterranean Living",
-    subtitle: "Unveil the secrets of our estate: Michelin-starred culinary artistry, Riva yacht charters, ancient subterranean cellars, and holistic botanical wellness."
+    subtitle: "Unveil the secrets of our estate: Michelin-starred culinary artistry, Riva yacht charters, ancient subterranean cellars, and holistic botanical wellness.",
+    visible: true
   },
   gallery: {
     id: "gallery",
     sectionName: "Visual Story (Gallery)",
     eyebrow: "Visual Story",
     title: "Moments of Sublime Beauty",
-    subtitle: "Immerse yourself in snapshots of idyllic afternoons, sunset champagne toasts, and serene botanical spaces."
+    subtitle: "Immerse yourself in snapshots of idyllic afternoons, sunset champagne toasts, and serene botanical spaces.",
+    visible: true
   },
   reviews: {
     id: "reviews",
@@ -778,14 +783,16 @@ export const initialSectionHeaders = {
     ratingScore: "4.98 / 5.0",
     ratingCount: "(420+ Verified Residencies)",
     stars: 5,
-    subtitle: "Read authentic feedback and impressions from our esteemed international guests."
+    subtitle: "Read authentic feedback and impressions from our esteemed international guests.",
+    visible: true
   },
   location: {
     id: "location",
     sectionName: "Location & Concierge",
     eyebrow: "Location & Concierge",
     title: "Arrive in Absolute Tranquility",
-    subtitle: "Nestled along the emerald coast, easily reachable by helicopter transfer, private yacht dock, or luxury chauffeur."
+    subtitle: "Nestled along the emerald coast, easily reachable by helicopter transfer, private yacht dock, or luxury chauffeur.",
+    visible: true
   }
 };
 

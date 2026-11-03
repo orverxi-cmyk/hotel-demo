@@ -41,6 +41,8 @@ export const DiningSection = () => {
 
   const visibleVenues = venues.filter(v => v.visible !== false);
 
+  if (sectionHeaders?.visible === false) return null;
+
   return (
     <section id="dining" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       

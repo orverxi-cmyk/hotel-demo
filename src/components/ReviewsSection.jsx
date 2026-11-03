@@ -18,6 +18,9 @@ export const ReviewsSection = () => {
     });
     return () => unsub();
   }, []);
+
+  if (sectionHeaders?.visible === false) return null;
+
   return (
     <section id="reviews" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       

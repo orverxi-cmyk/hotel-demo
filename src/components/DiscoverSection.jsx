@@ -55,6 +55,8 @@ export const DiscoverSection = ({ onSelectArticle }) => {
 
   const visibleArticles = articles.filter(a => a.visible !== false);
 
+  if (sectionHeaders?.visible === false) return null;
+
   return (
     <section id="discover" className="py-24 bg-slate-950 text-white relative overflow-hidden">
       {/* Background ambient accents */}
