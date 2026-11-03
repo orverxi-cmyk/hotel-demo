@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
-import { Utensils, Award, Clock, Calendar, Wine, MapPin } from 'lucide-react';
+import { Utensils, Clock, Calendar, Wine, MapPin } from 'lucide-react';
 import { 
   getCachedDiningVenues, 
   subscribeDiningVenues, 
@@ -17,6 +17,7 @@ import {
   isSectionHiddenByMenu 
 } from '../services/storageService';
 
+// Gastronomy & Dining Venues Section
 export const DiningSection = () => {
   const { theme } = useTheme();
   const { openBookingModal } = useBooking();
@@ -97,16 +98,6 @@ export const DiningSection = () => {
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              
-              <div className="absolute top-4 left-4">
-                <span 
-                  className="px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase text-slate-950 flex items-center gap-1 shadow-md"
-                  style={{ backgroundColor: 'var(--color-secondary)' }}
-                >
-                  <Award className="w-3.5 h-3.5" />
-                  {venue.accolade}
-                </span>
-              </div>
 
               <div className="absolute bottom-4 left-4 right-4 text-white">
                 <h3 className="font-serif text-2xl font-bold">{venue.name}</h3>
