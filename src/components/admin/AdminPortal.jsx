@@ -1346,7 +1346,7 @@ export const AdminPortal = ({
       </aside>
 
       {/* Right Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-900">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white">
         
         {/* Top Action & Breadcrumb Header */}
         <header className="bg-slate-950 border-b border-slate-800 px-4 sm:px-8 py-3.5 flex items-center justify-between shrink-0 z-10">
@@ -1424,7 +1424,7 @@ export const AdminPortal = ({
         </header>
 
         {/* Main CMS Viewport */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-900/50">
+        <div className="admin-main-content flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-100/70 text-slate-900">
           <div className="max-w-6xl mx-auto">
             
             {/* TAB 1: BRANDING & THEME STUDIO */}
