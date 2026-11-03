@@ -10,12 +10,9 @@ import {
   ChevronRight, 
   BedDouble, 
   UtensilsCrossed, 
-  Sparkles, 
   Ship, 
   Wine, 
   ArrowRight,
-  ShieldCheck,
-  Award,
   Calendar,
   Maximize2
 } from 'lucide-react';
@@ -324,20 +321,13 @@ export const Hero = ({ onSelectArticleById }) => {
           <BookingSearchBar />
         </div>
 
-        {/* Trust Badges */}
-        <div className={`mt-6 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-medium ${isLightBg ? 'text-stone-600' : 'text-stone-400'}`}>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className={`w-4 h-4 ${isLightBg ? 'text-amber-600' : 'text-amber-300'}`} />
-            <span>Best Direct Rate Guaranteed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Award className={`w-4 h-4 ${isLightBg ? 'text-amber-600' : 'text-amber-300'}`} />
-            <span>2026 World Luxury Hotel Award</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Sparkles className={`w-4 h-4 ${isLightBg ? 'text-amber-600' : 'text-amber-300'}`} />
-            <span>Flexible Free Cancellation up to 48h</span>
-          </div>
+        {/* Trust Guarantees */}
+        <div className={`mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs font-medium tracking-wide ${isLightBg ? 'text-stone-600' : 'text-stone-400'}`}>
+          <span>Best Direct Rate Guaranteed</span>
+          <span className="opacity-30">•</span>
+          <span>2026 World Luxury Hotel Award</span>
+          <span className="opacity-30">•</span>
+          <span>Flexible Free Cancellation up to 48h</span>
         </div>
 
       </div>

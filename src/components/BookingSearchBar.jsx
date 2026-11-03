@@ -5,18 +5,10 @@ import { useBooking } from '../context/BookingContext';
 import { useTheme } from '../context/ThemeContext';
 import { initialDiningVenues } from '../data/initialData';
 import { 
-  Calendar, 
-  Users, 
-  Home, 
   Search, 
-  Sparkles, 
   UtensilsCrossed, 
-  Clock, 
   ArrowRight, 
-  BedDouble, 
-  ShieldCheck, 
-  FileText,
-  MapPin
+  BedDouble
 } from 'lucide-react';
 
 export const BookingSearchBar = () => {
@@ -149,8 +141,7 @@ export const BookingSearchBar = () => {
         </div>
 
         {/* Micro Guarantee Badge */}
-        <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-amber-300/90">
-          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+        <div className="hidden sm:flex items-center text-[11px] font-mono text-amber-300/90">
           <span>Best Direct Guarantee • Real-Time Confirmation</span>
         </div>
 
@@ -165,8 +156,7 @@ export const BookingSearchBar = () => {
             
             {/* Check In */}
             <div className="bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-all focus-within:border-amber-400/50">
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
                 Check-In Date
               </label>
               <input
@@ -181,8 +171,7 @@ export const BookingSearchBar = () => {
 
             {/* Check Out */}
             <div className="bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-all focus-within:border-amber-400/50">
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
                 Check-Out Date
               </label>
               <input
@@ -199,8 +188,7 @@ export const BookingSearchBar = () => {
             <div className="grid grid-cols-2 gap-2">
               {/* Guests */}
               <div className="bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-all focus-within:border-amber-400/50">
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-amber-400" />
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
                   Guests
                 </label>
                 <select
@@ -218,8 +206,7 @@ export const BookingSearchBar = () => {
 
               {/* Room Type */}
               <div className="bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-all focus-within:border-amber-400/50">
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1 flex items-center gap-1.5">
-                  <Home className="w-3.5 h-3.5 text-amber-400" />
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
                   Suite Type
                 </label>
                 <select
@@ -251,7 +238,6 @@ export const BookingSearchBar = () => {
                 onClick={handleInstantStayBook}
                 className="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-stone-200 font-semibold text-[11px] uppercase tracking-wider transition-all border border-white/15 flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span>Book Direct Online</span>
               </button>
             </div>
@@ -294,8 +280,7 @@ export const BookingSearchBar = () => {
 
             {/* Dinner Date */}
             <div className="bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-all focus-within:border-amber-400/50">
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
                 Dinner Date
               </label>
               <input
@@ -312,8 +297,7 @@ export const BookingSearchBar = () => {
             <div className="grid grid-cols-2 gap-2">
               {/* Seating Time */}
               <div className="bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-all focus-within:border-amber-400/50">
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
                   Dinner Time
                 </label>
                 <select
@@ -331,8 +315,7 @@ export const BookingSearchBar = () => {
 
               {/* Diners / Party Size */}
               <div className="bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-all focus-within:border-amber-400/50">
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-amber-400" />
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
                   Diners
                 </label>
                 <select
@@ -385,8 +368,7 @@ export const BookingSearchBar = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 items-center">
             
             <div className="sm:col-span-2 bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-all focus-within:border-amber-400/50">
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1 flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-amber-400" />
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
                 Booking Reference or Guest Email
               </label>
               <input
@@ -415,8 +397,7 @@ export const BookingSearchBar = () => {
 
       {/* FOOTER QUICK LINKS */}
       <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between text-xs text-stone-400 gap-2">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+        <div>
           <span>
             {activeTab === 'stay' && "Complimentary airport limousine & champagne welcome included with palatial residences."}
             {activeTab === 'dining' && "Private table lock guaranteed with sommelier consultation on arrival."}
