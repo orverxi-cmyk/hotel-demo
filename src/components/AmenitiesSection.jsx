@@ -4,13 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { hotelAmenities } from '../data/initialData';
 import { Sparkles, Utensils, Waves, Anchor, Wine, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useBooking } from '../context/BookingContext';
-import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const AmenitiesSection = () => {
   const { openBookingModal } = useBooking();
-  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().amenities);
+  const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.amenities);
 
   useEffect(() => {
+    const cached = getCachedSectionHeaders();
+    if (cached && cached.amenities) {
+      setSectionHeaders(cached.amenities);
+    }
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.amenities) setSectionHeaders(all.amenities);
     });

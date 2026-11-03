@@ -14,6 +14,7 @@ import {
   getCachedArticles, 
   subscribeArticles, 
   initialArticles,
+  initialSectionHeaders,
   getCachedSectionHeaders,
   subscribeSectionHeaders
 } from '../services/storageService';
@@ -21,13 +22,17 @@ import {
 export const DiscoverSection = ({ onSelectArticle }) => {
   const [articles, setArticles] = useState(initialArticles);
   const [mounted, setMounted] = useState(false);
-  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().discover);
+  const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.discover);
 
   useEffect(() => {
     // 1. Immediately hydrate with cached articles (0 ms flash-free)
     const cached = getCachedArticles();
     if (cached && Array.isArray(cached) && cached.length > 0) {
       setArticles(cached);
+    }
+    const cachedHeaders = getCachedSectionHeaders();
+    if (cachedHeaders && cachedHeaders.discover) {
+      setSectionHeaders(cachedHeaders.discover);
     }
     setMounted(true);
 

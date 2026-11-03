@@ -2,14 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Eye, Maximize2 } from 'lucide-react';
-import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const GallerySection = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedImage, setSelectedImage] = useState(null);
-  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().gallery);
+  const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.gallery);
 
   useEffect(() => {
+    const cached = getCachedSectionHeaders();
+    if (cached && cached.gallery) {
+      setSectionHeaders(cached.gallery);
+    }
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.gallery) setSectionHeaders(all.gallery);
     });

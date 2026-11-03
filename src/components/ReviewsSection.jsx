@@ -3,12 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { guestReviews } from '../data/initialData';
 import { Star, CheckCircle, Quote } from 'lucide-react';
-import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const ReviewsSection = () => {
-  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().reviews);
+  const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.reviews);
 
   useEffect(() => {
+    const cached = getCachedSectionHeaders();
+    if (cached && cached.reviews) {
+      setSectionHeaders(cached.reviews);
+    }
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.reviews) setSectionHeaders(all.reviews);
     });

@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { RoomCard } from './RoomCard';
 import { RoomDetailModal } from './RoomDetailModal';
 import { Sparkles, SlidersHorizontal } from 'lucide-react';
-import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const RoomsSection = () => {
   const { rooms, searchParams, setSearchParams } = useBooking();
@@ -15,9 +15,13 @@ export const RoomsSection = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
   const [inspectingRoom, setInspectingRoom] = useState(null);
-  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().rooms);
+  const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.rooms);
 
   useEffect(() => {
+    const cached = getCachedSectionHeaders();
+    if (cached && cached.rooms) {
+      setSectionHeaders(cached.rooms);
+    }
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.rooms) setSectionHeaders(all.rooms);
     });

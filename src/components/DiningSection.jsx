@@ -4,18 +4,23 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
 import { Utensils, Award, Clock, Calendar, Wine, MapPin } from 'lucide-react';
-import { getCachedDiningVenues, subscribeDiningVenues, initialDiningVenues, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { getCachedDiningVenues, subscribeDiningVenues, initialDiningVenues, initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const DiningSection = () => {
   const { theme } = useTheme();
   const { openBookingModal } = useBooking();
   const [venues, setVenues] = useState(initialDiningVenues);
-  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().dining);
+  const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.dining);
 
   useEffect(() => {
-    const cached = getCachedDiningVenues();
-    if (cached && Array.isArray(cached) && cached.length > 0) {
-      setVenues(cached);
+    const cachedVenues = getCachedDiningVenues();
+    if (cachedVenues && Array.isArray(cachedVenues) && cachedVenues.length > 0) {
+      setVenues(cachedVenues);
+    }
+
+    const cachedHeaders = getCachedSectionHeaders();
+    if (cachedHeaders && cachedHeaders.dining) {
+      setSectionHeaders(cachedHeaders.dining);
     }
 
     const unsubscribe = subscribeDiningVenues((updated) => {

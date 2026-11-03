@@ -3,15 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { MapPin, Phone, Mail, Clock, Send, Plane, Compass, CheckCircle } from 'lucide-react';
-import { getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
 
 export const LocationSection = () => {
   const { theme } = useTheme();
   const [inquirySent, setInquirySent] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [sectionHeaders, setSectionHeaders] = useState(getCachedSectionHeaders().location);
+  const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.location);
 
   useEffect(() => {
+    const cached = getCachedSectionHeaders();
+    if (cached && cached.location) {
+      setSectionHeaders(cached.location);
+    }
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.location) setSectionHeaders(all.location);
     });
