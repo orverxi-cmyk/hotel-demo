@@ -38,6 +38,7 @@ export const BookingModal = () => {
     selectedVenue,
     selectedTableNumber,
     searchParams,
+    diningSearchParams,
     createReservation,
     openTrackerModal,
     getRoomAvailability,
@@ -96,13 +97,13 @@ export const BookingModal = () => {
 
       // Initialize Dining State
       const venuesList = (diningVenues && diningVenues.length > 0) ? diningVenues : initialDiningVenues;
-      const currentVenue = selectedVenue || venuesList[0];
+      const currentVenue = selectedVenue || (diningSearchParams?.venueId ? venuesList.find(v => v.id === diningSearchParams.venueId) : null) || venuesList[0];
       setActiveDiningVenue(currentVenue);
-      const defaultDiningDate = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+      const defaultDiningDate = diningSearchParams?.date || new Date(Date.now() + 86400000).toISOString().split('T')[0];
       setDiningDate(defaultDiningDate);
-      const defaultSlot = (currentVenue?.timeSlots && currentVenue.timeSlots[0]) ? currentVenue.timeSlots[0] : "19:30";
+      const defaultSlot = diningSearchParams?.timeSlot || (currentVenue?.timeSlots && currentVenue.timeSlots[0]) || "19:30";
       setDiningTimeSlot(defaultSlot);
-      setDiningGuests(2);
+      setDiningGuests(diningSearchParams?.guests || 2);
       setSelectedDiningAddons([]);
 
       // Find initial table if specified
@@ -124,7 +125,7 @@ export const BookingModal = () => {
         specialRequests: ''
       });
     }
-  }, [isBookingModalOpen, selectedRoom, selectedVenue, selectedTableNumber, rooms, diningVenues, searchParams]);
+  }, [isBookingModalOpen, selectedRoom, selectedVenue, selectedTableNumber, rooms, diningVenues, searchParams, diningSearchParams]);
 
   if (!isBookingModalOpen) return null;
 

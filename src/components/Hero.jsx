@@ -303,7 +303,7 @@ export const Hero = ({ onSelectArticleById }) => {
         </div>
 
         {/* AVAILABILITY SEARCH BAR DOCKED BELOW THE SLIDER */}
-        <div className="mt-8">
+        <div id="booking" className="mt-8 scroll-mt-28">
           <BookingSearchBar />
         </div>
 

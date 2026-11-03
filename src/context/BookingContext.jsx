@@ -35,6 +35,14 @@ export const BookingProvider = ({ children }) => {
     roomType: 'all'
   });
 
+  // Dining search parameters for dinner table reservation
+  const [diningSearchParams, setDiningSearchParams] = useState({
+    venueId: '',
+    date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    timeSlot: '19:30',
+    guests: 2
+  });
+
   // Modal & Mode states
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingMode, setBookingMode] = useState('stay'); // 'stay' | 'dining'
@@ -200,21 +208,30 @@ export const BookingProvider = ({ children }) => {
 
   // --- MODAL CONTROLS ---
 
-  const openBookingModal = (item = null, mode = 'stay') => {
+  const openBookingModal = (item = null, mode = 'stay', initialParams = null) => {
     const isDining = mode === 'dining' || item?.tables || item?.accolade || (item?.id && item.id.startsWith('dining-'));
     if (isDining) {
       setBookingMode('dining');
+      if (initialParams) {
+        setDiningSearchParams(prev => ({ ...prev, ...initialParams }));
+      }
       setSelectedVenue(item || diningVenues[0] || initialDiningVenues[0] || null);
-      setSelectedTableNumber(null);
+      setSelectedTableNumber(initialParams?.tableNumber || null);
     } else {
       setBookingMode('stay');
+      if (initialParams) {
+        setSearchParams(prev => ({ ...prev, ...initialParams }));
+      }
       setSelectedRoom(item || rooms[0] || initialRooms[0] || null);
     }
     setIsBookingModalOpen(true);
   };
 
-  const openDiningModal = (venue = null, tableNumber = null) => {
+  const openDiningModal = (venue = null, tableNumber = null, initialParams = null) => {
     setBookingMode('dining');
+    if (initialParams) {
+      setDiningSearchParams(prev => ({ ...prev, ...initialParams }));
+    }
     setSelectedVenue(venue || diningVenues[0] || initialDiningVenues[0] || null);
     setSelectedTableNumber(tableNumber || null);
     setIsBookingModalOpen(true);
@@ -422,6 +439,8 @@ export const BookingProvider = ({ children }) => {
       isLoading,
       searchParams,
       setSearchParams,
+      diningSearchParams,
+      setDiningSearchParams,
       bookingMode,
       setBookingMode,
       isBookingModalOpen,
