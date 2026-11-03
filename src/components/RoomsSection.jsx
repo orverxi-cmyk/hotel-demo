@@ -6,7 +6,15 @@ import { useTheme } from '../context/ThemeContext';
 import { RoomCard } from './RoomCard';
 import { RoomDetailModal } from './RoomDetailModal';
 import { Sparkles, SlidersHorizontal } from 'lucide-react';
-import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { 
+  initialSectionHeaders, 
+  getCachedSectionHeaders, 
+  subscribeSectionHeaders,
+  initialNavMenus,
+  getCachedNavMenus,
+  subscribeNavMenus,
+  isSectionHiddenByMenu 
+} from '../services/storageService';
 
 export const RoomsSection = () => {
   const { rooms, searchParams, setSearchParams } = useBooking();
@@ -16,6 +24,7 @@ export const RoomsSection = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [inspectingRoom, setInspectingRoom] = useState(null);
   const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.rooms);
+  const [navMenus, setNavMenus] = useState(initialNavMenus);
 
   useEffect(() => {
     const cached = getCachedSectionHeaders();
@@ -25,7 +34,17 @@ export const RoomsSection = () => {
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.rooms) setSectionHeaders(all.rooms);
     });
-    return () => unsub();
+
+    const cachedNav = getCachedNavMenus();
+    if (cachedNav && Array.isArray(cachedNav)) setNavMenus(cachedNav);
+    const unsubNav = subscribeNavMenus((allNav) => {
+      if (allNav && Array.isArray(allNav)) setNavMenus(allNav);
+    });
+
+    return () => {
+      unsub();
+      unsubNav();
+    };
   }, []);
 
   // Filter and sort rooms
@@ -59,7 +78,7 @@ export const RoomsSection = () => {
 
   const categories = ['All', 'Villa', 'Suite', 'Deluxe'];
 
-  if (sectionHeaders?.visible === false) return null;
+  if (sectionHeaders?.visible === false || isSectionHiddenByMenu('rooms', navMenus)) return null;
 
   return (
     <section id="rooms" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">

@@ -914,6 +914,31 @@ export const resetNavMenus = async () => {
   return await saveNavMenus(initialNavMenus);
 };
 
+// Maps a navigation menu item to its corresponding homepage landing section key
+export const getRelatedSectionKey = (menu) => {
+  if (!menu) return null;
+  const target = (menu.targetId || '').toLowerCase().trim();
+  const href = (menu.href || '').toLowerCase().trim();
+  const id = (menu.id || '').toLowerCase().trim();
+  const label = (menu.label || '').toLowerCase().trim();
+
+  if (target === 'rooms' || href.includes('#rooms') || id.includes('rooms') || label.includes('room') || label.includes('suite')) return 'rooms';
+  if (target === 'amenities' || href.includes('#amenities') || id.includes('amenities') || label.includes('amenit') || label.includes('experience') || label.includes('spa')) return 'amenities';
+  if (target === 'dining' || href.includes('#dining') || id.includes('dining') || label.includes('dining') || label.includes('gastronomy') || label.includes('restaurant')) return 'dining';
+  if (target === 'discover' || href.includes('discover') || id.includes('discover') || label.includes('discover') || label.includes('article') || label.includes('chronicle')) return 'discover';
+  if (target === 'gallery' || href.includes('#gallery') || id.includes('gallery') || label.includes('gallery') || label.includes('visual')) return 'gallery';
+  if (target === 'reviews' || href.includes('#reviews') || id.includes('reviews') || label.includes('review') || label.includes('testimonial') || label.includes('acclaim')) return 'reviews';
+  if (target === 'contact' || target === 'location' || href.includes('#contact') || href.includes('#location') || id.includes('contact') || id.includes('location') || label.includes('contact') || label.includes('location') || label.includes('concierge')) return 'location';
+
+  return null;
+};
+
+// Returns true if any active navigation menu corresponding to the given section is hidden
+export const isSectionHiddenByMenu = (sectionKey, navMenusList) => {
+  if (!sectionKey || !Array.isArray(navMenusList)) return false;
+  return navMenusList.some((m) => getRelatedSectionKey(m) === sectionKey && m.visible === false);
+};
+
 // --- DINING MENUS & VENUES MANAGEMENT ---
 export const getCachedDiningVenues = () => {
   if (!isClient) return initialDiningVenues;

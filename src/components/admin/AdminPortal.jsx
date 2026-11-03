@@ -90,7 +90,9 @@ import {
   getCachedSectionHeaders,
   subscribeSectionHeaders,
   saveSectionHeaders,
-  resetSectionHeaders
+  resetSectionHeaders,
+  getRelatedSectionKey,
+  isSectionHiddenByMenu
 } from '../../services/storageService';
 import { adjustLightness } from '../../utils/colorUtils';
 
@@ -718,17 +720,42 @@ export const AdminPortal = ({
   };
 
   const handleToggleNavVisibility = async (menuId) => {
+    let target = null;
+    let nextVisibility = true;
+
     const updated = navMenus.map(m => {
       if (m.id === menuId) {
         const isCurrentlyVisible = m.visible !== false;
-        return { ...m, visible: !isCurrentlyVisible };
+        nextVisibility = !isCurrentlyVisible;
+        target = { ...m, visible: nextVisibility };
+        return target;
       }
       return m;
     });
+
     setNavMenus(updated);
     await saveNavMenus(updated);
-    const target = updated.find(m => m.id === menuId);
-    showNotification(`Menu "${target?.label || 'Item'}" is now ${target?.visible ? 'visible' : 'hidden'} on the website.`);
+
+    // If a menu is hidden or shown, automatically sync its related section too!
+    const relatedSecKey = getRelatedSectionKey(target);
+    if (relatedSecKey) {
+      const updatedHeaders = {
+        ...sectionHeadersData,
+        [relatedSecKey]: {
+          ...(sectionHeadersData?.[relatedSecKey] || {}),
+          visible: nextVisibility
+        }
+      };
+      setSectionHeadersData(updatedHeaders);
+      await saveSectionHeaders(updatedHeaders);
+
+      const secConfig = SECTION_CONFIGS.find(c => c.key === relatedSecKey);
+      showNotification(
+        `Menu "${target?.label || 'Item'}" and related section "${secConfig?.name || 'Section'}" are now ${nextVisibility ? 'visible' : 'hidden'} on the website.`
+      );
+    } else {
+      showNotification(`Menu "${target?.label || 'Item'}" is now ${nextVisibility ? 'visible' : 'hidden'} on the website.`);
+    }
   };
 
   const handleMoveNavMenu = async (index, direction) => {
@@ -2373,10 +2400,10 @@ export const AdminPortal = ({
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-800 text-amber-300 border border-slate-700">
                                 {cfg.badge}
                               </span>
-                              {secData.visible === false && (
+                              {(secData.visible === false || isSectionHiddenByMenu(cfg.key, navMenus)) && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-rose-950 text-rose-300 border border-rose-500/30 flex items-center gap-1">
                                   <EyeOff className="w-3 h-3 text-rose-400" />
-                                  Hidden from Site
+                                  <span>Hidden {isSectionHiddenByMenu(cfg.key, navMenus) ? '(via Menu)' : 'from Site'}</span>
                                 </span>
                               )}
                             </div>
@@ -2391,7 +2418,7 @@ export const AdminPortal = ({
                           <button
                             type="button"
                             onClick={async () => {
-                              const isVis = secData.visible !== false;
+                              const isVis = secData.visible !== false && !isSectionHiddenByMenu(cfg.key, navMenus);
                               const updatedVisible = !isVis;
                               handleHeaderFieldChange(cfg.key, 'visible', updatedVisible);
                               const updated = {
@@ -2403,16 +2430,35 @@ export const AdminPortal = ({
                               };
                               setSectionHeadersData(updated);
                               await saveSectionHeaders(updated);
-                              showNotification(`Section "${cfg.name}" is now ${updatedVisible ? 'visible' : 'hidden'} on the website.`);
+
+                              // Also synchronize related navbar menu!
+                              let matchedMenu = null;
+                              const updatedNav = navMenus.map(m => {
+                                if (getRelatedSectionKey(m) === cfg.key) {
+                                  matchedMenu = m;
+                                  return { ...m, visible: updatedVisible };
+                                }
+                                return m;
+                              });
+
+                              if (matchedMenu) {
+                                setNavMenus(updatedNav);
+                                await saveNavMenus(updatedNav);
+                                showNotification(
+                                  `Section "${cfg.name}" and navbar menu "${matchedMenu.label}" are now ${updatedVisible ? 'visible' : 'hidden'} on the website.`
+                                );
+                              } else {
+                                showNotification(`Section "${cfg.name}" is now ${updatedVisible ? 'visible' : 'hidden'} on the website.`);
+                              }
                             }}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1.5 transition-all shadow-sm ${
-                              secData.visible !== false
+                              (secData.visible !== false && !isSectionHiddenByMenu(cfg.key, navMenus))
                                 ? 'bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border-emerald-500/40'
                                 : 'bg-rose-950/80 hover:bg-rose-900 text-rose-300 border-rose-500/40'
                             }`}
-                            title={secData.visible !== false ? "Click to hide this entire section on the live website" : "Click to display this section on the live website"}
+                            title={(secData.visible !== false && !isSectionHiddenByMenu(cfg.key, navMenus)) ? "Click to hide this entire section on the live website" : "Click to display this section on the live website"}
                           >
-                            {secData.visible !== false ? (
+                            {(secData.visible !== false && !isSectionHiddenByMenu(cfg.key, navMenus)) ? (
                               <>
                                 <Eye className="w-3.5 h-3.5 text-emerald-400" />
                                 <span>Visible on Site</span>

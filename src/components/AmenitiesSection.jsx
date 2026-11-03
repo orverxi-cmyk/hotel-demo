@@ -4,11 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { hotelAmenities } from '../data/initialData';
 import { Sparkles, Utensils, Waves, Anchor, Wine, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useBooking } from '../context/BookingContext';
-import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { 
+  initialSectionHeaders, 
+  getCachedSectionHeaders, 
+  subscribeSectionHeaders,
+  initialNavMenus,
+  getCachedNavMenus,
+  subscribeNavMenus,
+  isSectionHiddenByMenu 
+} from '../services/storageService';
 
 export const AmenitiesSection = () => {
   const { openBookingModal } = useBooking();
   const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.amenities);
+  const [navMenus, setNavMenus] = useState(initialNavMenus);
 
   useEffect(() => {
     const cached = getCachedSectionHeaders();
@@ -18,7 +27,17 @@ export const AmenitiesSection = () => {
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.amenities) setSectionHeaders(all.amenities);
     });
-    return () => unsub();
+
+    const cachedNav = getCachedNavMenus();
+    if (cachedNav && Array.isArray(cachedNav)) setNavMenus(cachedNav);
+    const unsubNav = subscribeNavMenus((allNav) => {
+      if (allNav && Array.isArray(allNav)) setNavMenus(allNav);
+    });
+
+    return () => {
+      unsub();
+      unsubNav();
+    };
   }, []);
 
   const iconMap = {
@@ -30,7 +49,7 @@ export const AmenitiesSection = () => {
     ShieldCheck: ShieldCheck
   };
 
-  if (sectionHeaders?.visible === false) return null;
+  if (sectionHeaders?.visible === false || isSectionHiddenByMenu('amenities', navMenus)) return null;
 
   return (
     <section id="amenities" className="py-24 bg-stone-100/70 border-y border-stone-200">

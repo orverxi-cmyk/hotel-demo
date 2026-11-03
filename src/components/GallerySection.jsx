@@ -2,12 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Eye, Maximize2 } from 'lucide-react';
-import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { 
+  initialSectionHeaders, 
+  getCachedSectionHeaders, 
+  subscribeSectionHeaders,
+  initialNavMenus,
+  getCachedNavMenus,
+  subscribeNavMenus,
+  isSectionHiddenByMenu 
+} from '../services/storageService';
 
 export const GallerySection = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedImage, setSelectedImage] = useState(null);
   const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.gallery);
+  const [navMenus, setNavMenus] = useState(initialNavMenus);
 
   useEffect(() => {
     const cached = getCachedSectionHeaders();
@@ -17,7 +26,17 @@ export const GallerySection = () => {
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.gallery) setSectionHeaders(all.gallery);
     });
-    return () => unsub();
+
+    const cachedNav = getCachedNavMenus();
+    if (cachedNav && Array.isArray(cachedNav)) setNavMenus(cachedNav);
+    const unsubNav = subscribeNavMenus((allNav) => {
+      if (allNav && Array.isArray(allNav)) setNavMenus(allNav);
+    });
+
+    return () => {
+      unsub();
+      unsubNav();
+    };
   }, []);
 
   const images = [
@@ -59,7 +78,7 @@ export const GallerySection = () => {
 
   const filters = ['All', 'Suites', 'Grounds', 'Gastronomy', 'Wellness'];
 
-  if (sectionHeaders?.visible === false) return null;
+  if (sectionHeaders?.visible === false || isSectionHiddenByMenu('gallery', navMenus)) return null;
 
   return (
     <section id="gallery" className="py-24 bg-stone-900 text-white">

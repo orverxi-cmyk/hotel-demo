@@ -3,10 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { guestReviews } from '../data/initialData';
 import { Star, CheckCircle, Quote } from 'lucide-react';
-import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { 
+  initialSectionHeaders, 
+  getCachedSectionHeaders, 
+  subscribeSectionHeaders,
+  initialNavMenus,
+  getCachedNavMenus,
+  subscribeNavMenus,
+  isSectionHiddenByMenu 
+} from '../services/storageService';
 
 export const ReviewsSection = () => {
   const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.reviews);
+  const [navMenus, setNavMenus] = useState(initialNavMenus);
 
   useEffect(() => {
     const cached = getCachedSectionHeaders();
@@ -16,10 +25,20 @@ export const ReviewsSection = () => {
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.reviews) setSectionHeaders(all.reviews);
     });
-    return () => unsub();
+
+    const cachedNav = getCachedNavMenus();
+    if (cachedNav && Array.isArray(cachedNav)) setNavMenus(cachedNav);
+    const unsubNav = subscribeNavMenus((allNav) => {
+      if (allNav && Array.isArray(allNav)) setNavMenus(allNav);
+    });
+
+    return () => {
+      unsub();
+      unsubNav();
+    };
   }, []);
 
-  if (sectionHeaders?.visible === false) return null;
+  if (sectionHeaders?.visible === false || isSectionHiddenByMenu('reviews', navMenus)) return null;
 
   return (
     <section id="reviews" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">

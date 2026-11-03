@@ -16,13 +16,18 @@ import {
   initialArticles,
   initialSectionHeaders,
   getCachedSectionHeaders,
-  subscribeSectionHeaders
+  subscribeSectionHeaders,
+  initialNavMenus,
+  getCachedNavMenus,
+  subscribeNavMenus,
+  isSectionHiddenByMenu
 } from '../services/storageService';
 
 export const DiscoverSection = ({ onSelectArticle }) => {
   const [articles, setArticles] = useState(initialArticles);
   const [mounted, setMounted] = useState(false);
   const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.discover);
+  const [navMenus, setNavMenus] = useState(initialNavMenus);
 
   useEffect(() => {
     // 1. Immediately hydrate with cached articles (0 ms flash-free)
@@ -33,6 +38,10 @@ export const DiscoverSection = ({ onSelectArticle }) => {
     const cachedHeaders = getCachedSectionHeaders();
     if (cachedHeaders && cachedHeaders.discover) {
       setSectionHeaders(cachedHeaders.discover);
+    }
+    const cachedNav = getCachedNavMenus();
+    if (cachedNav && Array.isArray(cachedNav)) {
+      setNavMenus(cachedNav);
     }
     setMounted(true);
 
@@ -47,15 +56,20 @@ export const DiscoverSection = ({ onSelectArticle }) => {
       if (all && all.discover) setSectionHeaders(all.discover);
     });
 
+    const unsubscribeNav = subscribeNavMenus((allNav) => {
+      if (allNav && Array.isArray(allNav)) setNavMenus(allNav);
+    });
+
     return () => {
       unsubscribe();
       unsubscribeHeaders();
+      unsubscribeNav();
     };
   }, []);
 
   const visibleArticles = articles.filter(a => a.visible !== false);
 
-  if (sectionHeaders?.visible === false) return null;
+  if (sectionHeaders?.visible === false || isSectionHiddenByMenu('discover', navMenus)) return null;
 
   return (
     <section id="discover" className="py-24 bg-slate-950 text-white relative overflow-hidden">

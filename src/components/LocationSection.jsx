@@ -3,13 +3,22 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { MapPin, Phone, Mail, Clock, Send, Plane, Compass, CheckCircle } from 'lucide-react';
-import { initialSectionHeaders, getCachedSectionHeaders, subscribeSectionHeaders } from '../services/storageService';
+import { 
+  initialSectionHeaders, 
+  getCachedSectionHeaders, 
+  subscribeSectionHeaders,
+  initialNavMenus,
+  getCachedNavMenus,
+  subscribeNavMenus,
+  isSectionHiddenByMenu 
+} from '../services/storageService';
 
 export const LocationSection = () => {
   const { theme } = useTheme();
   const [inquirySent, setInquirySent] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [sectionHeaders, setSectionHeaders] = useState(initialSectionHeaders.location);
+  const [navMenus, setNavMenus] = useState(initialNavMenus);
 
   useEffect(() => {
     const cached = getCachedSectionHeaders();
@@ -19,7 +28,17 @@ export const LocationSection = () => {
     const unsub = subscribeSectionHeaders((all) => {
       if (all && all.location) setSectionHeaders(all.location);
     });
-    return () => unsub();
+
+    const cachedNav = getCachedNavMenus();
+    if (cachedNav && Array.isArray(cachedNav)) setNavMenus(cachedNav);
+    const unsubNav = subscribeNavMenus((allNav) => {
+      if (allNav && Array.isArray(allNav)) setNavMenus(allNav);
+    });
+
+    return () => {
+      unsub();
+      unsubNav();
+    };
   }, []);
 
   const handleSubmit = (e) => {
@@ -31,7 +50,7 @@ export const LocationSection = () => {
     }, 4000);
   };
 
-  if (sectionHeaders?.visible === false) return null;
+  if (sectionHeaders?.visible === false || isSectionHiddenByMenu('location', navMenus)) return null;
 
   return (
     <section id="contact" className="py-24 bg-stone-100/70 border-t border-stone-200">
