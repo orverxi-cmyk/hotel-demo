@@ -98,9 +98,20 @@ export const Hero = ({ onSelectArticleById }) => {
   const heroOverlayOpacity = theme?.heroOverlayOpacity !== undefined ? Number(theme.heroOverlayOpacity) : 0.65;
   const heroBgBlur = theme?.heroBgBlur ? Number(theme.heroBgBlur) : 0;
 
+  const isLightBg = (() => {
+    if (!heroBgColor || typeof heroBgColor !== 'string') return false;
+    const c = heroBgColor.replace('#', '');
+    if (c.length !== 6) return false;
+    const r = parseInt(c.substr(0, 2), 16);
+    const g = parseInt(c.substr(2, 2), 16);
+    const b = parseInt(c.substr(4, 2), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return yiq >= 160;
+  })();
+
   return (
     <section 
-      className="relative pt-28 pb-16 text-white overflow-hidden transition-colors duration-500"
+      className={`relative pt-28 pb-16 overflow-hidden transition-colors duration-500 ${isLightBg ? 'text-slate-900' : 'text-white'}`}
       style={{ backgroundColor: heroBgColor }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -117,24 +128,30 @@ export const Hero = ({ onSelectArticleById }) => {
         />
       ) : null}
 
-      {/* Customizable Darkness Overlay for Contrast & Readability */}
-      <div 
-        className="absolute inset-0 transition-opacity duration-500 pointer-events-none"
-        style={{ 
-          backgroundColor: heroBgColor,
-          opacity: heroImage ? heroOverlayOpacity : 0
-        }}
-      />
+      {/* Customizable Darkness Overlay for Contrast & Readability when photo is active */}
+      {heroImage ? (
+        <div 
+          className="absolute inset-0 transition-opacity duration-500 pointer-events-none"
+          style={{ 
+            backgroundColor: heroBgColor,
+            opacity: heroOverlayOpacity
+          }}
+        />
+      ) : null}
 
       {/* Ambient background glow */}
-      <div 
-        className="absolute top-0 right-1/4 w-[600px] h-[600px] rounded-full blur-[180px] opacity-20 pointer-events-none"
-        style={{ backgroundColor: 'var(--color-secondary)' }}
-      />
-      <div 
-        className="absolute bottom-10 left-10 w-[500px] h-[500px] rounded-full blur-[160px] opacity-15 pointer-events-none"
-        style={{ backgroundColor: 'var(--color-primary)' }}
-      />
+      {!isLightBg && (
+        <>
+          <div 
+            className="absolute top-0 right-1/4 w-[600px] h-[600px] rounded-full blur-[180px] opacity-20 pointer-events-none"
+            style={{ backgroundColor: 'var(--color-secondary)' }}
+          />
+          <div 
+            className="absolute bottom-10 left-10 w-[500px] h-[500px] rounded-full blur-[160px] opacity-15 pointer-events-none"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          />
+        </>
+      )}
 
       <div className="w-full px-3 sm:px-6 lg:px-8 relative z-10">
 
@@ -308,17 +325,17 @@ export const Hero = ({ onSelectArticleById }) => {
         </div>
 
         {/* Trust Badges */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-stone-400 font-medium">
+        <div className={`mt-6 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-medium ${isLightBg ? 'text-stone-600' : 'text-stone-400'}`}>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-amber-300" />
+            <ShieldCheck className={`w-4 h-4 ${isLightBg ? 'text-amber-600' : 'text-amber-300'}`} />
             <span>Best Direct Rate Guaranteed</span>
           </div>
           <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 text-amber-300" />
+            <Award className={`w-4 h-4 ${isLightBg ? 'text-amber-600' : 'text-amber-300'}`} />
             <span>2026 World Luxury Hotel Award</span>
           </div>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-300" />
+            <Sparkles className={`w-4 h-4 ${isLightBg ? 'text-amber-600' : 'text-amber-300'}`} />
             <span>Flexible Free Cancellation up to 48h</span>
           </div>
         </div>

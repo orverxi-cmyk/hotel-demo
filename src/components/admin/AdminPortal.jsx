@@ -2190,7 +2190,7 @@ export const AdminPortal = ({
 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-slate-300">Canvas Base Color</label>
+                        <label className="text-xs font-semibold text-slate-300">Slider Plain Background Color</label>
                         <span className="text-xs font-mono text-amber-300 font-bold">{themeForm.heroBgColor || '#020617'}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -2204,7 +2204,7 @@ export const AdminPortal = ({
                           }}
                           className="w-8 h-8 rounded-lg cursor-pointer bg-slate-950 border border-slate-700 p-0.5 shrink-0"
                         />
-                        <span className="text-xs font-mono text-slate-400">Tint behind photo / solid canvas</span>
+                        <span className="text-xs font-mono text-slate-400">Sets the plain solid color behind the hero slider</span>
                       </div>
                     </div>
                   </div>
@@ -3263,8 +3263,12 @@ export const AdminPortal = ({
                       <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
                         Section Canvas & Backdrop
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                        {themeForm.heroImage ? 'Custom Photo Backdrop' : 'Solid Luxury Canvas'}
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
+                        !themeForm.heroImage 
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                          : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                      }`}>
+                        {!themeForm.heroImage ? '● Plain Color Background Active' : 'Custom Photo Backdrop Active'}
                       </span>
                     </div>
                     <h4 className="text-base font-bold text-white font-serif flex items-center gap-2">
@@ -3272,7 +3276,7 @@ export const AdminPortal = ({
                       <span>Hero Section Background</span>
                     </h4>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Set the background photo or luxury color that sits behind the hero slider, right-side cards, and availability bar.
+                      Configure a plain background color or an optional photo backdrop that sits behind the hero slider.
                     </p>
                   </div>
 
@@ -3294,27 +3298,120 @@ export const AdminPortal = ({
                   {/* Left Column: Background Controls (8 cols) */}
                   <div className="lg:col-span-8 space-y-5">
                     
-                    {/* 1. Background Photo Upload & URL */}
+                    {/* 1. PLAIN / SOLID BACKGROUND COLOR (PRIMARY) */}
                     <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-white flex items-center gap-2">
-                          <span>Hero Background Photo</span>
-                          {themeForm.heroImage && (
-                            <span className="text-[10px] font-mono text-emerald-400">● Active</span>
-                          )}
-                        </label>
+                        <div>
+                          <label className="text-xs font-semibold text-white flex items-center gap-2">
+                            <span>Plain Slider Background Color</span>
+                            {!themeForm.heroImage && (
+                              <span className="text-[10px] font-mono text-emerald-400">● Active</span>
+                            )}
+                          </label>
+                          <p className="text-[10px] text-slate-400">Select any luxury color for the slider section background</p>
+                        </div>
+
                         {themeForm.heroImage && isSuperAdmin && (
                           <button
                             type="button"
                             onClick={async () => {
                               setThemeForm(prev => ({ ...prev, heroImage: '' }));
                               await updateTheme({ heroImage: '' });
-                              showNotification("Background photo cleared. Now using solid background color.");
+                              showNotification("Switched to plain background color. Photo backdrop removed!");
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 text-[11px] font-semibold transition-all flex items-center gap-1.5"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Use Plain Color (Remove Photo)</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        {/* Direct Color Picker & Hex Code Input */}
+                        <div className="flex items-center gap-2.5">
+                          <input
+                            type="color"
+                            value={themeForm.heroBgColor || '#020617'}
+                            onChange={(e) => {
+                              const color = e.target.value;
+                              setThemeForm(prev => ({ ...prev, heroBgColor: color }));
+                              updateTheme({ heroBgColor: color });
+                            }}
+                            className="w-11 h-11 rounded-xl cursor-pointer bg-slate-950 border border-slate-700 p-0.5 shrink-0"
+                            title="Choose background color"
+                          />
+                          <input
+                            type="text"
+                            value={themeForm.heroBgColor || '#020617'}
+                            onChange={(e) => {
+                              const color = e.target.value;
+                              setThemeForm(prev => ({ ...prev, heroBgColor: color }));
+                              updateTheme({ heroBgColor: color });
+                            }}
+                            placeholder="#020617"
+                            className="w-28 bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white font-mono uppercase focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+
+                        {/* Luxury Palette Presets */}
+                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                          {[
+                            { name: 'Obsidian Slate', hex: '#020617' },
+                            { name: 'Midnight Navy', hex: '#0b132b' },
+                            { name: 'Charcoal Dark', hex: '#0f172a' },
+                            { name: 'Deep Emerald', hex: '#081b15' },
+                            { name: 'Velvet Bordeaux', hex: '#1a0a10' },
+                            { name: 'Warm Espresso', hex: '#19120e' },
+                            { name: 'Sand & Cream', hex: '#f5f0e8' },
+                            { name: 'Pure White', hex: '#ffffff' }
+                          ].map((p) => (
+                            <button
+                              key={p.hex}
+                              type="button"
+                              onClick={() => {
+                                setThemeForm(prev => ({ ...prev, heroBgColor: p.hex }));
+                                updateTheme({ heroBgColor: p.hex });
+                              }}
+                              className={`p-1.5 rounded-lg border text-[10px] flex items-center gap-1.5 transition-all ${
+                                (themeForm.heroBgColor || '#020617').toLowerCase() === p.hex.toLowerCase()
+                                  ? 'border-amber-400 bg-slate-800 text-white font-semibold'
+                                  : 'border-slate-800 bg-slate-950 hover:bg-slate-800 text-stone-400'
+                              }`}
+                            >
+                              <span className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0" style={{ backgroundColor: p.hex }} />
+                              <span className="truncate">{p.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. OPTIONAL PHOTO BACKDROP (SECONDARY) */}
+                    <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-xs font-semibold text-white flex items-center gap-2">
+                            <span>Optional Photo Backdrop</span>
+                            {themeForm.heroImage && (
+                              <span className="text-[10px] font-mono text-emerald-400">● Active</span>
+                            )}
+                          </label>
+                          <p className="text-[10px] text-slate-400">Leave empty to keep the clean plain color background</p>
+                        </div>
+
+                        {themeForm.heroImage && isSuperAdmin && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setThemeForm(prev => ({ ...prev, heroImage: '' }));
+                              await updateTheme({ heroImage: '' });
+                              showNotification("Background photo removed. Plain color background is now active.");
                             }}
                             className="text-[10px] text-rose-400 hover:text-rose-300 font-mono transition-colors flex items-center gap-1"
                           >
                             <Trash2 className="w-3 h-3" />
-                            <span>Remove Photo (Use Color Only)</span>
+                            <span>Remove Photo</span>
                           </button>
                         )}
                       </div>
@@ -3350,150 +3447,73 @@ export const AdminPortal = ({
                               setThemeForm(prev => ({ ...prev, heroImage: val }));
                               updateTheme({ heroImage: val });
                             }}
-                            placeholder="Or paste image URL (https://images.unsplash.com/...)"
+                            placeholder="Optional image URL (e.g. https://...)"
                             className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-amber-400 placeholder:text-slate-600"
                           />
                         </div>
                       </div>
 
-                      {/* Photo Preset Recommendations */}
-                      <div className="pt-2 border-t border-slate-800/80">
-                        <span className="text-[10px] text-slate-500 font-mono block mb-1.5">Curated Luxury Backdrops:</span>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
-                          {[
-                            { name: 'Mediterranean Estate', url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=2000&q=80' },
-                            { name: 'Cliffside Infinity Pool', url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=2000&q=80' },
-                            { name: 'Sunset Ocean Terrace', url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=2000&q=80' },
-                            { name: 'Alpine Botanical Haven', url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=2000&q=80' }
-                          ].map((rec) => (
-                            <button
-                              key={rec.name}
-                              type="button"
-                              onClick={async () => {
-                                setThemeForm(prev => ({ ...prev, heroImage: rec.url }));
-                                await updateTheme({ heroImage: rec.url });
-                                showNotification(`Background set to "${rec.name}"!`);
+                      {/* Photo Overlays & Controls (Only when photo is present) */}
+                      {themeForm.heroImage && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-800/80">
+                          {/* Darkness Overlay */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] font-semibold text-white">Darkness Overlay</label>
+                              <span className="text-[11px] font-mono font-bold text-amber-400">
+                                {Math.round((themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65) * 100)}%
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="0.95"
+                              step="0.05"
+                              value={themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                setThemeForm(prev => ({ ...prev, heroOverlayOpacity: val }));
+                                updateTheme({ heroOverlayOpacity: val });
                               }}
-                              className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-stone-300 text-left truncate transition-all"
-                            >
-                              {rec.name}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                              className="w-full accent-amber-400 cursor-pointer"
+                            />
+                          </div>
 
-                    {/* 2. Darkness Overlay Opacity & Blur Sliders */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Darkness Overlay */}
-                      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-semibold text-white">Darkness Overlay</label>
-                          <span className="text-xs font-mono font-bold text-amber-400">
-                            {Math.round((themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65) * 100)}%
-                          </span>
+                          {/* Backdrop Blur */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] font-semibold text-white">Backdrop Blur</label>
+                              <span className="text-[11px] font-mono text-slate-400">
+                                {(themeForm.heroBgBlur || 0) === 0 ? 'Sharp (0px)' : `${themeForm.heroBgBlur}px`}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {[
+                                { label: 'Sharp', val: 0 },
+                                { label: 'Subtle', val: 3 },
+                                { label: 'Soft', val: 8 }
+                              ].map((opt) => (
+                                <button
+                                  key={opt.val}
+                                  type="button"
+                                  onClick={() => {
+                                    setThemeForm(prev => ({ ...prev, heroBgBlur: opt.val }));
+                                    updateTheme({ heroBgBlur: opt.val });
+                                  }}
+                                  className={`py-1 rounded text-[11px] font-mono transition-all border ${
+                                    (themeForm.heroBgBlur || 0) === opt.val
+                                      ? 'bg-amber-400 text-slate-950 font-bold border-amber-400'
+                                      : 'bg-slate-950 text-slate-300 border-slate-700/80'
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="0.95"
-                          step="0.05"
-                          value={themeForm.heroOverlayOpacity !== undefined ? Number(themeForm.heroOverlayOpacity) : 0.65}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value);
-                            setThemeForm(prev => ({ ...prev, heroOverlayOpacity: val }));
-                            updateTheme({ heroOverlayOpacity: val });
-                          }}
-                          className="w-full accent-amber-400 cursor-pointer"
-                        />
-                        <p className="text-[10px] text-slate-400">
-                          {themeForm.heroOverlayOpacity >= 0.65 ? 'Optimal contrast for white text & cards' : 'Lighter backdrop (photo more visible)'}
-                        </p>
-                      </div>
+                      )}
 
-                      {/* Backdrop Blur */}
-                      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-semibold text-white">Backdrop Softness / Blur</label>
-                          <span className="text-xs font-mono text-slate-400">
-                            {(themeForm.heroBgBlur || 0) === 0 ? 'Sharp (0px)' : `${themeForm.heroBgBlur}px`}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-1.5 pt-1">
-                          {[
-                            { label: 'Sharp', val: 0 },
-                            { label: 'Subtle', val: 3 },
-                            { label: 'Soft', val: 8 }
-                          ].map((opt) => (
-                            <button
-                              key={opt.val}
-                              type="button"
-                              onClick={() => {
-                                setThemeForm(prev => ({ ...prev, heroBgBlur: opt.val }));
-                                updateTheme({ heroBgBlur: opt.val });
-                              }}
-                              className={`py-1.5 rounded-lg text-xs font-mono transition-all border ${
-                                (themeForm.heroBgBlur || 0) === opt.val
-                                  ? 'bg-amber-400 text-slate-950 font-bold border-amber-400 shadow-sm'
-                                  : 'bg-slate-950 text-slate-300 border-slate-700/80 hover:bg-slate-800'
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 3. Solid Canvas / Fallback Color */}
-                    <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <label className="text-xs font-semibold text-white">Canvas Color (Base / Fallback)</label>
-                          <p className="text-[10px] text-slate-400">Color shown when no photo is set, or used as the overlay tint</p>
-                        </div>
-                        <span className="text-xs font-mono text-amber-300 font-bold">{themeForm.heroBgColor || '#020617'}</span>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="color"
-                          value={themeForm.heroBgColor || '#020617'}
-                          onChange={(e) => {
-                            const color = e.target.value;
-                            setThemeForm(prev => ({ ...prev, heroBgColor: color }));
-                            updateTheme({ heroBgColor: color });
-                          }}
-                          className="w-10 h-10 rounded-xl cursor-pointer bg-slate-950 border border-slate-700 p-0.5 shrink-0"
-                        />
-                        <div className="flex-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                          {[
-                            { name: 'Slate', hex: '#020617' },
-                            { name: 'Midnight', hex: '#0b132b' },
-                            { name: 'Obsidian', hex: '#090d16' },
-                            { name: 'Forest', hex: '#081b15' },
-                            { name: 'Bordeaux', hex: '#1a0a10' },
-                            { name: 'Espresso', hex: '#19120e' }
-                          ].map((p) => (
-                            <button
-                              key={p.hex}
-                              type="button"
-                              onClick={() => {
-                                setThemeForm(prev => ({ ...prev, heroBgColor: p.hex }));
-                                updateTheme({ heroBgColor: p.hex });
-                              }}
-                              className={`p-1.5 rounded-lg border text-[10px] flex items-center gap-1.5 transition-all ${
-                                (themeForm.heroBgColor || '#020617').toLowerCase() === p.hex.toLowerCase()
-                                  ? 'border-amber-400 bg-slate-800 text-white'
-                                  : 'border-slate-800 bg-slate-950 hover:bg-slate-800 text-stone-400'
-                              }`}
-                            >
-                              <span className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0" style={{ backgroundColor: p.hex }} />
-                              <span className="truncate">{p.name}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
                     </div>
 
                   </div>

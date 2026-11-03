@@ -52,7 +52,14 @@ export const getCachedTheme = () => {
     const cached = localStorage.getItem(LS_THEME_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (parsed && typeof parsed === 'object') return { ...defaultTheme, ...parsed };
+      if (parsed && typeof parsed === 'object') {
+        // If old unsplash demo photo is stored, clear to plain background
+        if (parsed.heroImage && parsed.heroImage.includes('photo-1542314831-068cd1dbfeeb')) {
+          parsed.heroImage = '';
+          try { localStorage.setItem(LS_THEME_KEY, JSON.stringify(parsed)); } catch (_) {}
+        }
+        return { ...defaultTheme, ...parsed };
+      }
     }
   } catch (_) {}
   return defaultTheme;
