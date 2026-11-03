@@ -33,10 +33,30 @@ export const ReviewsSection = () => {
           {sectionHeaders?.title || "Praised by Discerning Travelers"}
         </h2>
         <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="flex text-amber-400">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-5 h-5 fill-amber-400" />
-            ))}
+          <div className="flex text-amber-400 gap-1 items-center">
+            {(() => {
+              const currentStars = sectionHeaders?.stars !== undefined 
+                ? Number(sectionHeaders.stars) 
+                : (parseFloat(sectionHeaders?.ratingScore) || 5);
+
+              return [1, 2, 3, 4, 5].map((starIndex) => {
+                const isFilled = starIndex <= Math.floor(currentStars);
+                const isHalf = !isFilled && starIndex <= Math.ceil(currentStars) && currentStars % 1 !== 0;
+
+                return (
+                  <Star 
+                    key={starIndex} 
+                    className={`w-5 h-5 transition-colors ${
+                      isFilled 
+                        ? 'fill-amber-400 text-amber-400' 
+                        : isHalf
+                          ? 'fill-amber-400/50 text-amber-400'
+                          : 'fill-stone-200 text-stone-300'
+                    }`} 
+                  />
+                );
+              });
+            })()}
           </div>
           <span className="font-serif text-xl font-bold text-slate-900 ml-2">
             {sectionHeaders?.ratingScore || "4.98 / 5.0"}

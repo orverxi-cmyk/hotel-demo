@@ -53,7 +53,8 @@ import {
   FileText,
   LayoutTemplate,
   RotateCcw,
-  MapPin
+  MapPin,
+  Star
 } from 'lucide-react';
 import { 
   syncAllContentToFirestore, 
@@ -1101,6 +1102,7 @@ export const AdminPortal = ({
       defaultTitle: 'Praised by Discerning Travelers',
       defaultRatingScore: '4.98 / 5.0',
       defaultRatingCount: '(420+ Verified Residencies)',
+      defaultStars: 5,
       defaultSubtitle: 'Read authentic feedback and impressions from our esteemed international guests.'
     },
     {
@@ -2281,6 +2283,9 @@ export const AdminPortal = ({
                   const currentSubtitle = secData.subtitle ?? cfg.defaultSubtitle;
                   const currentRatingScore = secData.ratingScore ?? cfg.defaultRatingScore ?? '4.98 / 5.0';
                   const currentRatingCount = secData.ratingCount ?? cfg.defaultRatingCount ?? '(420+ Verified Residencies)';
+                  const currentStars = secData.stars !== undefined 
+                    ? Number(secData.stars) 
+                    : (parseFloat(currentRatingScore) || (cfg.defaultStars ?? 5));
 
                   return (
                     <div 
@@ -2374,32 +2379,104 @@ export const AdminPortal = ({
                             />
                           </div>
 
-                          {/* For Reviews: Rating inputs */}
+                          {/* For Reviews: Rating inputs & Star Rating Editor */}
                           {cfg.isReview && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-                              <div>
-                                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-                                  Rating Score
-                                </label>
-                                <input
-                                  type="text"
-                                  value={currentRatingScore}
-                                  onChange={(e) => handleHeaderFieldChange(cfg.key, 'ratingScore', e.target.value)}
-                                  placeholder="4.98 / 5.0"
-                                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono font-bold focus:outline-none focus:border-amber-400"
-                                />
+                            <div className="space-y-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                                    Rating Score
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={currentRatingScore}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      handleHeaderFieldChange(cfg.key, 'ratingScore', val);
+                                      const parsed = parseFloat(val);
+                                      if (!isNaN(parsed) && parsed >= 0.5 && parsed <= 5 && secData.stars === undefined) {
+                                        handleHeaderFieldChange(cfg.key, 'stars', parsed);
+                                      }
+                                    }}
+                                    placeholder="4.98 / 5.0"
+                                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono font-bold focus:outline-none focus:border-amber-400"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                                    Verified Reviews Count
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={currentRatingCount}
+                                    onChange={(e) => handleHeaderFieldChange(cfg.key, 'ratingCount', e.target.value)}
+                                    placeholder="(420+ Verified Residencies)"
+                                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                                  />
+                                </div>
                               </div>
-                              <div>
-                                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-                                  Verified Reviews Count
-                                </label>
-                                <input
-                                  type="text"
-                                  value={currentRatingCount}
-                                  onChange={(e) => handleHeaderFieldChange(cfg.key, 'ratingCount', e.target.value)}
-                                  placeholder="(420+ Verified Residencies)"
-                                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
-                                />
+
+                              {/* Interactive Star Rating Selector */}
+                              <div className="pt-3 border-t border-slate-800/80">
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-xs font-semibold text-slate-200 flex items-center gap-2">
+                                    <span>Star Rating Display</span>
+                                    <span className="text-[11px] font-mono text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                                      {currentStars} / 5 Stars
+                                    </span>
+                                  </label>
+                                  <span className="text-[10px] text-slate-400 font-mono">
+                                    Click stars to select
+                                  </span>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-3">
+                                  {/* Interactive 5-star clickable row */}
+                                  <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-950 border border-slate-800 shadow-inner">
+                                    {[1, 2, 3, 4, 5].map((starNum) => {
+                                      const isFilled = starNum <= Math.floor(currentStars);
+                                      const isHalf = !isFilled && starNum <= Math.ceil(currentStars) && currentStars % 1 !== 0;
+
+                                      return (
+                                        <button
+                                          key={starNum}
+                                          type="button"
+                                          onClick={() => handleHeaderFieldChange(cfg.key, 'stars', starNum)}
+                                          className="p-1 hover:scale-125 active:scale-95 transition-all cursor-pointer group"
+                                          title={`Set to ${starNum} star${starNum > 1 ? 's' : ''}`}
+                                        >
+                                          <Star 
+                                            className={`w-6 h-6 transition-colors ${
+                                              isFilled 
+                                                ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]' 
+                                                : isHalf
+                                                  ? 'text-amber-400 fill-amber-400/50'
+                                                  : 'text-slate-600 fill-slate-800 group-hover:text-amber-400/50'
+                                            }`}
+                                          />
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {/* Quick Preset Buttons */}
+                                  <div className="flex items-center gap-1.5">
+                                    {[5, 4.5, 4, 3, 2, 1].map((sVal) => (
+                                      <button
+                                        key={sVal}
+                                        type="button"
+                                        onClick={() => handleHeaderFieldChange(cfg.key, 'stars', sVal)}
+                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border ${
+                                          currentStars === sVal
+                                            ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-sm'
+                                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
+                                        }`}
+                                      >
+                                        {sVal}★
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -2453,8 +2530,23 @@ export const AdminPortal = ({
 
                               {cfg.isReview && (
                                 <div className="flex items-center gap-3 py-1">
-                                  <div className="flex text-amber-400 text-xs tracking-tighter">
-                                    {'★★★★★'}
+                                  <div className="flex text-amber-400 gap-0.5 items-center">
+                                    {[1, 2, 3, 4, 5].map((starIndex) => {
+                                      const isFilled = starIndex <= Math.floor(currentStars);
+                                      const isHalf = !isFilled && starIndex <= Math.ceil(currentStars) && currentStars % 1 !== 0;
+                                      return (
+                                        <Star 
+                                          key={starIndex} 
+                                          className={`w-4 h-4 ${
+                                            isFilled 
+                                              ? 'text-amber-400 fill-amber-400' 
+                                              : isHalf
+                                                ? 'text-amber-400 fill-amber-400/50'
+                                                : 'text-slate-700 fill-slate-800'
+                                          }`} 
+                                        />
+                                      );
+                                    })}
                                   </div>
                                   <span className="text-xs font-mono font-bold text-amber-300">
                                     {currentRatingScore}

@@ -777,6 +777,7 @@ export const initialSectionHeaders = {
     title: "Praised by Discerning Travelers",
     ratingScore: "4.98 / 5.0",
     ratingCount: "(420+ Verified Residencies)",
+    stars: 5,
     subtitle: "Read authentic feedback and impressions from our esteemed international guests."
   },
   location: {
