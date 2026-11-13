@@ -39,7 +39,7 @@ export default function RoomDetailPage() {
           {/* Back button */}
           <div className="mb-6">
             <Link 
-              href="/#rooms"
+              href="/rooms"
               className="inline-flex items-center gap-2 text-xs font-semibold text-stone-600 hover:text-slate-950 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -174,14 +174,14 @@ export default function RoomDetailPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => openBookingModal(room)}
-                  className="w-full py-4 rounded-full text-xs font-bold uppercase tracking-wider text-slate-950 shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
+                <Link
+                  href={`/book?room=${room.id}`}
+                  className="w-full py-4 rounded-full text-xs font-bold uppercase tracking-wider text-slate-950 shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 cursor-pointer"
                   style={{ backgroundColor: 'var(--color-secondary)' }}
                 >
                   <Calendar className="w-4 h-4" />
                   <span>Reserve This Residence</span>
-                </button>
+                </Link>
               </div>
             </div>
 

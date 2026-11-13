@@ -518,7 +518,7 @@ export const initialSliderSlides = [
     ctaLabel: 'Reserve Residence',
     destinationLink: '/discover?article=article-villas-architecture',
     actionLabel: 'Explore Suites & Villas',
-    actionTarget: '/#rooms'
+    actionTarget: '/rooms'
   },
   {
     id: 'dining',
@@ -531,7 +531,7 @@ export const initialSliderSlides = [
     ctaLabel: 'Book Tasting Table',
     destinationLink: '/discover?article=article-michelin-story',
     actionLabel: 'Explore Dining Venues',
-    actionTarget: '/#dining'
+    actionTarget: '/dining'
   },
   {
     id: 'spa',
@@ -544,7 +544,7 @@ export const initialSliderSlides = [
     ctaLabel: 'Book Spa Experience',
     destinationLink: '/discover?article=article-botanical-spa',
     actionLabel: 'Discover Spa Rituals',
-    actionTarget: '/#amenities'
+    actionTarget: '/amenities'
   },
   {
     id: 'yachts',
@@ -557,7 +557,7 @@ export const initialSliderSlides = [
     ctaLabel: 'Inquire Yacht Charter',
     destinationLink: '/discover?article=article-yacht-expeditions',
     actionLabel: 'View Maritime Charters',
-    actionTarget: '/#amenities'
+    actionTarget: '/amenities'
   },
   {
     id: 'cellar',
@@ -570,7 +570,7 @@ export const initialSliderSlides = [
     ctaLabel: 'Private Tasting Reservation',
     destinationLink: '/discover?article=article-wine-vault',
     actionLabel: 'Explore Wine Vault',
-    actionTarget: '/#dining'
+    actionTarget: '/dining'
   }
 ];
 
@@ -809,13 +809,26 @@ export const uploadMediaFile = async (file, folder = 'slider', onProgress = null
 };
 
 // --- WEBSITE NAVIGATION MENUS MANAGEMENT ---
+const sanitizeNavMenuItems = (items) => {
+  if (!Array.isArray(items)) return items;
+  return items.map(m => {
+    if (m && typeof m.href === 'string' && m.href.includes('/#')) {
+      return {
+        ...m,
+        href: m.href.replace('/#', '/')
+      };
+    }
+    return m;
+  });
+};
+
 export const getCachedNavMenus = () => {
   if (!isClient) return initialNavMenus;
   try {
     const cached = localStorage.getItem(LS_NAV_MENUS_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) return sanitizeNavMenuItems(parsed);
     }
   } catch (_) {}
   return initialNavMenus;
@@ -832,10 +845,11 @@ export const subscribeNavMenus = (callback) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data && Array.isArray(data.items)) {
+          const sanitized = sanitizeNavMenuItems(data.items);
           if (isClient) {
-            localStorage.setItem(LS_NAV_MENUS_KEY, JSON.stringify(data.items));
+            localStorage.setItem(LS_NAV_MENUS_KEY, JSON.stringify(sanitized));
           }
-          callback(data.items);
+          callback(sanitized);
         }
       }
     }, (err) => {

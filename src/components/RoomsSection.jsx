@@ -81,102 +81,113 @@ export const RoomsSection = () => {
   if (sectionHeaders?.visible === false || isSectionHiddenByMenu('rooms', navMenus)) return null;
 
   return (
-    <section id="rooms" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      
-      {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-3"
-          style={{ backgroundColor: 'var(--color-primary-soft)', color: 'var(--color-primary)' }}>
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{sectionHeaders?.eyebrow || "Bespoke Accommodations"}</span>
-        </div>
-        <h2 className="font-serif text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight mb-4">
-          {sectionHeaders?.title || "Sanctuaries of Refined Elegance"}
-        </h2>
-        <p className="text-stone-600 text-base sm:text-lg font-light leading-relaxed">
-          {sectionHeaders?.subtitle || "Each residence is individually curated with natural materials, handcrafted Italian furnishings, and unobstructed Mediterranean vistas."}
-        </p>
-      </div>
+    <section id="rooms" className="py-24 bg-slate-950 text-white relative overflow-hidden">
+      {/* Background ambient accents */}
+      <div 
+        className="absolute top-1/3 -left-32 w-96 h-96 rounded-full blur-[160px] opacity-15 pointer-events-none"
+        style={{ backgroundColor: 'var(--color-primary)' }}
+      />
+      <div 
+        className="absolute bottom-10 -right-32 w-96 h-96 rounded-full blur-[180px] opacity-10 pointer-events-none"
+        style={{ backgroundColor: 'var(--color-secondary)' }}
+      />
 
-      {/* Filter and Control Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-12 pb-6 border-b border-stone-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Category Pills */}
-        <div className="flex flex-wrap items-center gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-5 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
-                selectedCategory === cat
-                  ? 'text-white shadow-md'
-                  : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
-              }`}
-              style={selectedCategory === cat ? { backgroundColor: 'var(--color-primary)' } : {}}
-            >
-              {cat === 'All' ? 'All Residences' : `${cat}s`}
-            </button>
-          ))}
-        </div>
-
-        {/* Sort and Count */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-          <span className="text-xs text-stone-500 font-medium">
-            Showing <strong className="text-slate-900">{filteredRooms.length}</strong> available rooms
-          </span>
-
-          <div className="flex items-center gap-2 bg-stone-100 px-3 py-1.5 rounded-xl border border-stone-200">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-stone-500" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-xs font-medium text-stone-700 focus:outline-none cursor-pointer"
-            >
-              <option value="featured">Signature First</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="capacity">Largest Capacity</option>
-            </select>
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-mono uppercase tracking-widest text-amber-300">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>{sectionHeaders?.eyebrow || "Bespoke Accommodations"}</span>
           </div>
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
+            {sectionHeaders?.title || "Sanctuaries of Refined Elegance"}
+          </h2>
+          <p className="text-stone-300 text-sm sm:text-base font-light leading-relaxed">
+            {sectionHeaders?.subtitle || "Each residence is individually curated with natural materials, handcrafted Italian furnishings, and unobstructed Mediterranean vistas."}
+          </p>
         </div>
+
+        {/* Filter and Control Bar */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-12 pb-6 border-b border-white/10">
+          
+          {/* Category Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-5 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'text-slate-950 font-bold shadow-md scale-105'
+                    : 'bg-white/5 hover:bg-white/15 text-stone-300 border border-white/10'
+                }`}
+                style={selectedCategory === cat ? { backgroundColor: 'var(--color-secondary)' } : {}}
+              >
+                {cat === 'All' ? 'All Residences' : `${cat}s`}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort and Count */}
+          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+            <span className="text-xs text-stone-400 font-medium">
+              Showing <strong className="text-white">{filteredRooms.length}</strong> available rooms
+            </span>
+
+            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-stone-400" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-transparent text-xs font-medium text-stone-200 focus:outline-none cursor-pointer [color-scheme:dark]"
+              >
+                <option value="featured" className="bg-slate-900 text-white">Signature First</option>
+                <option value="price-low" className="bg-slate-900 text-white">Price: Low to High</option>
+                <option value="price-high" className="bg-slate-900 text-white">Price: High to Low</option>
+                <option value="capacity" className="bg-slate-900 text-white">Largest Capacity</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Rooms Grid */}
+        {filteredRooms.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredRooms.map((room) => (
+              <RoomCard
+                key={room.id}
+                room={room}
+                onSelectDetail={(r) => setInspectingRoom(r)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16 bg-slate-900/80 rounded-3xl border border-white/10 p-8 shadow-sm">
+            <p className="text-stone-300 text-lg mb-4">No rooms match your specific guest count or category filter.</p>
+            <button
+              onClick={() => {
+                setSelectedCategory('All');
+                setSearchParams({ ...searchParams, guests: 1 });
+              }}
+              className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-slate-950 shadow-lg cursor-pointer"
+              style={{ backgroundColor: 'var(--color-secondary)' }}
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
+
+        {/* Inspecting Room Modal */}
+        {inspectingRoom && (
+          <RoomDetailModal
+            room={inspectingRoom}
+            onClose={() => setInspectingRoom(null)}
+          />
+        )}
 
       </div>
-
-      {/* Rooms Grid */}
-      {filteredRooms.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredRooms.map((room) => (
-            <RoomCard
-              key={room.id}
-              room={room}
-              onSelectDetail={(r) => setInspectingRoom(r)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16 bg-white rounded-3xl border border-stone-200 p-8 shadow-sm">
-          <p className="text-stone-500 text-lg mb-4">No rooms match your specific guest count or category filter.</p>
-          <button
-            onClick={() => {
-              setSelectedCategory('All');
-              setSearchParams({ ...searchParams, guests: 1 });
-            }}
-            className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-white"
-            style={{ backgroundColor: 'var(--color-primary)' }}
-          >
-            Reset Filters
-          </button>
-        </div>
-      )}
-
-      {/* Inspecting Room Modal */}
-      {inspectingRoom && (
-        <RoomDetailModal
-          room={inspectingRoom}
-          onClose={() => setInspectingRoom(null)}
-        />
-      )}
-
     </section>
   );
 };

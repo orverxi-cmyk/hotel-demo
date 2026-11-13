@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
 import { X, Users, Maximize2, Bed, Check, Sparkles, Calendar, ShieldCheck, MapPin } from 'lucide-react';
@@ -126,17 +127,15 @@ export const RoomDetailModal = ({ room, onClose }) => {
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                onClose();
-                openBookingModal(room);
-              }}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider text-slate-950 shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95"
+            <Link
+              href={`/book?room=${room.id}`}
+              onClick={onClose}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider text-slate-950 shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95 cursor-pointer"
               style={{ backgroundColor: 'var(--color-secondary)' }}
             >
               <Calendar className="w-4 h-4" />
               <span>Reserve {room.name}</span>
-            </button>
+            </Link>
           </div>
 
         </div>

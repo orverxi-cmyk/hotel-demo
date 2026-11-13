@@ -70,10 +70,10 @@ export const Footer = ({ onOpenCMS }) => {
               Residences
             </h5>
             <ul className="space-y-2 text-sm text-stone-300">
-              <li><a href="/#rooms" className="hover:text-amber-300 transition-colors">Ocean Villas</a></li>
-              <li><a href="/#rooms" className="hover:text-amber-300 transition-colors">Penthouse Suites</a></li>
-              <li><a href="/#rooms" className="hover:text-amber-300 transition-colors">Botanical Suites</a></li>
-              <li><a href="/#rooms" className="hover:text-amber-300 transition-colors">Classic Deluxe</a></li>
+              <li><Link href="/rooms" className="hover:text-amber-300 transition-colors">Ocean Villas</Link></li>
+              <li><Link href="/rooms" className="hover:text-amber-300 transition-colors">Penthouse Suites</Link></li>
+              <li><Link href="/rooms" className="hover:text-amber-300 transition-colors">Botanical Suites</Link></li>
+              <li><Link href="/rooms" className="hover:text-amber-300 transition-colors">Classic Deluxe</Link></li>
             </ul>
           </div>
 
@@ -83,10 +83,10 @@ export const Footer = ({ onOpenCMS }) => {
               Experiences
             </h5>
             <ul className="space-y-2 text-sm text-stone-300">
-              <li><a href="/#amenities" className="hover:text-amber-300 transition-colors">The Botanical Spa</a></li>
-              <li><a href="/#dining" className="hover:text-amber-300 transition-colors">Michelin Gastronomy</a></li>
-              <li><a href="/#amenities" className="hover:text-amber-300 transition-colors">Private Riva Yacht</a></li>
-              <li><a href="/#amenities" className="hover:text-amber-300 transition-colors">Wine Vault & Tastings</a></li>
+              <li><Link href="/amenities" className="hover:text-amber-300 transition-colors">The Botanical Spa</Link></li>
+              <li><Link href="/dining" className="hover:text-amber-300 transition-colors">Michelin Gastronomy</Link></li>
+              <li><Link href="/amenities" className="hover:text-amber-300 transition-colors">Private Riva Yacht</Link></li>
+              <li><Link href="/amenities" className="hover:text-amber-300 transition-colors">Wine Vault & Tastings</Link></li>
             </ul>
           </div>
 
@@ -134,16 +134,16 @@ export const Footer = ({ onOpenCMS }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => openBookingModal()}
+            <Link
+              href="/book"
               className="hover:text-amber-300 transition-colors"
             >
               Direct Reservations
-            </button>
+            </Link>
             <span>•</span>
-            <a href="#contact" className="hover:text-amber-300 transition-colors">
+            <Link href="/contact" className="hover:text-amber-300 transition-colors">
               Concierge Desk
-            </a>
+            </Link>
             <span>•</span>
             <Link 
               href="/admin" 

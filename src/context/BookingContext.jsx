@@ -209,32 +209,27 @@ export const BookingProvider = ({ children }) => {
   // --- MODAL CONTROLS ---
 
   const openBookingModal = (item = null, mode = 'stay', initialParams = null) => {
-    const isDining = mode === 'dining' || item?.tables || item?.accolade || (item?.id && item.id.startsWith('dining-'));
-    if (isDining) {
-      setBookingMode('dining');
-      if (initialParams) {
-        setDiningSearchParams(prev => ({ ...prev, ...initialParams }));
+    if (typeof window !== 'undefined') {
+      const isDining = mode === 'dining' || item?.tables || item?.accolade || (item?.id && item.id.startsWith('dining-'));
+      if (isDining) {
+        const venueParam = item?.id ? `&venue=${item.id}` : '';
+        window.location.href = `/book?type=dining${venueParam}`;
+      } else {
+        const roomParam = item?.id ? `?room=${item.id}` : '';
+        window.location.href = `/book${roomParam}`;
       }
-      setSelectedVenue(item || diningVenues[0] || initialDiningVenues[0] || null);
-      setSelectedTableNumber(initialParams?.tableNumber || null);
-    } else {
-      setBookingMode('stay');
-      if (initialParams) {
-        setSearchParams(prev => ({ ...prev, ...initialParams }));
-      }
-      setSelectedRoom(item || rooms[0] || initialRooms[0] || null);
+      return;
     }
-    setIsBookingModalOpen(true);
+    setIsBookingModalOpen(false);
   };
 
   const openDiningModal = (venue = null, tableNumber = null, initialParams = null) => {
-    setBookingMode('dining');
-    if (initialParams) {
-      setDiningSearchParams(prev => ({ ...prev, ...initialParams }));
+    if (typeof window !== 'undefined') {
+      const venueParam = venue?.id ? `&venue=${venue.id}` : '';
+      window.location.href = `/book?type=dining${venueParam}`;
+      return;
     }
-    setSelectedVenue(venue || diningVenues[0] || initialDiningVenues[0] || null);
-    setSelectedTableNumber(tableNumber || null);
-    setIsBookingModalOpen(true);
+    setIsBookingModalOpen(false);
   };
 
   const closeBookingModal = () => {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useTheme } from '../context/ThemeContext';
 import { useBooking } from '../context/BookingContext';
 import { Utensils, Clock, Calendar, Wine, MapPin } from 'lucide-react';
@@ -134,15 +135,14 @@ export const DiningSection = () => {
 
               <div className="pt-4 border-t border-stone-100 flex items-center justify-between">
                 <span className="text-xs font-semibold text-stone-500">Dress Code: Resort Chic</span>
-                <button
-                  type="button"
-                  onClick={() => openBookingModal(venue, 'dining')}
+                <Link
+                  href={`/book?type=dining&venue=${venue.id}`}
                   className="text-xs font-bold uppercase tracking-wider hover:underline flex items-center gap-1 cursor-pointer"
                   style={{ color: 'var(--color-primary)' }}
                 >
                   <span>Book Table</span>
                   <span>→</span>
-                </button>
+                </Link>
               </div>
             </div>
 

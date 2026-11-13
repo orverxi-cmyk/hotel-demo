@@ -8,7 +8,7 @@ import { useBooking } from '../context/BookingContext';
 import { Sparkles, Calendar, Menu, X, Shield, PhoneCall, Home, ExternalLink } from 'lucide-react';
 import { getCachedNavMenus, subscribeNavMenus, initialNavMenus } from '../services/storageService';
 
-// Helper to extract target section ID and canonical href from any menu item
+// Helper to extract target canonical href from any menu item (SEO-friendly clean URLs)
 export const resolveNavTarget = (item) => {
   if (!item) return { isHome: false, isAnchor: false, targetId: null, href: '/' };
 
@@ -19,38 +19,49 @@ export const resolveNavTarget = (item) => {
     return { isHome: true, isAnchor: false, targetId: 'home', href: '/' };
   }
 
-  // Any link that contains '#' is an anchor link (e.g. "/#amenities", "#amenities", "http.../#amenities")
-  if (rawHref.includes('#')) {
-    const hashId = rawHref.split('#')[1].split('/')[0].split('?')[0].trim();
-    if (hashId) {
-      return {
-        isHome: false,
-        isAnchor: true,
-        targetId: hashId,
-        href: `/#${hashId}`
-      };
-    }
-  }
+  // Known sections that have clean dedicated SEO URLs
+  const known = ['rooms', 'amenities', 'dining', 'discover', 'gallery', 'reviews', 'contact', 'location', 'book'];
 
-  // If rawTarget is specified (e.g. "amenities", "rooms", "dining")
-  if (rawTarget && rawTarget !== 'home') {
+  // Clean path slug (e.g. "/rooms" -> "rooms")
+  const cleanPath = rawHref.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (known.includes(cleanPath)) {
+    const canonical = cleanPath === 'location' ? '/contact' : `/${cleanPath}`;
     return {
       isHome: false,
-      isAnchor: true,
-      targetId: rawTarget,
-      href: `/#${rawTarget}`
+      isAnchor: false,
+      targetId: cleanPath === 'location' ? 'contact' : cleanPath,
+      href: canonical
     };
   }
 
-  // If rawHref is a known section slug like "amenities" or "/amenities"
-  const cleanPath = rawHref.replace(/^\/+|\/+$/g, '').toLowerCase();
-  const known = ['rooms', 'amenities', 'dining', 'gallery', 'reviews', 'contact', 'location'];
-  if (known.includes(cleanPath)) {
+  // If rawHref contains old hash anchor (e.g. "/#rooms", "#rooms"), sanitize to SEO route "/rooms"
+  if (rawHref.includes('#')) {
+    const hashId = rawHref.split('#')[1].split('/')[0].split('?')[0].trim().toLowerCase();
+    if (known.includes(hashId)) {
+      const canonical = hashId === 'location' ? '/contact' : `/${hashId}`;
+      return {
+        isHome: false,
+        isAnchor: false,
+        targetId: hashId === 'location' ? 'contact' : hashId,
+        href: canonical
+      };
+    }
     return {
       isHome: false,
       isAnchor: true,
-      targetId: cleanPath,
-      href: `/#${cleanPath}`
+      targetId: hashId,
+      href: `/#${hashId}`
+    };
+  }
+
+  // If rawTarget is specified (e.g. "amenities", "rooms", "dining")
+  if (rawTarget && known.includes(rawTarget.toLowerCase())) {
+    const canonical = rawTarget.toLowerCase() === 'location' ? '/contact' : `/${rawTarget.toLowerCase()}`;
+    return {
+      isHome: false,
+      isAnchor: false,
+      targetId: rawTarget.toLowerCase() === 'location' ? 'contact' : rawTarget.toLowerCase(),
+      href: canonical
     };
   }
 
@@ -64,7 +75,7 @@ export const resolveNavTarget = (item) => {
 
 export const Navbar = ({ onOpenCMS }) => {
   const { theme } = useTheme();
-  const { openBookingModal } = useBooking();
+  const { openBookingModal, isBookingModalOpen } = useBooking();
   const pathname = usePathname();
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -204,8 +215,9 @@ export const Navbar = ({ onOpenCMS }) => {
   };
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+    <>
+      <header 
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         isScrolled 
           ? 'bg-slate-950/95 backdrop-blur-md shadow-lg border-b border-white/10 py-2.5 sm:py-3' 
           : theme?.heroNavbarStyle === 'transparent'
@@ -251,7 +263,7 @@ export const Navbar = ({ onOpenCMS }) => {
               const nav = resolveNavTarget(item);
               const isActive = (nav.isHome && pathname === '/' && activeSection === 'home') ||
                                (!nav.isHome && pathname === '/' && (activeSection === nav.targetId || (activeSection === 'location' && nav.targetId === 'contact') || (activeSection === 'contact' && nav.targetId === 'location'))) ||
-                               (!nav.isHome && !nav.isAnchor && pathname === nav.href);
+                               (!nav.isHome && !nav.isAnchor && (pathname === nav.href || (nav.href !== '/' && pathname.startsWith(nav.href))));
 
               if (item.isExternal || (item.href && (item.href.startsWith('http://') || item.href.startsWith('https://')))) {
                 return (
@@ -311,10 +323,10 @@ export const Navbar = ({ onOpenCMS }) => {
           </nav>
 
           {/* Right Action Buttons (Stays on one line, shrink-0) */}
-          <div className="hidden sm:flex items-center gap-2.5 lg:gap-3.5 shrink-0 whitespace-nowrap flex-nowrap">
+          <div className="hidden md:flex items-center gap-2.5 lg:gap-3.5 shrink-0 whitespace-nowrap flex-nowrap">
             {/* Book Now Button */}
-            <button
-              onClick={() => openBookingModal()}
+            <Link
+              href="/book"
               className="flex items-center gap-1.5 px-4 py-1.5 lg:px-5 lg:py-2 rounded-full text-[11px] lg:text-xs font-bold uppercase tracking-wider text-slate-950 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
               style={{
                 backgroundColor: 'var(--color-secondary)',
@@ -323,7 +335,7 @@ export const Navbar = ({ onOpenCMS }) => {
             >
               <Calendar className="w-3 h-3 lg:w-3.5 lg:h-3.5 shrink-0" />
               <span>Book Stay</span>
-            </button>
+            </Link>
           </div>
 
           {/* Mobile Menu Hamburger (for screens under md) */}
@@ -348,7 +360,7 @@ export const Navbar = ({ onOpenCMS }) => {
               const nav = resolveNavTarget(item);
               const isActive = (nav.isHome && pathname === '/' && activeSection === 'home') ||
                                (!nav.isHome && pathname === '/' && (activeSection === nav.targetId || (activeSection === 'location' && nav.targetId === 'contact') || (activeSection === 'contact' && nav.targetId === 'location'))) ||
-                               (!nav.isHome && !nav.isAnchor && pathname === nav.href);
+                               (!nav.isHome && !nav.isAnchor && (pathname === nav.href || (nav.href !== '/' && pathname.startsWith(nav.href))));
 
               if (item.isExternal || (item.href && (item.href.startsWith('http://') || item.href.startsWith('https://')))) {
                 return (
@@ -403,20 +415,37 @@ export const Navbar = ({ onOpenCMS }) => {
           </nav>
 
           <div className="pt-4 border-t border-white/10 flex flex-col gap-3">
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                openBookingModal();
-              }}
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-slate-950 font-bold text-sm tracking-wider uppercase shadow-lg"
+            <Link
+              href="/book"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-slate-950 font-bold text-sm tracking-wider uppercase shadow-lg cursor-pointer"
               style={{ backgroundColor: 'var(--color-secondary)' }}
             >
               <Calendar className="w-4 h-4" />
               <span>Reserve Room Now</span>
-            </button>
+            </Link>
           </div>
         </div>
       )}
-    </header>
+      </header>
+
+      {/* Vertically Aligned Floating Book Button on Mobile View (Right Edge) */}
+      {!isMobileMenuOpen && (
+        <Link
+          href="/book"
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 md:hidden flex flex-col items-center justify-center gap-2.5 py-4 px-2.5 rounded-l-2xl text-[11px] font-extrabold uppercase tracking-widest text-slate-950 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border border-white/25 border-r-0 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-right-4"
+          style={{
+            backgroundColor: 'var(--color-secondary)',
+            boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.45)'
+          }}
+          aria-label="Book Now"
+        >
+          <Calendar className="w-4 h-4 shrink-0 text-slate-950" />
+          <span className="[writing-mode:vertical-rl] rotate-180 tracking-widest select-none font-bold">
+            Book Now
+          </span>
+        </Link>
+      )}
+    </>
   );
 };
